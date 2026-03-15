@@ -1,0 +1,435 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "exported_at": "2024-01-01T00:00:00Z",
+    "tool_version": "1.8.2",
+    "source": {
+      "zip_basename": "fixture_records_public.zip",
+      "zip_path": "/abs/path/fixture_records_public.zip",
+      "input_format": "records"
+    },
+    "output": {
+      "out_dir": "/abs/path/out"
+    },
+    "config": {
+      "mode": "all",
+      "split_midnight": "utc",
+      "split_mode": "daily",
+      "export_format": [
+        "json"
+      ],
+      "input_format": "auto"
+    },
+    "filters": {
+      "limit": 5
+    }
+  },
+  "data": {
+    "days": [
+      {
+        "date": "2024-05-01",
+        "visits": [
+          {
+            "start_time": "2024-05-01T06:10:00Z",
+            "end_time": "2024-05-01T07:15:00Z",
+            "lat": 52.5208,
+            "lon": 13.4095,
+            "semantic_type": "HOME",
+            "place_id": "fixture-home-a",
+            "accuracy_m": 18.0,
+            "source_type": "placeVisit"
+          },
+          {
+            "start_time": "2024-05-01T07:45:00Z",
+            "end_time": "2024-05-01T16:40:00Z",
+            "lat": 52.5164,
+            "lon": 13.3777,
+            "semantic_type": "WORK",
+            "place_id": "fixture-office-a",
+            "accuracy_m": 12.0,
+            "source_type": "placeVisit"
+          },
+          {
+            "start_time": "2024-05-01T17:20:00Z",
+            "end_time": "2024-05-01T19:10:00Z",
+            "lat": 52.4986,
+            "lon": 13.4502,
+            "semantic_type": "LEISURE",
+            "place_id": "fixture-club-a",
+            "accuracy_m": 15.0,
+            "source_type": "placeVisit"
+          }
+        ],
+        "activities": [
+          {
+            "start_time": "2024-05-01T07:20:00Z",
+            "end_time": "2024-05-01T07:45:00Z",
+            "start_lat": 52.5208,
+            "start_lon": 13.4095,
+            "end_lat": 52.5164,
+            "end_lon": 13.3777,
+            "activity_type": "WALKING",
+            "distance_m": 1850.0,
+            "split_from_midnight": false,
+            "start_accuracy_m": 7.0,
+            "end_accuracy_m": 9.0,
+            "source_type": "activity",
+            "flat_coordinates": [
+              52.5208,
+              13.4095,
+              52.5164,
+              13.3777
+            ]
+          },
+          {
+            "start_time": "2024-05-01T16:50:00Z",
+            "end_time": "2024-05-01T17:20:00Z",
+            "start_lat": 52.5164,
+            "start_lon": 13.3777,
+            "end_lat": 52.4986,
+            "end_lon": 13.4502,
+            "activity_type": "IN PASSENGER VEHICLE",
+            "distance_m": 8420.5,
+            "split_from_midnight": false,
+            "start_accuracy_m": null,
+            "end_accuracy_m": null,
+            "source_type": "activity",
+            "flat_coordinates": [
+              52.5164,
+              13.3777,
+              52.4986,
+              13.4502
+            ]
+          }
+        ],
+        "paths": [
+          {
+            "start_time": "2024-05-01T07:20:00Z",
+            "end_time": "2024-05-01T07:45:00Z",
+            "activity_type": "WALKING",
+            "distance_m": 2207.8509109636716,
+            "source_type": "timelinePath",
+            "flat_coordinates": [
+              52.5208,
+              13.4095,
+              52.519,
+              13.394,
+              52.5164,
+              13.3777
+            ],
+            "points": [
+              {
+                "lat": 52.5208,
+                "lon": 13.4095,
+                "time": "2024-05-01T07:20:00Z",
+                "accuracy_m": 6.0
+              },
+              {
+                "lat": 52.519,
+                "lon": 13.394,
+                "time": "2024-05-01T07:32:00Z",
+                "accuracy_m": 7.0
+              },
+              {
+                "lat": 52.5164,
+                "lon": 13.3777,
+                "time": "2024-05-01T07:45:00Z",
+                "accuracy_m": 8.0
+              }
+            ]
+          },
+          {
+            "start_time": "2024-05-01T16:50:00Z",
+            "end_time": "2024-05-01T17:20:00Z",
+            "activity_type": "IN PASSENGER VEHICLE",
+            "distance_m": 5294.998155384078,
+            "source_type": "timelinePath",
+            "flat_coordinates": [
+              52.5164,
+              13.3777,
+              52.5105,
+              13.402,
+              52.5042,
+              13.4308,
+              52.4986,
+              13.4502
+            ],
+            "points": [
+              {
+                "lat": 52.5164,
+                "lon": 13.3777,
+                "time": "2024-05-01T16:50:00Z",
+                "accuracy_m": 10.0
+              },
+              {
+                "lat": 52.5105,
+                "lon": 13.402,
+                "time": "2024-05-01T17:00:00Z",
+                "accuracy_m": 12.0
+              },
+              {
+                "lat": 52.5042,
+                "lon": 13.4308,
+                "time": "2024-05-01T17:10:00Z",
+                "accuracy_m": 11.0
+              },
+              {
+                "lat": 52.4986,
+                "lon": 13.4502,
+                "time": "2024-05-01T17:20:00Z",
+                "accuracy_m": 9.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "date": "2024-05-02",
+        "visits": [
+          {
+            "start_time": "2024-05-02T06:30:00Z",
+            "end_time": "2024-05-02T07:05:00Z",
+            "lat": 52.4986,
+            "lon": 13.4502,
+            "semantic_type": "STAY",
+            "place_id": "fixture-club-a",
+            "accuracy_m": null,
+            "source_type": "placeVisit"
+          },
+          {
+            "start_time": "2024-05-02T07:40:00Z",
+            "end_time": "2024-05-02T08:50:00Z",
+            "lat": 52.5074,
+            "lon": 13.4721,
+            "semantic_type": "PARK",
+            "place_id": "fixture-park-a",
+            "accuracy_m": null,
+            "source_type": "placeVisit"
+          },
+          {
+            "start_time": "2024-05-02T09:40:00Z",
+            "end_time": "2024-05-02T11:30:00Z",
+            "lat": 52.4949,
+            "lon": 13.5255,
+            "semantic_type": "EVENT",
+            "place_id": "fixture-venue-a",
+            "accuracy_m": 14.0,
+            "source_type": "placeVisit"
+          }
+        ],
+        "activities": [
+          {
+            "start_time": "2024-05-02T07:10:00Z",
+            "end_time": "2024-05-02T07:40:00Z",
+            "start_lat": 52.4986,
+            "start_lon": 13.4502,
+            "end_lat": 52.5074,
+            "end_lon": 13.4721,
+            "activity_type": "CYCLING",
+            "distance_m": 4200.0,
+            "split_from_midnight": false,
+            "start_accuracy_m": 6.0,
+            "end_accuracy_m": 8.0,
+            "source_type": "activity",
+            "flat_coordinates": [
+              52.4986,
+              13.4502,
+              52.5074,
+              13.4721
+            ]
+          },
+          {
+            "start_time": "2024-05-02T09:05:00Z",
+            "end_time": "2024-05-02T09:40:00Z",
+            "start_lat": 52.5074,
+            "start_lon": 13.4721,
+            "end_lat": 52.4949,
+            "end_lon": 13.5255,
+            "activity_type": "IN BUS",
+            "distance_m": 9800.0,
+            "split_from_midnight": false,
+            "start_accuracy_m": null,
+            "end_accuracy_m": null,
+            "source_type": "activity",
+            "flat_coordinates": [
+              52.5074,
+              13.4721,
+              52.4949,
+              13.5255
+            ]
+          }
+        ],
+        "paths": [
+          {
+            "start_time": "2024-05-02T07:10:00Z",
+            "end_time": "2024-05-02T07:40:00Z",
+            "activity_type": "CYCLING",
+            "distance_m": 1776.2732528035885,
+            "source_type": "timelinePath",
+            "flat_coordinates": [
+              52.4986,
+              13.4502,
+              52.5032,
+              13.4614,
+              52.5074,
+              13.4721
+            ],
+            "points": [
+              {
+                "lat": 52.4986,
+                "lon": 13.4502,
+                "time": "2024-05-02T07:10:00Z",
+                "accuracy_m": 5.0
+              },
+              {
+                "lat": 52.5032,
+                "lon": 13.4614,
+                "time": "2024-05-02T07:24:00Z",
+                "accuracy_m": 6.0
+              },
+              {
+                "lat": 52.5074,
+                "lon": 13.4721,
+                "time": "2024-05-02T07:40:00Z",
+                "accuracy_m": 7.0
+              }
+            ]
+          },
+          {
+            "start_time": "2024-05-02T09:05:00Z",
+            "end_time": "2024-05-02T09:40:00Z",
+            "activity_type": "IN BUS",
+            "distance_m": 3872.8971996045802,
+            "source_type": "timelinePath",
+            "flat_coordinates": [
+              52.5074,
+              13.4721,
+              52.5032,
+              13.4899,
+              52.4992,
+              13.5078,
+              52.4949,
+              13.5255
+            ],
+            "points": [
+              {
+                "lat": 52.5074,
+                "lon": 13.4721,
+                "time": "2024-05-02T09:05:00Z",
+                "accuracy_m": 9.0
+              },
+              {
+                "lat": 52.5032,
+                "lon": 13.4899,
+                "time": "2024-05-02T09:15:00Z",
+                "accuracy_m": 10.0
+              },
+              {
+                "lat": 52.4992,
+                "lon": 13.5078,
+                "time": "2024-05-02T09:25:00Z",
+                "accuracy_m": 10.0
+              },
+              {
+                "lat": 52.4949,
+                "lon": 13.5255,
+                "time": "2024-05-02T09:40:00Z",
+                "accuracy_m": 11.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "date": "2024-05-03",
+        "visits": [
+          {
+            "start_time": "2024-05-03T08:00:00Z",
+            "end_time": "2024-05-03T09:20:00Z",
+            "lat": 52.4918,
+            "lon": 13.5362,
+            "semantic_type": "UNKNOWN",
+            "place_id": null,
+            "accuracy_m": null,
+            "source_type": "placeVisit"
+          },
+          {
+            "start_time": "2024-05-03T09:45:00Z",
+            "end_time": "2024-05-03T10:30:00Z",
+            "lat": 52.4895,
+            "lon": 13.5419,
+            "semantic_type": "CAFE",
+            "place_id": "fixture-cafe-a",
+            "accuracy_m": 10.0,
+            "source_type": "placeVisit"
+          }
+        ],
+        "activities": [
+          {
+            "start_time": "2024-05-03T09:25:00Z",
+            "end_time": "2024-05-03T09:45:00Z",
+            "start_lat": 52.4918,
+            "start_lon": 13.5362,
+            "end_lat": 52.4895,
+            "end_lon": 13.5419,
+            "activity_type": "UNKNOWN",
+            "distance_m": 350.0,
+            "split_from_midnight": false,
+            "start_accuracy_m": 5.0,
+            "end_accuracy_m": 5.0,
+            "source_type": "activity",
+            "flat_coordinates": [
+              52.4918,
+              13.5362,
+              52.4895,
+              13.5419
+            ]
+          }
+        ],
+        "paths": [
+          {
+            "start_time": "2024-05-03T09:25:00Z",
+            "end_time": "2024-05-03T09:45:00Z",
+            "activity_type": "UNKNOWN",
+            "distance_m": 462.97174655049054,
+            "source_type": "timelinePath",
+            "flat_coordinates": [
+              52.4918,
+              13.5362,
+              52.4895,
+              13.5419
+            ],
+            "points": [
+              {
+                "lat": 52.4918,
+                "lon": 13.5362,
+                "time": "2024-05-03T09:25:00Z",
+                "accuracy_m": 4.0
+              },
+              {
+                "lat": 52.4895,
+                "lon": 13.5419,
+                "time": "2024-05-03T09:45:00Z",
+                "accuracy_m": 4.0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "periods": [
+      {
+        "label": "2024",
+        "year": 2024,
+        "month": null,
+        "days": 3,
+        "visits": 8,
+        "activities": 5,
+        "paths": 5,
+        "distance_m": 24733.47174655049
+      }
+    ]
+  }
+}

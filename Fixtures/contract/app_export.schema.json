@@ -1,0 +1,700 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LocationHistory2GPX App Export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "meta",
+    "data"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exported_at",
+        "tool_version",
+        "source",
+        "output",
+        "config",
+        "filters"
+      ],
+      "properties": {
+        "exported_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "tool_version": {
+          "type": "string"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "zip_basename",
+            "zip_path",
+            "input_format"
+          ],
+          "properties": {
+            "zip_basename": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "zip_path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "input_format": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "records",
+                "timeline",
+                "mixed",
+                "auto",
+                null
+              ]
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "out_dir"
+          ],
+          "properties": {
+            "out_dir": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "split_midnight",
+            "split_mode",
+            "export_format",
+            "input_format"
+          ],
+          "properties": {
+            "mode": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "all",
+                "visits",
+                "activities",
+                "paths",
+                null
+              ]
+            },
+            "split_midnight": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "utc",
+                "local",
+                null
+              ]
+            },
+            "split_mode": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "daily",
+                "monthly",
+                "yearly",
+                "single",
+                null
+              ]
+            },
+            "export_format": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "enum": [
+                  "gpx",
+                  "geojson",
+                  "csv",
+                  "json"
+                ]
+              }
+            },
+            "input_format": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "auto",
+                "records",
+                "timeline",
+                null
+              ]
+            }
+          }
+        },
+        "filters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "to_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "year": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "month": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "weekday": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "days": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              }
+            },
+            "has": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "enum": [
+                  "visits",
+                  "activities",
+                  "paths"
+                ]
+              }
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "max_accuracy_m": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "activity_types": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "min_gap_min": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "days"
+      ],
+      "properties": {
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "date",
+              "visits",
+              "activities",
+              "paths"
+            ],
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "visits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "lat",
+                    "lon",
+                    "start_time",
+                    "end_time",
+                    "semantic_type",
+                    "place_id"
+                  ],
+                  "properties": {
+                    "lat": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "lon": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "start_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "end_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "semantic_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "place_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "accuracy_m": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "source_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "placeVisit",
+                        "semanticSegment",
+                        null
+                      ]
+                    }
+                  }
+                }
+              },
+              "activities": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "start_time",
+                    "end_time",
+                    "start_lat",
+                    "start_lon",
+                    "end_lat",
+                    "end_lon",
+                    "activity_type",
+                    "distance_m",
+                    "split_from_midnight"
+                  ],
+                  "properties": {
+                    "start_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "end_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "start_lat": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "start_lon": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "end_lat": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "end_lon": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "activity_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "distance_m": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "split_from_midnight": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "flat_coordinates": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "start_accuracy_m": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "end_accuracy_m": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "source_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "activity",
+                        "activitySegment",
+                        "semanticSegment",
+                        null
+                      ]
+                    }
+                  }
+                }
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "start_time",
+                    "end_time",
+                    "activity_type",
+                    "distance_m",
+                    "points"
+                  ],
+                  "properties": {
+                    "start_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "end_time": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                    },
+                    "activity_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "distance_m": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "flat_coordinates": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "points": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "lat",
+                          "lon",
+                          "time"
+                        ],
+                        "properties": {
+                          "lat": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "lon": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "time": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                          },
+                          "accuracy_m": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "source_type": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "timelinePath",
+                        "activitySegment",
+                        "semanticSegment",
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "stats": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "activities": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "count",
+              "total_distance_km",
+              "total_duration_h",
+              "avg_distance_km",
+              "avg_speed_kmh"
+            ],
+            "properties": {
+              "count": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "total_distance_km": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "total_duration_h": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "avg_distance_km": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "avg_speed_kmh": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "periods": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "year",
+              "month",
+              "days",
+              "visits",
+              "activities",
+              "paths",
+              "distance_m"
+            ],
+            "properties": {
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "year": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "month": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "days": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "visits": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "activities": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "paths": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "distance_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

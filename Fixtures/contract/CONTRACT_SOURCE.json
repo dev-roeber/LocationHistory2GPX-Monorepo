@@ -1,0 +1,21 @@
+{
+  "producer_repo": "dev-roeber/LocationHistory2GPX",
+  "producer_commit": "7630b0e",
+  "source_boundary_doc": "docs/SEPARATE_IOS_REPO_BOUNDARY.md",
+  "imported_artifacts": [
+    "app_export.schema.json",
+    "app_export_contract_gate.json",
+    "app_export_sample_small.json",
+    "app_export_sample_medium.json",
+    "app_export_sample_placeholder_many_days.json",
+    "app_export_sample_placeholder_mixed.json",
+    "app_export_sample_placeholder_nulls.json",
+    "app_export_sample_placeholder_stats_activities_only.json",
+    "app_export_sample_placeholder_stats_periods_only.json"
+  ],
+  "excluded_artifacts": [
+    "trips_index_mvp.json",
+    "Python CLI/TUI/Shell files",
+    "private fixtures"
+  ]
+}

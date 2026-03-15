@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "exported_at": "2024-01-01T00:00:00Z",
+    "tool_version": "1.8.2",
+    "source": {
+      "zip_basename": "synthetic-many-days.json",
+      "zip_path": "/abs/path/synthetic-many-days.json",
+      "input_format": "records"
+    },
+    "output": {
+      "out_dir": "/abs/path/out"
+    },
+    "config": {
+      "mode": "all",
+      "split_midnight": null,
+      "split_mode": "daily",
+      "export_format": [
+        "json"
+      ],
+      "input_format": "auto"
+    },
+    "filters": {
+      "limit": 20
+    }
+  },
+  "data": {
+    "days": []
+  },
+  "stats": null
+}
