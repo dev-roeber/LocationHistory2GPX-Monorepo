@@ -13,6 +13,11 @@
     "app_export_sample_placeholder_stats_activities_only.json",
     "app_export_sample_placeholder_stats_periods_only.json"
   ],
+  "consumer_local_artifacts": [
+    "golden_app_export_consumer_forward_compatible_additive_fields.json",
+    "golden_app_export_empty_collections_minimal.json",
+    "golden_app_export_multi_day_varied_structure.json"
+  ],
   "excluded_artifacts": [
     "trips_index_mvp.json",
     "Python CLI/TUI/Shell files",

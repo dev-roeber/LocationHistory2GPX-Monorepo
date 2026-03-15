@@ -6,6 +6,17 @@
 - [x] Contract-Artefakte aus dem Producer-Repo übernehmen
 - [x] Decoder-Modelle für den stabilen App-Export anlegen
 - [x] Golden-Decoding-Tests anlegen
+
+## Phase 3
+
+- [x] 2-3 zusätzliche realistische Golden-Faelle ergänzen
+- [x] Contract- und Fixture-Guards schärfen
+- [x] nativen lokalen Swift-Testlauf als Standard dokumentieren
+- [x] lokalen Producer-zu-Consumer-Update-Workflow skriptbar machen
+
+## Phase 4
+
+- [ ] UI-unabhaengige Query-/ViewState-Schicht
 - [ ] Produkt-UI
 
 ## Nicht Teil dieser Phase

@@ -26,6 +26,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - gegen Swift-Modelle decodieren
 - Golden-basierte Contract-Tests lokal ausfuehren
 - klar dokumentieren, welche Producer-Artefakte konsumiert werden
+- Producer-Contract-Artefakte lokal reproduzierbar aktualisieren
 
 ## Was dieses Repo aktuell bewusst nicht kann
 
@@ -56,4 +57,20 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 swift test
 ```
 
-Wenn `swift` lokal nicht installiert ist, koennen die Dateien hier trotzdem vorbereitet und geprueft werden, aber der Build/Test-Lauf muss spaeter auf einer Swift-Umgebung nachgezogen werden.
+Der Standardweg ist jetzt nativer lokaler Swift 5.9.
+
+## Contract-Files aktualisieren
+
+Producer-Updates starten immer im Python-Repo `LocationHistory2GPX`. Wenn dort Schema, Goldens und Contract-Tests aktualisiert wurden, uebernimmst du hier nur die producer-abgeleiteten Consumer-Artefakte:
+
+```bash
+./scripts/update_contract_fixtures.sh
+swift test
+```
+
+Der Sync-Skriptlauf aktualisiert nur:
+- `Fixtures/contract/app_export.schema.json`
+- producer-abgeleitete `Fixtures/contract/golden_app_export_*.json`
+- `Fixtures/contract/CONTRACT_SOURCE.json` mit dem referenzierten Producer-Commit
+
+Consumer-lokale Forward-Compatibility-Fixtures bleiben bewusst unangetastet.

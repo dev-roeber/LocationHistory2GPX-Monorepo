@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "exported_at": "2024-06-15T12:00:00Z",
+    "tool_version": "1.8.2",
+    "source": {
+      "zip_basename": "multi-day-varied.json",
+      "zip_path": "/abs/path/multi-day-varied.json",
+      "input_format": "mixed"
+    },
+    "output": {
+      "out_dir": "/abs/path/out"
+    },
+    "config": {
+      "mode": "all",
+      "split_midnight": "local",
+      "split_mode": "daily",
+      "export_format": [
+        "json"
+      ],
+      "input_format": "auto"
+    },
+    "filters": {
+      "from_date": "2024-06-10",
+      "to_date": "2024-06-12"
+    }
+  },
+  "data": {
+    "days": [
+      {
+        "date": "2024-06-10",
+        "visits": [
+          {
+            "lat": 52.52,
+            "lon": 13.405,
+            "start_time": "2024-06-10T06:00:00Z",
+            "end_time": "2024-06-10T07:00:00Z",
+            "semantic_type": "HOME",
+            "place_id": "home-1",
+            "source_type": "placeVisit"
+          }
+        ],
+        "activities": [],
+        "paths": []
+      },
+      {
+        "date": "2024-06-11",
+        "visits": [],
+        "activities": [
+          {
+            "start_time": "2024-06-11T08:00:00Z",
+            "end_time": "2024-06-11T08:20:00Z",
+            "start_lat": 52.52,
+            "start_lon": 13.405,
+            "end_lat": 52.53,
+            "end_lon": 13.41,
+            "activity_type": "CYCLING",
+            "distance_m": 2400.0,
+            "split_from_midnight": false,
+            "source_type": "activitySegment"
+          }
+        ],
+        "paths": [
+          {
+            "start_time": "2024-06-11T08:00:00Z",
+            "end_time": "2024-06-11T08:20:00Z",
+            "activity_type": "CYCLING",
+            "distance_m": 2410.0,
+            "source_type": "timelinePath",
+            "points": [
+              {
+                "lat": 52.52,
+                "lon": 13.405,
+                "time": "2024-06-11T08:00:00Z"
+              },
+              {
+                "lat": 52.525,
+                "lon": 13.407,
+                "time": "2024-06-11T08:10:00Z",
+                "accuracy_m": 5.0
+              },
+              {
+                "lat": 52.53,
+                "lon": 13.41,
+                "time": "2024-06-11T08:20:00Z"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "date": "2024-06-12",
+        "visits": [],
+        "activities": [],
+        "paths": []
+      }
+    ]
+  },
+  "stats": {
+    "activities": {
+      "CYCLING": {
+        "count": 1,
+        "total_distance_km": 2.4,
+        "total_duration_h": 0.33,
+        "avg_distance_km": 2.4,
+        "avg_speed_kmh": 7.27
+      }
+    },
+    "periods": [
+      {
+        "label": "2024-06",
+        "year": 2024,
+        "month": 6,
+        "days": 3,
+        "visits": 1,
+        "activities": 1,
+        "paths": 1,
+        "distance_m": 2410.0
+      }
+    ]
+  }
+}

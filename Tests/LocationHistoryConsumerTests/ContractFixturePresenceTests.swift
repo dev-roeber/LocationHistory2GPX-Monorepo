@@ -10,9 +10,12 @@ final class ContractFixturePresenceTests: XCTestCase {
             "golden_app_export_contract_gate.json",
             "golden_app_export_sample_small.json",
             "golden_app_export_sample_medium.json",
+            "golden_app_export_consumer_forward_compatible_additive_fields.json",
+            "golden_app_export_empty_collections_minimal.json",
+            "golden_app_export_multi_day_varied_structure.json",
         ]
 
-        let fixtures = try contractFixturesDirectory()
+        let fixtures = try TestSupport.contractFixturesDirectory()
         for name in expected {
             let path = fixtures.appendingPathComponent(name)
             XCTAssertTrue(FileManager.default.fileExists(atPath: path.path), name)
@@ -23,19 +26,19 @@ final class ContractFixturePresenceTests: XCTestCase {
         XCTAssertEqual(ContractVersion.currentSchemaVersion, "1.0")
     }
 
-    private func contractFixturesDirectory() throws -> URL {
-        let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let direct = root.appendingPathComponent("Fixtures/contract", isDirectory: true)
-        if FileManager.default.fileExists(atPath: direct.path) {
-            return direct
-        }
-        let repoRoot = root.deletingLastPathComponent()
-        let fallback = repoRoot.appendingPathComponent("Fixtures/contract", isDirectory: true)
-        if FileManager.default.fileExists(atPath: fallback.path) {
-            return fallback
-        }
-        throw NSError(domain: "LocationHistoryConsumerTests", code: 1, userInfo: [
-            NSLocalizedDescriptionKey: "Fixtures/contract not found from current directory"
-        ])
+    func testContractSourceManifestDocumentsImportedAndLocalFixtures() throws {
+        let manifestURL = try TestSupport.contractFixtureURL(named: "CONTRACT_SOURCE.json")
+        let data = try Data(contentsOf: manifestURL)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let imported = try XCTUnwrap(json["imported_artifacts"] as? [String])
+        let local = try XCTUnwrap(json["consumer_local_artifacts"] as? [String])
+        let producerCommit = try XCTUnwrap(json["producer_commit"] as? String)
+
+        XCTAssertTrue(imported.contains("app_export.schema.json"))
+        XCTAssertTrue(imported.contains("app_export_contract_gate.json"))
+        XCTAssertTrue(local.contains("golden_app_export_consumer_forward_compatible_additive_fields.json"))
+        XCTAssertTrue(local.contains("golden_app_export_empty_collections_minimal.json"))
+        XCTAssertTrue(local.contains("golden_app_export_multi_day_varied_structure.json"))
+        XCTAssertEqual(producerCommit.count, 7)
     }
 }

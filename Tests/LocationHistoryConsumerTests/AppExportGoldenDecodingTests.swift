@@ -4,17 +4,18 @@ import XCTest
 
 final class AppExportGoldenDecodingTests: XCTestCase {
     func testDecodesAllGoldenAppExports() throws {
-        let files = try contractFixtureURLs(prefix: "golden_app_export_", suffix: ".json")
+        let files = try TestSupport.contractFixtureURLs(prefix: "golden_app_export_", suffix: ".json")
         XCTAssertFalse(files.isEmpty)
 
         for fileURL in files {
             let export = try AppExportDecoder.decode(contentsOf: fileURL)
             XCTAssertEqual(export.schemaVersion.rawValue, ContractVersion.currentSchemaVersion, fileURL.lastPathComponent)
+            XCTAssertFalse(export.meta.toolVersion.isEmpty, fileURL.lastPathComponent)
         }
     }
 
     func testDecodesDeterministicContractGoldenAndChecksCoreFields() throws {
-        let fileURL = try contractFixturesDirectory().appendingPathComponent("golden_app_export_contract_gate.json")
+        let fileURL = try TestSupport.contractFixtureURL(named: "golden_app_export_contract_gate.json")
         let export = try AppExportDecoder.decode(contentsOf: fileURL)
 
         XCTAssertEqual(export.schemaVersion.rawValue, "1.0")
@@ -27,26 +28,49 @@ final class AppExportGoldenDecodingTests: XCTestCase {
         XCTAssertEqual(export.data.days.count, 3)
     }
 
-    private func contractFixturesDirectory() throws -> URL {
-        let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        let direct = root.appendingPathComponent("Fixtures/contract", isDirectory: true)
-        if FileManager.default.fileExists(atPath: direct.path) {
-            return direct
-        }
-        let repoRoot = root.deletingLastPathComponent()
-        let fallback = repoRoot.appendingPathComponent("Fixtures/contract", isDirectory: true)
-        if FileManager.default.fileExists(atPath: fallback.path) {
-            return fallback
-        }
-        throw NSError(domain: "LocationHistoryConsumerTests", code: 1, userInfo: [
-            NSLocalizedDescriptionKey: "Fixtures/contract not found from current directory"
-        ])
+    func testDecodesForwardCompatibleAdditiveFieldsFixture() throws {
+        let fileURL = try TestSupport.contractFixtureURL(named: "golden_app_export_consumer_forward_compatible_additive_fields.json")
+        let export = try AppExportDecoder.decode(contentsOf: fileURL)
+
+        XCTAssertEqual(export.data.days.count, 1)
+        XCTAssertEqual(export.data.days[0].activities.count, 1)
+        XCTAssertEqual(export.data.days[0].paths.count, 1)
+        XCTAssertEqual(export.data.days[0].paths[0].points.count, 2)
+        XCTAssertEqual(export.stats?.activities?["WALKING"]?.count, 1)
+        XCTAssertEqual(export.meta.config.mode, "paths")
     }
 
-    private func contractFixtureURLs(prefix: String, suffix: String) throws -> [URL] {
-        let directory = try contractFixturesDirectory()
-        return try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            .filter { $0.lastPathComponent.hasPrefix(prefix) && $0.lastPathComponent.hasSuffix(suffix) }
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    func testDecodesNewRealisticFixturesAndChecksPurposeSpecificFields() throws {
+        let cases: [(String, (AppExport) -> Void)] = [
+            ("golden_app_export_multi_day_varied_structure.json", { export in
+                XCTAssertEqual(export.data.days.count, 3)
+                XCTAssertEqual(export.data.days[0].visits.count, 1)
+                XCTAssertEqual(export.data.days[1].activities.first?.activityType, "CYCLING")
+                XCTAssertEqual(export.data.days[1].paths.first?.points.count, 3)
+                XCTAssertEqual(export.stats?.periods?.first?.days, 3)
+            }),
+            ("golden_app_export_empty_collections_minimal.json", { export in
+                XCTAssertEqual(export.data.days.count, 1)
+                XCTAssertTrue(export.data.days[0].visits.isEmpty)
+                XCTAssertTrue(export.data.days[0].activities.isEmpty)
+                XCTAssertTrue(export.data.days[0].paths.isEmpty)
+                XCTAssertEqual(export.stats?.activities?.count, 0)
+                XCTAssertEqual(export.stats?.periods?.count, 0)
+            }),
+        ]
+
+        for (fileName, assertions) in cases {
+            let export = try AppExportDecoder.decode(contentsOf: TestSupport.contractFixtureURL(named: fileName))
+            assertions(export)
+        }
+    }
+
+    func testRejectsUnknownSchemaVersion() throws {
+        let fileURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let data = try Data(contentsOf: fileURL)
+        let text = try XCTUnwrap(String(data: data, encoding: .utf8))
+        let invalid = try XCTUnwrap(text.replacingOccurrences(of: "\"schema_version\": \"1.0\"", with: "\"schema_version\": \"9.9\"").data(using: .utf8))
+
+        XCTAssertThrowsError(try AppExportDecoder.decode(data: invalid))
     }
 }

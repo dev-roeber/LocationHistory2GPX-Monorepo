@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "exported_at": "2024-02-10T09:30:00Z",
+    "tool_version": "1.8.2",
+    "source": {
+      "zip_basename": "consumer-forward-compatible.json",
+      "zip_path": "/abs/path/consumer-forward-compatible.json",
+      "input_format": "records",
+      "future_import_id": "batch-42"
+    },
+    "output": {
+      "out_dir": "/abs/path/out",
+      "app_bundle_hint": "ios"
+    },
+    "config": {
+      "mode": "paths",
+      "split_midnight": "utc",
+      "split_mode": "single",
+      "export_format": [
+        "json"
+      ],
+      "input_format": "auto"
+    },
+    "filters": {
+      "limit": 1,
+      "has": [
+        "paths"
+      ]
+    },
+    "display_name": "forward-compatible sample"
+  },
+  "data": {
+    "days": [
+      {
+        "date": "2024-07-14",
+        "visits": [],
+        "activities": [
+          {
+            "start_time": "2024-07-14T09:00:00Z",
+            "end_time": "2024-07-14T09:12:00Z",
+            "start_lat": 52.52,
+            "start_lon": 13.405,
+            "end_lat": 52.5215,
+            "end_lon": 13.409,
+            "activity_type": "WALKING",
+            "distance_m": 480.0,
+            "split_from_midnight": false,
+            "source_type": "activity"
+          }
+        ],
+        "paths": [
+          {
+            "start_time": "2024-07-14T09:00:00Z",
+            "end_time": "2024-07-14T09:12:00Z",
+            "activity_type": "WALKING",
+            "distance_m": 500.0,
+            "points": [
+              {
+                "lat": 52.52,
+                "lon": 13.405,
+                "time": "2024-07-14T09:00:00Z",
+                "alt_m": 52.1
+              },
+              {
+                "lat": 52.5215,
+                "lon": 13.409,
+                "time": "2024-07-14T09:12:00Z"
+              }
+            ],
+            "polyline_precision": 5
+          }
+        ],
+        "day_summary": "unknown keys should not break decoding"
+      }
+    ]
+  },
+  "stats": {
+    "activities": {
+      "WALKING": {
+        "count": 1,
+        "total_distance_km": 0.5,
+        "total_duration_h": 0.2,
+        "avg_distance_km": 0.5,
+        "avg_speed_kmh": 2.5,
+        "median_speed_kmh": 2.5
+      }
+    },
+    "periods": [],
+    "consumer_notes": [
+      "forward-compatible"
+    ]
+  },
+  "future_contract_flags": {
+    "supports_map_clustering": true
+  }
+}
