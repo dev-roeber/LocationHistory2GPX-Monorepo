@@ -65,3 +65,10 @@ Die Query-Schicht in `Sources/LocationHistoryConsumer/Queries/` ist bewusst cons
 - Sie liest nur `AppExport` und erzeugt kleine Read-Modelle fuer Listen, Detail und Header.
 - Sie fuehrt keine Producer-Aufgaben wie Parsing, Dedupe, Trip-Erkennung oder Export-Erzeugung aus.
 - Sie ist fuer eine spaetere UI gedacht, bleibt aber selbst UI-frei.
+
+## Demo-Harness
+
+Die SwiftUI-Demo in `Sources/LocationHistoryConsumerDemo/` ist nur ein lokaler Harness:
+- Sie laedt eine feste gebuendelte Golden-Fixture aus `LocationHistoryConsumerDemoSupport`.
+- Sie nutzt nur Decoder + Query-Layer, keine neue Domain-Logik.
+- Sie ist kein echter Import-Flow und keine Produkt-App.

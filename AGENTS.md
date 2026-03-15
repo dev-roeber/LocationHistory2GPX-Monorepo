@@ -7,6 +7,7 @@
 - Keine Google-Rohdaten parsern.
 - Keine Produkt-UI in diesem Schritt bauen.
 - Read-only Query-/ViewState-Schicht ist erlaubt, solange sie contract-basiert bleibt.
+- Eine minimale lokale Demo-/Harness-Shell ist erlaubt, solange sie nur Decoder + Query-Layer nutzt.
 
 ## Stabiler Contract
 
@@ -21,6 +22,7 @@
 - Foundation-first, keine unnötigen Frameworks
 - Decoder und Modelle klein, klar, testbar halten
 - Query-Typen klein, wertbasiert und UI-unabhaengig halten
+- Demo-Views dumm halten; keine neue Business-Logik in SwiftUI schieben
 - additive Felder optional modellieren
 - unbekannte additive JSON-Felder tolerieren, aber unbekannte `schema_version` weiter ablehnen
 - Breaking Changes nur mit dokumentierter Contract-Version

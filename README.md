@@ -25,13 +25,14 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - App-Export-JSON laden
 - gegen Swift-Modelle decodieren
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
+- eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - Golden-basierte Contract-Tests lokal ausfuehren
 - klar dokumentieren, welche Producer-Artefakte konsumiert werden
 - Producer-Contract-Artefakte lokal reproduzierbar aktualisieren
 
 ## Was dieses Repo aktuell bewusst nicht kann
 
-- Karten-/Listen-/SwiftUI-Produkt-UI
+- fertige Produkt-UI
 - Import von Google-Rohdateien
 - Producer-Logik aus dem Python-Repo
 - `trips_index.json` konsumieren
@@ -43,11 +44,21 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `AppExportDecoder.swift`
   - `ContractVersion.swift`
   - `Queries/*.swift`
+- `Sources/LocationHistoryConsumerDemoSupport/`
+  - `DemoDataLoader.swift`
+  - `Resources/golden_app_export_sample_small.json`
+- `Sources/LocationHistoryConsumerDemo/`
+  - `LocationHistoryConsumerDemoApp.swift`
+  - `RootView.swift`
+  - `OverviewSection.swift`
+  - `DayListView.swift`
+  - `DayDetailView.swift`
 - `Tests/LocationHistoryConsumerTests/`
   - `AppExportGoldenDecodingTests.swift`
   - `ContractFixturePresenceTests.swift`
   - `AppExportQueriesTests.swift`
   - `DayDetailViewStateTests.swift`
+  - `DemoDataLoaderTests.swift`
 - `Fixtures/contract/`
   - `app_export.schema.json`
   - `golden_app_export_*.json`
@@ -62,6 +73,8 @@ swift test
 ```
 
 Der Standardweg ist jetzt nativer lokaler Swift 5.9.
+
+Auf Apple-Plattformen kann die lokale Demo-Harness danach ueber das Swift Package in Xcode oder per `swift run LocationHistoryConsumerDemo` gestartet werden. Sie ist bewusst keine Produkt-App und nutzt nur eine feste lokale Demo-Fixture.
 
 ## Contract-Files aktualisieren
 
@@ -88,3 +101,11 @@ Die Query-Schicht ist bewusst read-only und UI-unabhaengig:
 - `AppExportQueries` fuer Lookup und Datumsbereichsfilter
 
 Diese Schicht liest nur den eingefrorenen Consumer-Contract. Parsing, Dedupe, Trips und weitere Producer-Business-Logik bleiben im Python-Repo.
+
+## Demo-Shell
+
+Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
+- feste gebuendelte Fixture: `golden_app_export_sample_small.json`
+- zeigt Overview, sortierte Day-Liste und Day-Detail
+- kein Dateipicker, kein Import-Flow, keine Persistenz
+- Fehler beim Fixture-Load werden schlicht als Fehlzustand angezeigt

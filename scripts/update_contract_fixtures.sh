@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PRODUCER_ROOT="${1:-"${REPO_ROOT}/../LocationHistory2GPX"}"
 FIXTURE_DIR="${REPO_ROOT}/Fixtures/contract"
+DEMO_RESOURCE_DIR="${REPO_ROOT}/Sources/LocationHistoryConsumerDemoSupport/Resources"
 
 if [[ ! -d "${PRODUCER_ROOT}" ]]; then
   echo "Producer repo not found: ${PRODUCER_ROOT}" >&2
@@ -39,6 +40,10 @@ for path in "${required[@]:1}"; do
   base="$(basename "${path}")"
   cp "${PRODUCER_ROOT}/${path}" "${FIXTURE_DIR}/golden_${base}"
 done
+
+if [[ -d "${DEMO_RESOURCE_DIR}" ]]; then
+  cp "${FIXTURE_DIR}/golden_app_export_sample_small.json" "${DEMO_RESOURCE_DIR}/golden_app_export_sample_small.json"
+fi
 
 producer_commit="$(git -C "${PRODUCER_ROOT}" rev-parse --short=7 HEAD)"
 
