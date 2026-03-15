@@ -25,6 +25,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - App-Export-JSON laden
 - gegen Swift-Modelle decodieren
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
+- eine kleine produktnahe App-Shell-Struktur fuer lokalen `app_export.json`-Import bereitstellen
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -46,15 +47,16 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `AppExportDecoder.swift`
   - `ContractVersion.swift`
   - `Queries/*.swift`
+- `Sources/LocationHistoryConsumerAppSupport/`
+  - generische Session-/Loader-Typen
+  - gemeinsame SwiftUI-Inhaltsdarstellung fuer App und Demo
 - `Sources/LocationHistoryConsumerDemoSupport/`
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
+- `Sources/LocationHistoryConsumerApp/`
+  - produktnahe App-Shell fuer lokalen `app_export.json`-Import
 - `Sources/LocationHistoryConsumerDemo/`
-  - `LocationHistoryConsumerDemoApp.swift`
-  - `RootView.swift`
-  - `OverviewSection.swift`
-  - `DayListView.swift`
-  - `DayDetailView.swift`
+  - Demo-/Harness-Einstieg fuer Fixture-zentrierte Verifikation
 - `Tests/LocationHistoryConsumerTests/`
   - `AppExportGoldenDecodingTests.swift`
   - `ContractFixturePresenceTests.swift`
@@ -77,6 +79,8 @@ swift test
 Der Standardweg ist jetzt nativer lokaler Swift 5.9.
 
 Auf Apple-Plattformen kann die lokale Demo-Harness danach ueber das Swift Package in Xcode oder per `swift run LocationHistoryConsumerDemo` gestartet werden. Sie ist bewusst keine Produkt-App. Standardmaessig nutzt sie eine feste lokale Demo-Fixture, kann aber auch lokal eine `app_export.json` fuer denselben Consumer-Contract laden.
+
+Zusaetzlich gibt es jetzt eine kleine produktnahe App-Shell `LocationHistoryConsumerApp`. Sie startet leerer und import-zentriert, bleibt aber weiter offline-only und noch keine fertige Produkt-App. Unter Linux ist nur der nicht-UI Teil ueber `swift test` ehrlich verifizierbar.
 
 ## Contract-Files aktualisieren
 
@@ -114,3 +118,11 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 - zeigt aktive Quelle, Reset auf Demo und klarere Fehler-/Leerzustaende
 - keine Persistenz, keine Maps, kein Google-Rohdatenimport
 - Fehler beim Fixture- oder Datei-Load werden schlicht als Fehlzustand angezeigt
+
+## App-Shell
+
+Die App-Shell ist die produktnaehere Einstiegsschicht dieses Repos:
+- startet mit lokalem `app_export.json`-Import als primaerem Einstieg
+- bietet Demo-Daten nur als sekundären Fallback
+- nutzt dieselben Decoder-, Query- und Session-Typen wie die Demo
+- bleibt offline-only und fuehrt keine neue Business-Logik ein

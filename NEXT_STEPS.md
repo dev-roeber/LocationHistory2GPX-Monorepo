@@ -1,5 +1,5 @@
 # NEXT_STEPS
 
-1. Pruefen, ob vor einer groesseren App-Struktur noch ein kleiner Query-/Selection-Zwischenschritt noetig ist.
-2. Falls nicht, eine sehr kleine Produkt-App-Shell auf Basis der bestehenden Demo-Schicht abgrenzen.
+1. Datei-Import und Informationsarchitektur in der App-Shell produktnaeher einpassen, ohne Persistenz oder Maps zu oeffnen.
+2. Danach pruefen, ob noch ein kleiner Query-/Selection-Zwischenschritt vor groesserer UI-Ausweitung noetig ist.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.

@@ -6,37 +6,36 @@ import LocationHistoryConsumerDemoSupport
 import UniformTypeIdentifiers
 #endif
 
-struct RootView: View {
-    @State private var session = AppSessionState(isLoading: true)
+struct AppShellRootView: View {
+    @State private var session = AppSessionState()
     @State private var isImportingFile = false
 
     var body: some View {
         Group {
-            if session.isLoading && !session.hasLoadedContent {
-                ProgressView("Loading demo app export...")
-            } else if session.content != nil {
+            if session.content != nil {
                 AppContentSplitView(
                     session: $session,
-                    sourceHint: "Load Demo resets the harness back to the bundled sample."
+                    sourceHint: "Open app_export.json replaces the current content. Load Demo switches back to the bundled sample."
                 )
+            } else if session.isLoading {
+                ProgressView("Opening app export...")
             } else {
-                DemoPlaceholderView(
-                    title: session.message?.title ?? "No demo source loaded",
-                    message: session.message?.message ?? "Load the bundled demo fixture or import a local app_export.json file."
+                AppShellEmptyStateView(
+                    message: session.message,
+                    openAction: { isImportingFile = true },
+                    loadDemoAction: loadBundledDemo
                 )
             }
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button("Load Demo") {
+                Button("Open app_export.json") {
+                    isImportingFile = true
+                }
+                Button("Load Demo Data") {
                     loadBundledDemo()
                 }
-                importButton
             }
-        }
-        .task {
-            guard session.isLoading, !session.hasLoadedContent else { return }
-            loadBundledDemo()
         }
         #if canImport(UniformTypeIdentifiers)
         .fileImporter(
@@ -48,21 +47,15 @@ struct RootView: View {
         #endif
     }
 
-    private var importButton: some View {
-        Button("Import JSON") {
-            isImportingFile = true
-        }
-    }
-
     private func loadBundledDemo() {
         session.beginLoading()
         do {
             session.show(content: try DemoDataLoader.loadDefaultContent())
         } catch {
             session.showFailure(
-                title: "Unable to load demo fixture",
+                title: "Unable to load demo data",
                 message: error.localizedDescription,
-                preserveCurrentContent: false
+                preserveCurrentContent: session.hasLoadedContent
             )
         }
     }
@@ -81,7 +74,7 @@ struct RootView: View {
                 return
             }
             session.showFailure(
-                title: "Import failed",
+                title: "Unable to open app export",
                 message: error.localizedDescription,
                 preserveCurrentContent: session.hasLoadedContent
             )
@@ -97,10 +90,10 @@ struct RootView: View {
         }
 
         do {
-            session.show(content: try DemoDataLoader.loadImportedContent(from: url))
+            session.show(content: try AppContentLoader.loadImportedContent(from: url))
         } catch {
             session.showFailure(
-                title: "Import failed",
+                title: "Unable to open app export",
                 message: error.localizedDescription,
                 preserveCurrentContent: session.hasLoadedContent
             )
@@ -114,22 +107,36 @@ struct RootView: View {
     #endif
 }
 
-private struct DemoPlaceholderView: View {
-    let title: String
-    let message: String
+private struct AppShellEmptyStateView: View {
+    let message: AppUserMessage?
+    let openAction: () -> Void
+    let loadDemoAction: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "hammer")
-                .font(.system(size: 28))
-                .foregroundStyle(.secondary)
-            Text(title)
-                .font(.headline)
-            Text(message)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Location History Consumer")
+                    .font(.title2.weight(.semibold))
+                Text("Open a local app_export.json file to inspect overview, day summaries and day details offline.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let message {
+                AppMessageCard(message: message)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Button("Open app_export.json", action: openAction)
+                    .buttonStyle(.borderedProminent)
+                Button("Load Demo Data", action: loadDemoAction)
+                    .buttonStyle(.bordered)
+                Text("This shell remains consumer-only. It does not import Google raw exports, store files, or use cloud services.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
+        .frame(maxWidth: 520, alignment: .leading)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(24)
     }

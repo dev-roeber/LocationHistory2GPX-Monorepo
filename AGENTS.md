@@ -10,6 +10,7 @@
 - Eine minimale lokale Demo-/Harness-Shell ist erlaubt, solange sie nur Decoder + Query-Layer nutzt.
 - Ein lokaler `app_export.json`-Import in der Demo ist erlaubt, solange er nur den Consumer-Contract laedt und keine Persistenz oder Producer-Logik einfuehrt.
 - Kleine Demo-Zustandslogik fuer Quelle, Reset, Auswahl und Fehler ist erlaubt, solange sie in der Harness-Schicht bleibt und testbar bleibt.
+- Eine kleine produktnahe App-Shell ist erlaubt, solange sie nur lokalen `app_export.json`-Import anbietet und dieselben Core-/Support-Typen wiederverwendet.
 
 ## Stabiler Contract
 
@@ -24,6 +25,7 @@
 - Foundation-first, keine unnötigen Frameworks
 - Decoder und Modelle klein, klar, testbar halten
 - Query-Typen klein, wertbasiert und UI-unabhaengig halten
+- generische Session-/Loader-Typen in app-nahem Support halten, nicht in Demo-spezifischen Views vergraben
 - Demo-Views dumm halten; keine neue Business-Logik in SwiftUI schieben
 - Apple-spezifische Dateiimport-UI von plattformneutralem DemoSupport trennen
 - additive Felder optional modellieren

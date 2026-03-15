@@ -1,4 +1,5 @@
 import XCTest
+import LocationHistoryConsumerAppSupport
 @testable import LocationHistoryConsumerDemoSupport
 
 final class DemoDataLoaderTests: XCTestCase {
@@ -10,7 +11,7 @@ final class DemoDataLoaderTests: XCTestCase {
         XCTAssertEqual(content.overview.dayCount, 2)
         XCTAssertEqual(content.daySummaries.map(\.date), ["2024-05-01", "2024-05-02"])
         XCTAssertEqual(content.selectedDate, "2024-05-01")
-        XCTAssertEqual(content.source, .bundledFixture(name: DemoDataLoader.defaultFixtureName))
+        XCTAssertEqual(content.source, .demoFixture(name: DemoDataLoader.defaultFixtureName))
     }
 
     func testMissingFixtureFailsClearly() {

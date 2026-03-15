@@ -66,6 +66,14 @@ Die Query-Schicht in `Sources/LocationHistoryConsumer/Queries/` ist bewusst cons
 - Sie fuehrt keine Producer-Aufgaben wie Parsing, Dedupe, Trip-Erkennung oder Export-Erzeugung aus.
 - Sie ist fuer eine spaetere UI gedacht, bleibt aber selbst UI-frei.
 
+## App-Support und Schichten
+
+- `Sources/LocationHistoryConsumer/` bleibt Consumer-Core fuer Contract, Decoder und Queries.
+- `Sources/LocationHistoryConsumerAppSupport/` enthaelt generische Session-, Loader- und gemeinsame Inhaltsdarstellung fuer Apple-UI-Schichten.
+- `Sources/LocationHistoryConsumerDemoSupport/` bleibt fixture-zentrierte Demo-Unterstuetzung.
+- `Sources/LocationHistoryConsumerDemo/` bleibt Harness-/Verifikationsoberflaeche.
+- `Sources/LocationHistoryConsumerApp/` ist die kleine produktnaehere Einstiegsschicht fuer lokalen `app_export.json`-Import.
+
 ## Demo-Harness
 
 Die SwiftUI-Demo in `Sources/LocationHistoryConsumerDemo/` ist nur ein lokaler Harness:
@@ -75,3 +83,11 @@ Die SwiftUI-Demo in `Sources/LocationHistoryConsumerDemo/` ist nur ein lokaler H
 - Sie fuehrt Quelle, Reset und Fehlerzustand bewusst nur in einer kleinen Demo-Session-Schicht.
 - Sie bleibt auf den eingefrorenen Consumer-Contract beschraenkt und importiert keine Google-Rohdaten.
 - Sie ist keine Produkt-App und fuehrt keine Persistenz ein.
+
+## App-Shell
+
+Die kleine App-Shell in `Sources/LocationHistoryConsumerApp/` ist bewusst produktnaeher, aber weiter begrenzt:
+- primaerer Einstieg: lokales `app_export.json` oeffnen
+- sekundaerer Fallback: Demo-Daten laden
+- gleiche Session-/Content-Typen wie die Demo
+- keine Persistenz, keine Maps, keine Suche, keine Google-Rohdaten

@@ -37,6 +37,12 @@
 - [x] klarere Zustandsfuehrung fuer Demo, Import und Fehler
 - [x] sichtbare Quelle fuer Demo-Fixture vs. importierte Datei
 - [x] bessere Leer- und Fallback-Zustaende fuer Liste und Detail
+
+## Phase 8
+
+- [x] klare Trennung zwischen Core, Demo und App-Shell
+- [x] kleine produktnahe App-Shell-Struktur fuer lokalen `app_export.json`-Import
+- [x] gemeinsame Session-/Content-Darstellung fuer Demo und App-Shell
 - [ ] Produkt-UI
 
 ## Nicht Teil dieser Phase

@@ -1,13 +1,13 @@
 import XCTest
 import LocationHistoryConsumer
-@testable import LocationHistoryConsumerDemoSupport
+@testable import LocationHistoryConsumerAppSupport
 
-final class DemoSessionStateTests: XCTestCase {
+final class AppSessionStateTests: XCTestCase {
     func testShowingContentSelectsFirstDayAndBuildsSourceDescription() throws {
-        var state = DemoSessionState()
+        var state = AppSessionState()
         let content = try loadDemoContent(
             fixtureName: "golden_app_export_sample_small.json",
-            source: .bundledFixture(name: DemoDataLoader.defaultFixtureName)
+            source: .demoFixture(name: AppContentLoader.defaultDemoFixtureName)
         )
 
         state.beginLoading()
@@ -17,11 +17,11 @@ final class DemoSessionStateTests: XCTestCase {
         XCTAssertTrue(state.hasLoadedContent)
         XCTAssertEqual(state.selectedDate, "2024-05-01")
         XCTAssertEqual(state.sourceDescription, "Demo fixture: golden_app_export_sample_small.json")
-        XCTAssertEqual(state.message?.title, "Demo ready")
+        XCTAssertEqual(state.message?.title, "Demo data ready")
     }
 
     func testSelectionFallsBackToFirstKnownDayAndResetsOnReload() throws {
-        var state = DemoSessionState()
+        var state = AppSessionState()
         let content = try loadDemoContent(
             fixtureName: "golden_app_export_sample_small.json",
             source: .importedFile(filename: "imported_app_export.json")
@@ -40,7 +40,7 @@ final class DemoSessionStateTests: XCTestCase {
     }
 
     func testFailureCanPreserveCurrentContentForImportErrors() throws {
-        var state = DemoSessionState()
+        var state = AppSessionState()
         let content = try loadDemoContent(
             fixtureName: "golden_app_export_sample_small.json",
             source: .importedFile(filename: "imported_app_export.json")
@@ -62,10 +62,10 @@ final class DemoSessionStateTests: XCTestCase {
     }
 
     func testFailureWithoutPreservingContentClearsSelection() throws {
-        var state = DemoSessionState()
+        var state = AppSessionState()
         let content = try loadDemoContent(
             fixtureName: "golden_app_export_sample_small.json",
-            source: .bundledFixture(name: DemoDataLoader.defaultFixtureName)
+            source: .demoFixture(name: AppContentLoader.defaultDemoFixtureName)
         )
         state.show(content: content)
 
@@ -81,9 +81,9 @@ final class DemoSessionStateTests: XCTestCase {
         XCTAssertEqual(state.message?.title, "Unable to load demo fixture")
     }
 
-    private func loadDemoContent(fixtureName: String, source: DemoContentSource) throws -> DemoContent {
+    private func loadDemoContent(fixtureName: String, source: AppContentSource) throws -> AppSessionContent {
         let url = try TestSupport.contractFixtureURL(named: fixtureName)
         let export = try AppExportDecoder.decode(contentsOf: url)
-        return DemoContent(export: export, source: source)
+        return AppSessionContent(export: export, source: source)
     }
 }
