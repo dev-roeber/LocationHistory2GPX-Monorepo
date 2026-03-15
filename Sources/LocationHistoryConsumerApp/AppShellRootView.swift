@@ -15,25 +15,32 @@ struct AppShellRootView: View {
             if session.content != nil {
                 AppContentSplitView(
                     session: $session,
-                    sourceHint: "Open app_export.json replaces the current content. Load Demo switches back to the bundled sample."
+                    sourceHint: "Open another file replaces the current content. Load Demo switches back to the bundled sample. Clear returns to the import-first start state."
                 )
             } else if session.isLoading {
                 ProgressView("Opening app export...")
             } else {
                 AppShellEmptyStateView(
+                    summary: session.sourceSummary,
                     message: session.message,
                     openAction: { isImportingFile = true },
-                    loadDemoAction: loadBundledDemo
+                    loadDemoAction: loadBundledDemo,
+                    clearAction: clearCurrentContent
                 )
             }
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button("Open app_export.json") {
+                Button(openButtonTitle) {
                     isImportingFile = true
                 }
-                Button("Load Demo Data") {
+                Button(demoButtonTitle) {
                     loadBundledDemo()
+                }
+                if session.hasLoadedContent || session.message != nil {
+                    Button("Clear") {
+                        clearCurrentContent()
+                    }
                 }
             }
         }
@@ -58,6 +65,18 @@ struct AppShellRootView: View {
                 preserveCurrentContent: session.hasLoadedContent
             )
         }
+    }
+
+    private var openButtonTitle: String {
+        session.hasLoadedContent ? "Open Another File" : "Open app_export.json"
+    }
+
+    private var demoButtonTitle: String {
+        session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName) ? "Reload Demo Data" : "Load Demo Data"
+    }
+
+    private func clearCurrentContent() {
+        session.clearContent()
     }
 
     #if canImport(UniformTypeIdentifiers)
@@ -108,21 +127,25 @@ struct AppShellRootView: View {
 }
 
 private struct AppShellEmptyStateView: View {
+    let summary: AppSourceSummary
     let message: AppUserMessage?
     let openAction: () -> Void
     let loadDemoAction: () -> Void
+    let clearAction: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Location History Consumer")
+                Text("Open an app_export.json file")
                     .font(.title2.weight(.semibold))
-                Text("Open a local app_export.json file to inspect overview, day summaries and day details offline.")
+                Text("This shell reads local LocationHistory2GPX app_export contract files offline. Google raw exports, persistence and cloud features are out of scope here.")
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
 
-            if let message {
+            AppSourceSummaryCard(summary: summary)
+
+            if let message, message.kind == .error {
                 AppMessageCard(message: message)
             }
 
@@ -131,7 +154,11 @@ private struct AppShellEmptyStateView: View {
                     .buttonStyle(.borderedProminent)
                 Button("Load Demo Data", action: loadDemoAction)
                     .buttonStyle(.bordered)
-                Text("This shell remains consumer-only. It does not import Google raw exports, store files, or use cloud services.")
+                if message != nil {
+                    Button("Clear", action: clearAction)
+                        .buttonStyle(.bordered)
+                }
+                Text("Expected input is a local app_export.json file that matches the frozen consumer contract. Demo data is optional and secondary.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

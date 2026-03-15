@@ -90,4 +90,7 @@ Die kleine App-Shell in `Sources/LocationHistoryConsumerApp/` ist bewusst produk
 - primaerer Einstieg: lokales `app_export.json` oeffnen
 - sekundaerer Fallback: Demo-Daten laden
 - gleiche Session-/Content-Typen wie die Demo
+- import-first Leerlaufzustand mit klarer Erklaerung des erwarteten lokalen `app_export.json`
+- kompakter Quellen-/Contract-Bereich fuer aktive Quelle, Schema-Version, Exportzeitpunkt, Input-Format und Tagesanzahl
+- klarer Open-/Replace-/Clear-Fluss ohne Persistenz oder Dateiverlauf
 - keine Persistenz, keine Maps, keine Suche, keine Google-Rohdaten

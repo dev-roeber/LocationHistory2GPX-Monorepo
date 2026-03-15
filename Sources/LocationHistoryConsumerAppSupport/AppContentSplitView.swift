@@ -28,8 +28,8 @@ public struct AppContentSplitView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     AppSessionStatusView(
+                        summary: session.sourceSummary,
                         message: session.message,
-                        sourceDescription: session.sourceDescription,
                         isLoading: session.isLoading,
                         hasDays: session.hasDays
                     )
@@ -48,53 +48,44 @@ public struct AppContentSplitView: View {
     }
 
     private var sourceFooter: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Divider()
-            Text("Active Source")
-                .font(.caption.weight(.semibold))
-            Text(session.sourceDescription ?? "No source loaded")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        Group {
             if let sourceHint, session.hasLoadedContent {
-                Text(sourceHint)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Divider()
+                    Text("Source Actions")
+                        .font(.caption.weight(.semibold))
+                    Text(sourceHint)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(.thinMaterial)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .background(.thinMaterial)
     }
 }
 
 public struct AppSessionStatusView: View {
+    let summary: AppSourceSummary
     let message: AppUserMessage?
-    let sourceDescription: String?
     let isLoading: Bool
     let hasDays: Bool
 
-    public init(message: AppUserMessage?, sourceDescription: String?, isLoading: Bool, hasDays: Bool) {
+    public init(summary: AppSourceSummary, message: AppUserMessage?, isLoading: Bool, hasDays: Bool) {
+        self.summary = summary
         self.message = message
-        self.sourceDescription = sourceDescription
         self.isLoading = isLoading
         self.hasDays = hasDays
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if let sourceDescription {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Current Source")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(sourceDescription)
-                        .font(.subheadline)
-                }
-            }
+            AppSourceSummaryCard(summary: summary)
 
-            if let message {
+            if let message, message.kind == .error {
                 AppMessageCard(message: message)
             }
 
@@ -114,6 +105,50 @@ public struct AppSessionStatusView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+public struct AppSourceSummaryCard: View {
+    let summary: AppSourceSummary
+
+    public init(summary: AppSourceSummary) {
+        self.summary = summary
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(summary.stateTitle)
+                .font(.headline)
+
+            infoRow(summary.sourceLabel, value: summary.sourceValue)
+
+            if let schemaVersion = summary.schemaVersion {
+                infoRow("Schema", value: schemaVersion)
+            }
+            if let inputFormat = summary.inputFormat {
+                infoRow("Input Format", value: inputFormat)
+            }
+            if let exportedAt = summary.exportedAt {
+                infoRow("Exported At", value: exportedAt)
+            }
+            if let dayCountText = summary.dayCountText {
+                infoRow("Days", value: dayCountText)
+            }
+
+            Text(summary.statusText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func infoRow(_ label: String, value: String) -> some View {
+        LabeledContent(label, value: value)
+            .font(.subheadline)
     }
 }
 

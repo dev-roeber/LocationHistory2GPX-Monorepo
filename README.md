@@ -26,6 +26,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - gegen Swift-Modelle decodieren
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
 - eine kleine produktnahe App-Shell-Struktur fuer lokalen `app_export.json`-Import bereitstellen
+- die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -125,4 +126,7 @@ Die App-Shell ist die produktnaehere Einstiegsschicht dieses Repos:
 - startet mit lokalem `app_export.json`-Import als primaerem Einstieg
 - bietet Demo-Daten nur als sekundären Fallback
 - nutzt dieselben Decoder-, Query- und Session-Typen wie die Demo
+- zeigt klarer, ob noch nichts geladen ist, Demo-Daten aktiv sind, eine Datei importiert wurde oder ein Import fehlgeschlagen ist
+- fuehrt Quelle, Dateiname, Schema-Version, Exportzeitpunkt und Tagesanzahl kompakt im UI
+- erlaubt Open Another File, Load Demo Data und Clear ohne Persistenz oder Dateiverlauf
 - bleibt offline-only und fuehrt keine neue Business-Logik ein

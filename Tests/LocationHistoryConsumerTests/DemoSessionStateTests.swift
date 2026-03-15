@@ -18,6 +18,10 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertEqual(state.selectedDate, "2024-05-01")
         XCTAssertEqual(state.sourceDescription, "Demo fixture: golden_app_export_sample_small.json")
         XCTAssertEqual(state.message?.title, "Demo data ready")
+        XCTAssertEqual(state.presentationState, .demoLoaded)
+        XCTAssertEqual(state.sourceSummary.stateTitle, "Demo data loaded")
+        XCTAssertEqual(state.sourceSummary.sourceValue, "Demo fixture: golden_app_export_sample_small.json")
+        XCTAssertEqual(state.sourceSummary.schemaVersion, "1.0")
     }
 
     func testSelectionFallsBackToFirstKnownDayAndResetsOnReload() throws {
@@ -37,6 +41,7 @@ final class AppSessionStateTests: XCTestCase {
         state.show(content: content)
         XCTAssertEqual(state.selectedDate, "2024-05-01")
         XCTAssertEqual(state.sourceDescription, "Imported file: imported_app_export.json")
+        XCTAssertEqual(state.presentationState, .importedLoaded)
     }
 
     func testFailureCanPreserveCurrentContentForImportErrors() throws {
@@ -59,6 +64,8 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertEqual(state.message?.title, "Import failed")
         XCTAssertEqual(state.message?.kind, .error)
         XCTAssertEqual(state.sourceDescription, "Imported file: imported_app_export.json")
+        XCTAssertEqual(state.presentationState, .failedWithContent)
+        XCTAssertEqual(state.sourceSummary.stateTitle, "Import failed")
     }
 
     func testFailureWithoutPreservingContentClearsSelection() throws {
@@ -79,6 +86,41 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertNil(state.selectedDate)
         XCTAssertNil(state.sourceDescription)
         XCTAssertEqual(state.message?.title, "Unable to load demo fixture")
+        XCTAssertEqual(state.presentationState, .failedWithoutContent)
+    }
+
+    func testClearContentReturnsStateToImportFirstIdleMode() throws {
+        var state = AppSessionState()
+        let content = try loadDemoContent(
+            fixtureName: "golden_app_export_sample_small.json",
+            source: .importedFile(filename: "imported_app_export.json")
+        )
+        state.show(content: content)
+
+        state.clearContent()
+
+        XCTAssertFalse(state.hasLoadedContent)
+        XCTAssertNil(state.selectedDate)
+        XCTAssertEqual(state.presentationState, .idle)
+        XCTAssertEqual(state.message?.title, "No app export loaded")
+        XCTAssertEqual(state.sourceSummary.sourceValue, "None")
+    }
+
+    func testIdleAndFailureStatesHaveDistinctSourceSummaries() {
+        var idleState = AppSessionState()
+        XCTAssertEqual(idleState.presentationState, .idle)
+        XCTAssertEqual(idleState.sourceSummary.stateTitle, "No app export loaded")
+        XCTAssertTrue(idleState.sourceSummary.statusText.contains("Open a local app_export.json file"))
+
+        idleState.showFailure(
+            title: "Unable to open app export",
+            message: "Unable to decode app export file: broken.json",
+            preserveCurrentContent: false
+        )
+
+        XCTAssertEqual(idleState.presentationState, .failedWithoutContent)
+        XCTAssertEqual(idleState.sourceSummary.stateTitle, "Unable to open app export")
+        XCTAssertEqual(idleState.sourceSummary.sourceValue, "None")
     }
 
     private func loadDemoContent(fixtureName: String, source: AppContentSource) throws -> AppSessionContent {

@@ -15,6 +15,26 @@ public enum AppContentSource: Equatable {
     }
 }
 
+public enum AppSessionPresentationState: Equatable {
+    case idle
+    case loading
+    case demoLoaded
+    case importedLoaded
+    case failedWithoutContent
+    case failedWithContent
+}
+
+public struct AppSourceSummary: Equatable {
+    public let stateTitle: String
+    public let sourceLabel: String
+    public let sourceValue: String
+    public let schemaVersion: String?
+    public let inputFormat: String?
+    public let exportedAt: String?
+    public let dayCountText: String?
+    public let statusText: String
+}
+
 public struct AppSessionContent {
     public let export: AppExport
     public let overview: ExportOverview
@@ -109,6 +129,107 @@ public struct AppSessionState {
         !daySummaries.isEmpty
     }
 
+    public var presentationState: AppSessionPresentationState {
+        if isLoading {
+            return .loading
+        }
+        if hasLoadedContent, message?.kind == .error {
+            return .failedWithContent
+        }
+        if hasLoadedContent {
+            switch source {
+            case .demoFixture:
+                return .demoLoaded
+            case .importedFile:
+                return .importedLoaded
+            case nil:
+                return .idle
+            }
+        }
+        if message?.kind == .error {
+            return .failedWithoutContent
+        }
+        return .idle
+    }
+
+    public var sourceSummary: AppSourceSummary {
+        let overview = self.overview
+        let dayCountText = overview.map { "\($0.dayCount) days" }
+
+        switch presentationState {
+        case .idle:
+            return AppSourceSummary(
+                stateTitle: "No app export loaded",
+                sourceLabel: "Active Source",
+                sourceValue: "None",
+                schemaVersion: nil,
+                inputFormat: nil,
+                exportedAt: nil,
+                dayCountText: nil,
+                statusText: message?.message ?? "Open a local app_export.json file. Demo data remains available as a fallback."
+            )
+        case .loading:
+            return AppSourceSummary(
+                stateTitle: "Opening app export",
+                sourceLabel: "Active Source",
+                sourceValue: sourceDescription ?? "Pending",
+                schemaVersion: overview?.schemaVersion,
+                inputFormat: overview?.inputFormat,
+                exportedAt: overview?.exportedAt,
+                dayCountText: dayCountText,
+                statusText: "Processing app export data."
+            )
+        case .demoLoaded:
+            return AppSourceSummary(
+                stateTitle: "Demo data loaded",
+                sourceLabel: "Active Source",
+                sourceValue: sourceDescription ?? "Demo fixture",
+                schemaVersion: overview?.schemaVersion,
+                inputFormat: overview?.inputFormat,
+                exportedAt: overview?.exportedAt,
+                dayCountText: dayCountText,
+                statusText: hasDays
+                    ? "Bundled demo data is active. Open a local app_export.json file to replace it."
+                    : "Bundled demo data decoded successfully but does not contain any day entries."
+            )
+        case .importedLoaded:
+            return AppSourceSummary(
+                stateTitle: "Imported app export loaded",
+                sourceLabel: "Active Source",
+                sourceValue: sourceDescription ?? "Imported file",
+                schemaVersion: overview?.schemaVersion,
+                inputFormat: overview?.inputFormat,
+                exportedAt: overview?.exportedAt,
+                dayCountText: dayCountText,
+                statusText: hasDays
+                    ? "Local app_export.json content is active. Open another file to replace it."
+                    : "This app_export.json decoded successfully but does not contain any day entries."
+            )
+        case .failedWithoutContent:
+            return AppSourceSummary(
+                stateTitle: message?.title ?? "Unable to open app export",
+                sourceLabel: "Active Source",
+                sourceValue: "None",
+                schemaVersion: nil,
+                inputFormat: nil,
+                exportedAt: nil,
+                dayCountText: nil,
+                statusText: "No app export is currently active. Open a local app_export.json file or load demo data."
+            )
+        case .failedWithContent:
+            return AppSourceSummary(
+                stateTitle: message?.title ?? "Last loaded content remains visible",
+                sourceLabel: "Active Source",
+                sourceValue: sourceDescription ?? "Current content",
+                schemaVersion: overview?.schemaVersion,
+                inputFormat: overview?.inputFormat,
+                exportedAt: overview?.exportedAt,
+                dayCountText: dayCountText,
+                statusText: "The last successfully loaded content remains visible. Open another file to replace it or Clear to reset."
+            )
+        }
+    }
+
     public mutating func beginLoading() {
         isLoading = true
         message = nil
@@ -145,5 +266,16 @@ public struct AppSessionState {
             content = nil
             selectedDate = nil
         }
+    }
+
+    public mutating func clearContent() {
+        isLoading = false
+        content = nil
+        selectedDate = nil
+        message = AppUserMessage(
+            kind: .info,
+            title: "No app export loaded",
+            message: "Open a local app_export.json file or load the bundled demo data."
+        )
     }
 }

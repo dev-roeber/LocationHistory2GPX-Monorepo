@@ -45,6 +45,13 @@
 - [x] gemeinsame Session-/Content-Darstellung fuer Demo und App-Shell
 - [ ] Produkt-UI
 
+## Phase 9
+
+- [x] import-first Startzustand der App-Shell klarer formulieren
+- [x] aktiven Quellen-/Contract-Informationsbereich nachschärfen
+- [x] Open / Replace / Demo / Clear-Fluss klarer fuehren
+- [x] leere, fehlerhafte und importierte Inhaltszustaende sauberer unterscheiden
+
 ## Nicht Teil dieser Phase
 
 - Google-Rohdaten-Import

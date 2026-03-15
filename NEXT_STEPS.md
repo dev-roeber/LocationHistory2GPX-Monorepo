@@ -1,5 +1,5 @@
 # NEXT_STEPS
 
-1. Datei-Import und Informationsarchitektur in der App-Shell produktnaeher einpassen, ohne Persistenz oder Maps zu oeffnen.
-2. Danach pruefen, ob noch ein kleiner Query-/Selection-Zwischenschritt vor groesserer UI-Ausweitung noetig ist.
+1. Pruefen, ob vor weiterer UI-Ausweitung noch ein kleiner Query-/Selection-Zwischenschritt oder eine kleine App-Shell-Politur fuer Apple-Laufwege noetig ist.
+2. Danach erst eine weitere kleine Apple-App-Struktur ausbauen, ohne Persistenz, Maps oder Suche zu oeffnen.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
