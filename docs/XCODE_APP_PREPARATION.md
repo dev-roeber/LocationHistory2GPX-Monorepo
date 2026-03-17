@@ -66,10 +66,11 @@ Stand 2026-03-17 ist auf einer echten macOS-/Xcode-Maschine zusaetzlich verifizi
 - das gebaute Binary laesst sich starten und blieb bis zum manuellen Abbruch aktiv
 - `swift test` laeuft mit dem echten Xcode-Developer-Dir gruen
 
-Stand 2026-03-17 bleibt offen:
+Stand 2026-03-17 wurde zusaetzlich in Phase 11/12 verifiziert:
 
 - sichtbarer interaktiver UI-Run mit manuell bestaetigter Fensterdarstellung
 - `Load Demo Data`, `Open app_export.json`, `Clear` und Fehlerfaelle als echte UI-Durchgaenge
+- Details siehe `docs/APPLE_VERIFICATION_CHECKLIST.md`
 
 Wichtig fuer diese konkrete Maschine: das aktive `xcode-select` zeigte auf `/Library/Developer/CommandLineTools`; deshalb wurden Xcode-Build und SwiftPM-Test bewusst ueber `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` ausgefuehrt.
 

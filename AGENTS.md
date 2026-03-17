@@ -37,6 +37,13 @@
 - unbekannte additive JSON-Felder tolerieren, aber unbekannte `schema_version` weiter ablehnen
 - Breaking Changes nur mit dokumentierter Contract-Version
 
+## Roadmap-Governance
+
+- `ROADMAP.md` enthaelt die verbindliche Delivery-Roadmap bis v1.0 einschliesslich Governance-Regeln.
+- Checkboxen nur abhaken wenn Umsetzung + Tests + Doku-Sync nachweisbar.
+- NEXT_STEPS darf nur offene, priorisierte naechste Arbeit enthalten.
+- Wrapper-Repo `LH2GPXWrapper` ist das separate Xcode-Projekt fuer die fertige iOS-App.
+
 ## Pflichtchecks
 
 - `swift test`

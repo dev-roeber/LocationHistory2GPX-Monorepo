@@ -176,3 +176,7 @@ Zusatz fuer diese konkrete Maschine: mit aktivem `/Library/Developer/CommandLine
 Fuer den reproduzierbaren no-days-Apple-UI-Fall gibt es jetzt zusaetzlich `Fixtures/contract/golden_app_export_no_days_zero.json`.
 
 Wichtig: Apple-/Xcode-Verifikation ist getrennt von `swift test` zu betrachten. Linux- oder SwiftPM-Erfolge ersetzen keinen echten Apple-UI-Lauf.
+
+## Roadmap
+
+Die vollstaendige Delivery-Roadmap bis App v1.0 steht in `ROADMAP.md`. Die naechsten offenen Schritte stehen in `NEXT_STEPS.md`.
