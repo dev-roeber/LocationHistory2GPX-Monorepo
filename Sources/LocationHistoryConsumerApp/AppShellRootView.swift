@@ -13,10 +13,7 @@ struct AppShellRootView: View {
     var body: some View {
         Group {
             if session.content != nil {
-                AppContentSplitView(
-                    session: $session,
-                    sourceHint: "Open another file replaces the current content. Load Demo switches back to the bundled sample. Clear returns to the import-first start state."
-                )
+                AppContentSplitView(session: $session)
             } else if session.isLoading {
                 ProgressView("Opening app export...")
             } else {
@@ -31,15 +28,21 @@ struct AppShellRootView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button(openButtonTitle) {
+                Button {
                     isImportingFile = true
+                } label: {
+                    Label(openButtonTitle, systemImage: "doc.badge.plus")
                 }
-                Button(demoButtonTitle) {
+                Button {
                     loadBundledDemo()
+                } label: {
+                    Label(demoButtonTitle, systemImage: "testtube.2")
                 }
                 if session.hasLoadedContent || session.message != nil {
-                    Button("Clear") {
+                    Button {
                         clearCurrentContent()
+                    } label: {
+                        Label("Clear", systemImage: "xmark.circle")
                     }
                 }
             }
@@ -72,11 +75,11 @@ struct AppShellRootView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open app_export.json"
+        session.hasLoadedContent ? "Open Another File" : "Open File"
     }
 
     private var demoButtonTitle: String {
-        session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName) ? "Reload Demo Data" : "Load Demo Data"
+        session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName) ? "Reload Demo" : "Demo Data"
     }
 
     private func clearCurrentContent() {
@@ -169,9 +172,9 @@ private struct AppShellEmptyStateView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Open an app_export.json file")
+                Text("Import your location history")
                     .font(.title2.weight(.semibold))
-                Text("This product-oriented shell reads local LocationHistory2GPX app_export contract files offline. Google raw exports, persistence and cloud features stay out of scope here.")
+                Text("Open a local app_export.json file to explore your location history offline.")
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
@@ -183,17 +186,20 @@ private struct AppShellEmptyStateView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Button("Open app_export.json", action: openAction)
-                    .buttonStyle(.borderedProminent)
-                Button("Load Demo Data", action: loadDemoAction)
-                    .buttonStyle(.bordered)
-                if message != nil {
-                    Button("Clear", action: clearAction)
-                        .buttonStyle(.bordered)
+                Button(action: openAction) {
+                    Label("Open app_export.json", systemImage: "doc.badge.plus")
                 }
-                Text("Expected input is a local app_export.json file that matches the frozen consumer contract. Demo data remains optional and secondary.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .buttonStyle(.borderedProminent)
+                Button(action: loadDemoAction) {
+                    Label("Load Demo Data", systemImage: "testtube.2")
+                }
+                .buttonStyle(.bordered)
+                if message != nil {
+                    Button(action: clearAction) {
+                        Label("Clear", systemImage: "xmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
         .frame(maxWidth: 520, alignment: .leading)

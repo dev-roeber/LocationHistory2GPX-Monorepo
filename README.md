@@ -36,7 +36,6 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 
 ## Was dieses Repo aktuell bewusst nicht kann
 
-- fertige Produkt-UI
 - Import von Google-Rohdateien
 - Producer-Logik aus dem Python-Repo
 - `trips_index.json` konsumieren
@@ -50,12 +49,12 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `Queries/*.swift`
 - `Sources/LocationHistoryConsumerAppSupport/`
   - generische Session-/Loader-Typen
-  - gemeinsame SwiftUI-Inhaltsdarstellung fuer App und Demo
+  - gemeinsame SwiftUI-Produkt-UI fuer App und Demo (NavigationSplitView, Dashboard, Day-Detail)
 - `Sources/LocationHistoryConsumerDemoSupport/`
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
 - `Sources/LocationHistoryConsumerApp/`
-  - produktnahe App-Shell fuer lokalen `app_export.json`-Import
+  - Produkt-App-Einstieg fuer lokalen `app_export.json`-Import
 - `Sources/LocationHistoryConsumerDemo/`
   - Demo-/Harness-Einstieg fuer Fixture-zentrierte Verifikation
 - `Tests/LocationHistoryConsumerTests/`
@@ -139,23 +138,24 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 - keine Persistenz, keine Maps, kein Google-Rohdatenimport
 - Fehler beim Fixture- oder Datei-Load werden schlicht als Fehlzustand angezeigt
 
-## App-Shell
+## Produkt-UI
 
-Die App-Shell ist die produktnaehere Einstiegsschicht dieses Repos:
+Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
+- NavigationSplitView mit Day-Liste (formatierte Daten, Icons, Summary) und Detail-Pane
+- Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
+- Day-Detail mit strukturierten Sections, Cards und Quick-Stats
+- konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
+- Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
 - startet mit lokalem `app_export.json`-Import als primaerem Einstieg
-- bietet Demo-Daten nur als sekundären Fallback
-- nutzt dieselben Decoder-, Query- und Session-Typen wie die Demo
-- zeigt klarer, ob noch nichts geladen ist, Demo-Daten aktiv sind, eine Datei importiert wurde oder ein Import fehlgeschlagen ist
-- fuehrt Quelle, Dateiname, Schema-Version, Exportzeitpunkt und Tagesanzahl kompakt im UI
-- erlaubt Open Another File, Load Demo Data und Clear
+- bietet Demo-Daten als sekundaeren Fallback
 - merkt sich die zuletzt importierte Datei per Security-Scoped Bookmark und laedt sie beim Neustart automatisch
 - bleibt offline-only und fuehrt keine neue Business-Logik ein
 
 ## Apple-/Xcode-Vorbereitung
 
-- `LocationHistoryConsumerApp` ist die vorgesehene produktnahe Apple-App-Huelle
+- `LocationHistoryConsumerApp` ist die Produkt-App-Huelle
 - `LocationHistoryConsumerDemo` bleibt der Harness-/Verifikationspfad
-- `LocationHistoryConsumerAppSupport` enthaelt die gemeinsame app-nahe Import-/Session-Logik
+- `LocationHistoryConsumerAppSupport` enthaelt die gemeinsame Produkt-UI, Import-/Session-Logik
 - das konkrete Xcode-Runbook steht in `docs/XCODE_RUNBOOK.md`
 - die konkrete Apple-Verifikations-Checkliste steht in `docs/APPLE_VERIFICATION_CHECKLIST.md`
 - `docs/XCODE_APP_PREPARATION.md` bleibt die kleinere vorbereitende Notiz aus Phase 10

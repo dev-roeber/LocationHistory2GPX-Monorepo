@@ -147,11 +147,11 @@
 
 **Ziel:** Die bestehende Basis-UI wird zu einer nutzbaren Produkt-Oberflaeche ausgebaut. Das schliesst den offenen Punkt `Produkt-UI` aus Phase 8 ab.
 
-- [ ] verbessertes Home-/Uebersichts-Layout mit kompakterem Dashboard
-- [ ] aufgewertete Day-Liste mit besserem Datumsformat und Summary-Cards
-- [ ] aufgewertetes Day-Detail mit strukturierten Sections und besserem Layout
-- [ ] Navigation-Flow fuer iPhone und iPad optimieren (NavigationSplitView / NavigationStack)
-- [ ] Leer-/Fehler-/Ladezustaende visuell polieren
+- [x] verbessertes Home-/Uebersichts-Layout mit kompakterem Dashboard
+- [x] aufgewertete Day-Liste mit besserem Datumsformat und Summary-Cards
+- [x] aufgewertetes Day-Detail mit strukturierten Sections und besserem Layout
+- [x] Navigation-Flow fuer iPhone und iPad optimieren (NavigationSplitView / NavigationStack)
+- [x] Leer-/Fehler-/Ladezustaende visuell polieren
 
 **Definition of Done:** App fuehlt sich auf iPhone und iPad wie eine echte App an, nicht wie ein Harness. Alle bestehenden interaktiven Flows (Import, Demo, Clear, Fehler) funktionieren weiter. Tests gruen.
 

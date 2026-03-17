@@ -15,10 +15,7 @@ struct RootView: View {
             if session.isLoading && !session.hasLoadedContent {
                 ProgressView("Loading demo app export...")
             } else if session.content != nil {
-                AppContentSplitView(
-                    session: $session,
-                    sourceHint: "Load Demo resets the harness back to the bundled sample."
-                )
+                AppContentSplitView(session: $session)
             } else {
                 DemoPlaceholderView(
                     title: session.message?.title ?? "No demo source loaded",

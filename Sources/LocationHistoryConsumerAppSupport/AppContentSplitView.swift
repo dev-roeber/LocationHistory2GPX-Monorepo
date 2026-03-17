@@ -2,13 +2,39 @@
 import SwiftUI
 import LocationHistoryConsumer
 
+// MARK: - Date Formatting
+
+private enum AppDateDisplay {
+    private static let isoFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    static func longDate(_ iso: String) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return iso }
+        return d.formatted(date: .long, time: .omitted)
+    }
+
+    static func mediumDate(_ iso: String) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return iso }
+        return d.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    static func weekday(_ iso: String) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return "" }
+        return d.formatted(.dateTime.weekday(.wide))
+    }
+}
+
+// MARK: - Main Split View
+
 public struct AppContentSplitView: View {
     @Binding private var session: AppSessionState
-    private let sourceHint: String?
 
-    public init(session: Binding<AppSessionState>, sourceHint: String? = nil) {
+    public init(session: Binding<AppSessionState>) {
         self._session = session
-        self.sourceHint = sourceHint
     }
 
     public var body: some View {
@@ -20,13 +46,23 @@ public struct AppContentSplitView: View {
                     set: { session.selectDay($0) }
                 )
             )
-            .safeAreaInset(edge: .bottom) {
-                sourceFooter
-            }
             .navigationTitle("Days")
         } detail: {
+            detailPane
+        }
+    }
+
+    @ViewBuilder
+    private var detailPane: some View {
+        if let detail = session.selectedDetail {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                AppDayDetailView(detail: detail)
+                    .padding()
+            }
+            .navigationTitle(AppDateDisplay.longDate(detail.date))
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
                     AppSessionStatusView(
                         summary: session.sourceSummary,
                         message: session.message,
@@ -36,37 +72,23 @@ public struct AppContentSplitView: View {
                     if let overview = session.overview {
                         AppOverviewSection(overview: overview)
                     }
-                    AppDayDetailView(
-                        detail: session.selectedDetail,
-                        hasDays: session.hasDays
-                    )
+                    if session.hasDays {
+                        Label(
+                            "Select a day from the sidebar to view details.",
+                            systemImage: "hand.tap"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
                 }
                 .padding()
             }
-            .navigationTitle(session.selectedDate ?? "Overview")
-        }
-    }
-
-    private var sourceFooter: some View {
-        Group {
-            if let sourceHint, session.hasLoadedContent {
-                VStack(alignment: .leading, spacing: 4) {
-                    Divider()
-                    Text("Source Actions")
-                        .font(.caption.weight(.semibold))
-                    Text(sourceHint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
-                .background(.thinMaterial)
-            }
+            .navigationTitle("Overview")
         }
     }
 }
+
+// MARK: - Session Status
 
 public struct AppSessionStatusView: View {
     let summary: AppSourceSummary
@@ -82,7 +104,7 @@ public struct AppSessionStatusView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             AppSourceSummaryCard(summary: summary)
 
             if let message, message.kind == .error {
@@ -93,20 +115,25 @@ public struct AppSessionStatusView: View {
                 HStack(spacing: 10) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Processing app export...")
-                        .font(.caption)
+                    Text("Loading...")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
 
-            if !hasDays {
-                Text("This app export currently has no day entries. Overview data is still shown above.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            if !isLoading && !hasDays && summary.dayCountText != nil {
+                Label(
+                    "This export contains no day entries.",
+                    systemImage: "calendar.badge.exclamationmark"
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         }
     }
 }
+
+// MARK: - Source Summary Card
 
 public struct AppSourceSummaryCard: View {
     let summary: AppSourceSummary
@@ -116,41 +143,51 @@ public struct AppSourceSummaryCard: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(summary.stateTitle)
                 .font(.headline)
 
-            infoRow(summary.sourceLabel, value: summary.sourceValue)
+            summaryRow("Source", value: summary.sourceValue, icon: "doc")
 
-            if let schemaVersion = summary.schemaVersion {
-                infoRow("Schema", value: schemaVersion)
+            if let v = summary.schemaVersion {
+                summaryRow("Schema", value: v, icon: "number")
             }
-            if let inputFormat = summary.inputFormat {
-                infoRow("Input Format", value: inputFormat)
+            if let v = summary.inputFormat {
+                summaryRow("Format", value: v, icon: "square.grid.2x2")
             }
-            if let exportedAt = summary.exportedAt {
-                infoRow("Exported At", value: exportedAt)
+            if let v = summary.exportedAt {
+                summaryRow("Exported", value: v, icon: "clock")
             }
-            if let dayCountText = summary.dayCountText {
-                infoRow("Days", value: dayCountText)
+            if let v = summary.dayCountText {
+                summaryRow("Days", value: v, icon: "calendar")
             }
 
             Text(summary.statusText)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(14)
         .background(Color.secondary.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder
-    private func infoRow(_ label: String, value: String) -> some View {
-        LabeledContent(label, value: value)
-            .font(.subheadline)
+    private func summaryRow(_ label: String, value: String, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
+                .frame(width: 16, alignment: .center)
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+        }
+        .font(.subheadline)
     }
 }
+
+// MARK: - Message Card
 
 public struct AppMessageCard: View {
     let message: AppUserMessage
@@ -161,8 +198,11 @@ public struct AppMessageCard: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(message.title)
-                .font(.subheadline.weight(.semibold))
+            Label(
+                message.title,
+                systemImage: message.kind == .error ? "exclamationmark.triangle" : "info.circle"
+            )
+            .font(.subheadline.weight(.semibold))
             Text(message.message)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -175,13 +215,13 @@ public struct AppMessageCard: View {
 
     private var backgroundColor: Color {
         switch message.kind {
-        case .info:
-            return Color.accentColor.opacity(0.12)
-        case .error:
-            return Color.red.opacity(0.12)
+        case .info: return Color.accentColor.opacity(0.12)
+        case .error: return Color.red.opacity(0.12)
         }
     }
 }
+
+// MARK: - Overview Section
 
 public struct AppOverviewSection: View {
     let overview: ExportOverview
@@ -190,27 +230,54 @@ public struct AppOverviewSection: View {
         self.overview = overview
     }
 
-    public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Overview")
-                .font(.headline)
+    private let columns = [
+        GridItem(.adaptive(minimum: 100, maximum: 160), spacing: 12)
+    ]
 
-            LabeledContent("Schema", value: overview.schemaVersion)
-            LabeledContent("Exported At", value: overview.exportedAt)
-            LabeledContent("Input Format", value: overview.inputFormat ?? "n/a")
-            LabeledContent("Split Mode", value: overview.splitMode ?? "n/a")
-            LabeledContent("Days", value: "\(overview.dayCount)")
-            LabeledContent("Visits", value: "\(overview.totalVisitCount)")
-            LabeledContent("Activities", value: "\(overview.totalActivityCount)")
-            LabeledContent("Paths", value: "\(overview.totalPathCount)")
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Statistics")
+                .font(.title3.weight(.semibold))
+
+            LazyVGrid(columns: columns, spacing: 12) {
+                statCard("\(overview.dayCount)", label: "Days", icon: "calendar")
+                statCard("\(overview.totalVisitCount)", label: "Visits", icon: "mappin.and.ellipse")
+                statCard("\(overview.totalActivityCount)", label: "Activities", icon: "figure.walk")
+                statCard("\(overview.totalPathCount)", label: "Paths", icon: "location.north.line")
+            }
 
             if !overview.statsActivityTypes.isEmpty {
-                LabeledContent("Stats Activity Types", value: overview.statsActivityTypes.joined(separator: ", "))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Activity Types")
+                        .font(.subheadline.weight(.medium))
+                    Text(overview.statsActivityTypes.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func statCard(_ value: String, label: String, icon: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.accentColor)
+            Text(value)
+                .font(.title2.weight(.bold).monospacedDigit())
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
+
+// MARK: - Day List
 
 public struct AppDayListView: View {
     let summaries: [DaySummary]
@@ -223,39 +290,52 @@ public struct AppDayListView: View {
 
     public var body: some View {
         if summaries.isEmpty {
-            VStack(spacing: 12) {
-                Image(systemName: "calendar.badge.exclamationmark")
-                    .font(.system(size: 28))
-                    .foregroundStyle(.secondary)
-                Text("No Days Available")
-                    .font(.headline)
-                Text("This app export does not contain any day entries to inspect.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(24)
+            emptyDayList
         } else {
             List(summaries, id: \.date, selection: $selectedDate) { summary in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(summary.date)
-                        .font(.headline)
-                    Text("\(summary.visitCount) visits, \(summary.activityCount) activities, \(summary.pathCount) paths")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    if summary.pathCount > 0 {
-                        Text("\(summary.totalPathPointCount) path points")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
-                .tag(summary.date)
+                dayRow(summary)
+                    .tag(summary.date)
             }
         }
     }
+
+    private var emptyDayList: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 32))
+                .foregroundStyle(.secondary)
+            Text("No Days")
+                .font(.headline)
+            Text("This export does not contain any day entries.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(24)
+    }
+
+    @ViewBuilder
+    private func dayRow(_ summary: DaySummary) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(AppDateDisplay.weekday(summary.date))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(AppDateDisplay.mediumDate(summary.date))
+                .font(.headline)
+            HStack(spacing: 12) {
+                Label("\(summary.visitCount)", systemImage: "mappin.and.ellipse")
+                Label("\(summary.activityCount)", systemImage: "figure.walk")
+                Label("\(summary.pathCount)", systemImage: "location.north.line")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
 }
+
+// MARK: - Day Detail
 
 public struct AppDayDetailView: View {
     let detail: DayDetailViewState?
@@ -266,113 +346,202 @@ public struct AppDayDetailView: View {
         self.hasDays = hasDays
     }
 
+    // Convenience init for use within the split view
+    init(detail: DayDetailViewState) {
+        self.detail = detail
+        self.hasDays = true
+    }
+
     public var body: some View {
         if let detail {
             if detail.hasContent {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(detail.date)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-
-                    section("Visits", count: detail.visits.count) {
-                        ForEach(Array(detail.visits.enumerated()), id: \.offset) { _, visit in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(visit.semanticType ?? "Visit")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("\(visit.startTime ?? "n/a") -> \(visit.endTime ?? "n/a")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                if let placeID = visit.placeID {
-                                    Text(placeID)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-
-                    section("Activities", count: detail.activities.count) {
-                        ForEach(Array(detail.activities.enumerated()), id: \.offset) { _, activity in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(activity.activityType ?? "Activity")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("\(activity.startTime ?? "n/a") -> \(activity.endTime ?? "n/a")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                if let distanceM = activity.distanceM {
-                                    Text(String(format: "%.0f m", distanceM))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-
-                    section("Paths", count: detail.paths.count) {
-                        ForEach(Array(detail.paths.enumerated()), id: \.offset) { _, path in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(path.activityType ?? "Path")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("\(path.pointCount) points")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                if let distanceM = path.distanceM {
-                                    Text(String(format: "%.0f m", distanceM))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                contentView(detail)
             } else {
-                emptyState(
-                    title: "No Content For This Day",
-                    message: "This day exists in the app export, but it does not contain visits, activities or paths."
+                emptyDayState(
+                    "No Content",
+                    message: "This day exists in the export but contains no visits, activities or paths."
                 )
             }
         } else if hasDays {
-            emptyState(
-                title: "No Day Selected",
-                message: "Choose a day from the list to inspect visits, activities and paths."
+            emptyDayState(
+                "No Day Selected",
+                message: "Choose a day from the list to view details."
             )
         } else {
-            emptyState(
-                title: "No Day Details Available",
-                message: "Load a source with day entries to inspect visits, activities and paths."
+            emptyDayState(
+                "No Day Details",
+                message: "Import a file with day entries to view details."
             )
         }
     }
 
     @ViewBuilder
-    private func section<Content: View>(_ title: String, count: Int, @ViewBuilder content: () -> Content) -> some View {
+    private func contentView(_ detail: DayDetailViewState) -> some View {
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(AppDateDisplay.weekday(detail.date))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(AppDateDisplay.longDate(detail.date))
+                    .font(.title2.weight(.semibold))
+            }
+
+            HStack(spacing: 16) {
+                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse")
+                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk")
+                quickStat("\(detail.paths.count)", label: "Paths", icon: "location.north.line")
+            }
+
+            if !detail.visits.isEmpty {
+                detailSection("Visits", icon: "mappin.and.ellipse", count: detail.visits.count) {
+                    ForEach(Array(detail.visits.enumerated()), id: \.offset) { _, visit in
+                        visitCard(visit)
+                    }
+                }
+            }
+
+            if !detail.activities.isEmpty {
+                detailSection("Activities", icon: "figure.walk", count: detail.activities.count) {
+                    ForEach(Array(detail.activities.enumerated()), id: \.offset) { _, activity in
+                        activityCard(activity)
+                    }
+                }
+            }
+
+            if !detail.paths.isEmpty {
+                detailSection("Paths", icon: "location.north.line", count: detail.paths.count) {
+                    ForEach(Array(detail.paths.enumerated()), id: \.offset) { _, path in
+                        pathCard(path)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func detailSection<Content: View>(
+        _ title: String,
+        icon: String,
+        count: Int,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(title)
+                Label(title, systemImage: icon)
                     .font(.headline)
                 Spacer()
                 Text("\(count)")
-                    .font(.caption)
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
             }
             content()
         }
     }
 
     @ViewBuilder
-    private func emptyState(title: String, message: String) -> some View {
+    private func visitCard(_ visit: DayDetailViewState.VisitItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(visit.semanticType ?? "Visit")
+                .font(.subheadline.weight(.medium))
+            if let start = visit.startTime, let end = visit.endTime {
+                Label("\(start) → \(end)", systemImage: "clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if let placeID = visit.placeID {
+                Label(placeID, systemImage: "building.2")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.secondary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func activityCard(_ activity: DayDetailViewState.ActivityItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(activity.activityType ?? "Activity")
+                .font(.subheadline.weight(.medium))
+            HStack(spacing: 12) {
+                if let start = activity.startTime, let end = activity.endTime {
+                    Label("\(start) → \(end)", systemImage: "clock")
+                }
+                if let dist = activity.distanceM {
+                    Label(formatDistance(dist), systemImage: "ruler")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.secondary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func pathCard(_ path: DayDetailViewState.PathItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(path.activityType ?? "Path")
+                .font(.subheadline.weight(.medium))
+            HStack(spacing: 12) {
+                Label("\(path.pointCount) points", systemImage: "location.north.line")
+                if let dist = path.distanceM {
+                    Label(formatDistance(dist), systemImage: "ruler")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.secondary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func quickStat(_ value: String, label: String, icon: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.accentColor)
+            Text(value)
+                .font(.headline.monospacedDigit())
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func formatDistance(_ meters: Double) -> String {
+        if meters >= 1000 {
+            return String(format: "%.1f km", meters / 1000)
+        }
+        return String(format: "%.0f m", meters)
+    }
+
+    @ViewBuilder
+    private func emptyDayState(_ title: String, message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar")
-                .font(.system(size: 28))
+                .font(.system(size: 32))
                 .foregroundStyle(.secondary)
             Text(title)
                 .font(.headline)
             Text(message)
-                .font(.body)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
