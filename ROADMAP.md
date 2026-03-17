@@ -207,17 +207,21 @@
 
 **Ziel:** App ist bereit fuer externe Beta-Tester und App Store Review.
 
-- [ ] App Store Beschreibung und Metadaten
+- [ ] App Store Beschreibung und Metadaten (Vorentwurf in docs/TESTFLIGHT_RUNBOOK.md im Wrapper-Repo)
 - [ ] App Store Screenshots fuer iPhone und iPad
 - [ ] TestFlight-Build hochladen und interne Beta starten
-- [ ] App Store Review Guidelines pruefen (insbesondere Datenschutz, Minimal Functionality)
+- [x] App Store Review Guidelines pruefen (insbesondere Datenschutz, Minimal Functionality)
 - [ ] Feedback aus Beta-Phase einarbeiten
 
 **Definition of Done:** TestFlight-Build an Tester verteilt. App Store Metadaten vollstaendig. Keine Review-Guideline-Verstoesse bekannt.
 
+**Lokal verifiziert (2026-03-17):** `xcodebuild archive` erfolgreich (v1.0, Build 1). PrivacyInfo.xcprivacy konform. Review-Guidelines geprueft: konform bis auf Platzhalter-Icon. TestFlight-Runbook in `docs/TESTFLIGHT_RUNBOOK.md` im Wrapper-Repo.
+
+**Offen (erfordern ASC-Zugang):** App Store Metadaten in ASC eintragen, Screenshots erstellen, Upload/TestFlight, Beta-Tester-Feedback.
+
 **Tests:** TestFlight-Install auf echtem Geraet. Beta-Tester-Feedback. Crash-Reports pruefen.
 
-**Betroffene Dateien:** Primaer Wrapper-Repo (App Store Connect Metadaten, Screenshots). In diesem Repo ggf. kleinere Fixes aus Beta-Feedback.
+**Betroffene Dateien:** Primaer Wrapper-Repo (App Store Connect Metadaten, Screenshots, docs/TESTFLIGHT_RUNBOOK.md). In diesem Repo ggf. kleinere Fixes aus Beta-Feedback.
 
 **Nicht-Ziele:** Kein oeffentlicher Launch. Kein Marketing. Keine Android-Version.
 
