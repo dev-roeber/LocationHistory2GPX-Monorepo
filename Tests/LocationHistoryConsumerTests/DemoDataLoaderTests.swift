@@ -36,7 +36,7 @@ final class DemoDataLoaderTests: XCTestCase {
         try Data("{".utf8).write(to: invalidURL)
 
         XCTAssertThrowsError(try DemoDataLoader.loadImportedContent(from: invalidURL)) { error in
-            XCTAssertEqual(error.localizedDescription, "Unable to decode app export file: broken_app_export.json")
+            XCTAssertEqual(error.localizedDescription, "'broken_app_export.json' could not be opened. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool.")
         }
     }
 

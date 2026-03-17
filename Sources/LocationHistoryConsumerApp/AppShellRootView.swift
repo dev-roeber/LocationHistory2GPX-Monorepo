@@ -75,7 +75,7 @@ struct AppShellRootView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open File"
+        session.hasLoadedContent ? "Open Another File" : "Open app_export.json"
     }
 
     private var demoButtonTitle: String {

@@ -81,6 +81,23 @@ final class AppContentLoaderTests: XCTestCase {
         }
     }
 
+
+    func testDecodeFailedErrorDescriptionMentionsRequiredTool() throws {
+        let url = try writeTemp(json: #"{"foo": "bar"}"#, filename: "unknown.json")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        do {
+            _ = try AppContentLoader.loadImportedContent(from: url)
+            XCTFail("Expected decodeFailed error")
+        } catch let error as AppContentLoaderError {
+            let description = try XCTUnwrap(error.errorDescription)
+            XCTAssertTrue(
+                description.contains("LocationHistory2GPX"),
+                "Error description should mention the required tool. Got: \(description)"
+            )
+        }
+    }
+
     // MARK: - Helpers
 
     private func writeTemp(json: String, filename: String) throws -> URL {

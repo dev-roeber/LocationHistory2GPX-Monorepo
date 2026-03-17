@@ -16,7 +16,7 @@ public enum AppContentLoaderError: LocalizedError {
         case let .unsupportedFormat(name):
             return "'\(name)' has an unsupported format. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool."
         case let .decodeFailed(name):
-            return "Unable to decode app export file: \(name)"
+            return "'\(name)' could not be opened. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool."
         }
     }
 }
