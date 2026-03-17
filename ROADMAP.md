@@ -208,7 +208,7 @@
 **Ziel:** App ist bereit fuer externe Beta-Tester und App Store Review.
 
 - [ ] App Store Beschreibung und Metadaten (Vorentwurf in docs/TESTFLIGHT_RUNBOOK.md im Wrapper-Repo)
-- [ ] App Store Screenshots fuer iPhone und iPad
+- [x] App Store Screenshots fuer iPhone und iPad
 - [ ] TestFlight-Build hochladen und interne Beta starten
 - [x] App Store Review Guidelines pruefen (insbesondere Datenschutz, Minimal Functionality)
 - [ ] Feedback aus Beta-Phase einarbeiten
@@ -217,7 +217,7 @@
 
 **Lokal verifiziert (2026-03-17):** `xcodebuild archive` erfolgreich (v1.0, Build 1). PrivacyInfo.xcprivacy konform. Review-Guidelines geprueft: konform. App Icon ersetzt (Map-Pin + LH2GPX, kein Gradient-Placeholder mehr). Screenshot-Simulator-Workflow dokumentiert. TestFlight-Runbook in `docs/TESTFLIGHT_RUNBOOK.md` im Wrapper-Repo.
 
-**Lokal noch offen:** Screenshots manuell per Simulator erstellen (Workflow in Runbook).
+**Lokal abgeschlossen (2026-03-17):** Screenshots via UI-Test erstellt (iPhone 17 Pro Max + iPad Pro 13" M5, iOS 26.3.1). Liegen in `docs/appstore-screenshots/` im Wrapper-Repo.
 
 **Extern (ASC-Zugang):** App Store Connect Projekt anlegen, Metadaten eintragen, Upload, TestFlight-Beta aktivieren.
 
