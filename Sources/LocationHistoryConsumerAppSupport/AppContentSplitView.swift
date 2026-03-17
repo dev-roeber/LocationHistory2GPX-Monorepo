@@ -270,7 +270,7 @@ public struct AppOverviewSection: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Activity Types")
                         .font(.subheadline.weight(.medium))
-                    Text(overview.statsActivityTypes.joined(separator: ", "))
+                    Text(overview.statsActivityTypes.map { $0.capitalized }.joined(separator: ", "))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

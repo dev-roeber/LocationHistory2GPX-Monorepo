@@ -2,18 +2,22 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Naechster Schritt: Phase 19.3 bestimmen. Kandidaten: GPX-Export aus Day-Detail, Datumsbereichs-Filter in der Day-Liste, weitere UX-Feinschliffe auf Basis realem iPhone-Betrieb.
-2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus. Wird aufgenommen, sobald Zugang tatsaechlich verfuegbar ist.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Naechster Schritt: Phase 19.4 bestimmen. Kandidaten: weitere UX-Feinschliffe auf Basis realem iPhone-Betrieb, GPX-Export aus Day-Detail (nur wenn klar begrenzt), Datumsbereichs-Filter (nur wenn nachweislich klein).
+2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.3 (2026-03-18):**
+- statsActivityTypes in Overview-Statistik mit .capitalized formatiert
+- Konsistenz mit Day-Detail-Typ-Labels aus Phase 19.1 hergestellt
+- WALKING → Walking, IN PASSENGER VEHICLE → In Passenger Vehicle, IN BUS → In Bus
 
 **Abgeschlossene Phase 19.2 (2026-03-18):**
 - Clear-Button-Bedingungen auf message.kind == .error eingegrenzt
-- Ghost-Button nach clearContent() beseitigt (kein sichtbarer Loop mehr)
-- Toolbar und Empty-State in AppShellRootView.swift und ContentView.swift behoben
+- Ghost-Button nach clearContent() beseitigt
 
 **Abgeschlossene Phase 19.1 (2026-03-18):**
 - Tool-Name im Empty-State und Idle-Statustext kommuniziert
-- Zeitangaben in Day-Detail auf lesbare Uhrzeit formatiert (ISO 8601 → lokale Uhrzeit)
-- Typ-Labels formatiert (WALKING → Walking, HOME → Home)
+- Zeitangaben in Day-Detail auf lesbare Uhrzeit formatiert
+- Typ-Labels in Day-Detail formatiert
 
 **Lokaler iPhone-Betrieb: vollstaendig verifiziert (2026-03-17)** – iPhone 15 Pro Max und iPhone 12 Pro Max. iPad bewusst spaeter.

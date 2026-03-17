@@ -7,7 +7,7 @@ Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifizier
 
 ### Aktiver lokaler Fokus
 Lokale Produktweiterentwicklung (Phase 19.x): UX-Verbesserungen, Lesbarkeit, Robustheit.
-Phase 19.1 abgeschlossen. Aktuell: Phase 19.2 – Clear-Flow UX-Fix (Ghost-Button).
+Phasen 19.1 und 19.2 abgeschlossen. Aktuell: Phase 19.3 – Overview-Statistik-Formatierung.
 
 ### Geparkt / Extern
 Apple-/Developer-/ASC-/TestFlight-/Release-Themen (Phasen 20–21): kein aktiver Fokus.
@@ -263,6 +263,23 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 **Betroffene Dateien:** AppShellRootView.swift (Core-Repo); ContentView.swift (Wrapper-Repo).
 
 **Nicht-Ziele:** Kein Redesign. Keine State-Machine-Aenderung. Keine neuen Features.
+
+### Phase 19.3 – UX: Activity-Types-Formatierung in Overview-Statistik
+
+**Datum:** 2026-03-18
+**Ziel:** Konsistenz zwischen Day-Detail-Typ-Labels (Phase 19.1) und Overview-Statistik herstellen.
+
+- [x] statsActivityTypes in AppOverviewSection mit .capitalized formatiert (WALKING → Walking, IN PASSENGER VEHICLE → In Passenger Vehicle)
+
+**Problem vorher:** Phase 19.1 hatte Typ-Labels in Day-Detail-Cards formatiert, aber die Statistik-Sektion in der Overview zeigte weiterhin Rohstrings (WALKING, IN PASSENGER VEHICLE, CYCLING, IN BUS). Jeder Nutzer mit Aktivitaetsdaten sah diesen Widerspruch.
+
+**Definition of Done:** Overview-Statistik zeigt dieselbe lesbare Formatierung wie Day-Detail. WALKING → Walking, IN PASSENGER VEHICLE → In Passenger Vehicle, IN BUS → In Bus.
+
+**Tests:** swift test gruen (61/61). Fixture-Verifizierung: Rohdaten sind UPPER CASE mit Leerzeichen, .capitalized korrekt.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Core-Repo, AppOverviewSection). Wrapper-Repo via SPM automatisch aktuell.
+
+**Nicht-Ziele:** Keine Daten-Layer-Aenderung. Kein Redesign. Keine neuen Features.
 
 ---
 
