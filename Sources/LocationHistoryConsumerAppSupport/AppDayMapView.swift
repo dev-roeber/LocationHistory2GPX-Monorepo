@@ -16,6 +16,18 @@ public struct AppDayMapView: View {
             mapContent(region: region)
                 .frame(height: 280)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .accessibilityLabel(mapAccessibilityLabel)
+        }
+    }
+
+    private var mapAccessibilityLabel: String {
+        let visits = mapData.visitAnnotations.count
+        let paths = mapData.pathOverlays.count
+        switch (visits, paths) {
+        case (0, 0): return "Map"
+        case (_, 0): return "Map with \(visits) \(visits == 1 ? "visit" : "visits")"
+        case (0, _): return "Map with \(paths) \(paths == 1 ? "path" : "paths")"
+        default: return "Map with \(visits) \(visits == 1 ? "visit" : "visits") and \(paths) \(paths == 1 ? "path" : "paths")"
         }
     }
 

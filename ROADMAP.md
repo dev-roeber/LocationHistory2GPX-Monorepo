@@ -187,11 +187,11 @@
 
 **Ziel:** App auf Produktionsqualitaet bringen. Barrierefreiheit, Performance bei grossen Dateien und Robustheit sicherstellen.
 
-- [ ] VoiceOver-Unterstuetzung fuer alle Screens pruefen und nachbessern
-- [ ] Dynamic Type in allen Views korrekt unterstuetzen
+- [x] VoiceOver-Unterstuetzung fuer alle Screens pruefen und nachbessern
+- [x] Dynamic Type in allen Views korrekt unterstuetzen
 - [ ] Performance-Test mit grossen App-Exports (>100 Tage, >10k Pfadpunkte)
 - [ ] Memory-Profiling bei grossen Dateien
-- [ ] Edge-Cases haerten: leere Felder, extreme Werte, fehlende Koordinaten
+- [x] Edge-Cases haerten: leere Felder, extreme Werte, fehlende Koordinaten
 
 **Definition of Done:** VoiceOver navigiert alle Screens. Dynamic Type skaliert korrekt. Grosse Dateien laden in akzeptabler Zeit ohne Crash. Keine bekannten Crasher.
 

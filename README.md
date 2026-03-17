@@ -146,6 +146,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
+- VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
 - Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
 - startet mit lokalem `app_export.json`-Import als primaerem Einstieg

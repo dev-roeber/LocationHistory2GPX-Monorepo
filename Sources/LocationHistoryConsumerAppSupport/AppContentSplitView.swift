@@ -181,12 +181,15 @@ public struct AppSourceSummaryCard: View {
             Image(systemName: icon)
                 .foregroundStyle(.secondary)
                 .frame(width: 16, alignment: .center)
+                .accessibilityHidden(true)
             Text(label)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
         }
         .font(.subheadline)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 
@@ -273,6 +276,8 @@ public struct AppOverviewSection: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Color.secondary.opacity(0.06))
@@ -305,8 +310,9 @@ public struct AppDayListView: View {
     private var emptyDayList: some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 32))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             Text("No Days")
                 .font(.headline)
             Text("This export does not contain any day entries.")
@@ -314,6 +320,7 @@ public struct AppDayListView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(24)
     }
@@ -333,6 +340,8 @@ public struct AppDayListView: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(summary.visitCount) Visits, \(summary.activityCount) Activities, \(summary.pathCount) Paths")
         }
         .padding(.vertical, 4)
     }
@@ -448,6 +457,8 @@ public struct AppDayDetailView: View {
                     .background(Color.secondary.opacity(0.12))
                     .clipShape(Capsule())
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(count) \(title)")
             content()
         }
     }
@@ -528,6 +539,8 @@ public struct AppDayDetailView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .background(Color.secondary.opacity(0.06))
@@ -535,6 +548,7 @@ public struct AppDayDetailView: View {
     }
 
     private func formatDistance(_ meters: Double) -> String {
+        guard meters >= 0, meters.isFinite else { return "–" }
         if meters >= 1000 {
             return String(format: "%.1f km", meters / 1000)
         }
@@ -545,8 +559,9 @@ public struct AppDayDetailView: View {
     private func emptyDayState(_ title: String, message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar")
-                .font(.system(size: 32))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             Text(title)
                 .font(.headline)
             Text(message)
@@ -554,6 +569,7 @@ public struct AppDayDetailView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity, minHeight: 240)
     }
 }

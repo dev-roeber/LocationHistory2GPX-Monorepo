@@ -52,10 +52,10 @@ final class DayMapDataTests: XCTestCase {
         let allLons = mapData.visitAnnotations.map(\.coordinate.lon)
             + mapData.pathOverlays.flatMap { $0.coordinates.map(\.lon) }
 
-        let minLat = allLats.min()!
-        let maxLat = allLats.max()!
-        let minLon = allLons.min()!
-        let maxLon = allLons.max()!
+        let minLat = try XCTUnwrap(allLats.min())
+        let maxLat = try XCTUnwrap(allLats.max())
+        let minLon = try XCTUnwrap(allLons.min())
+        let maxLon = try XCTUnwrap(allLons.max())
 
         XCTAssertLessThanOrEqual(region.centerLat - region.spanLat / 2, minLat)
         XCTAssertGreaterThanOrEqual(region.centerLat + region.spanLat / 2, maxLat)
@@ -130,6 +130,89 @@ final class DayMapDataTests: XCTestCase {
 
         XCTAssertTrue(mapData.pathOverlays.isEmpty)
         XCTAssertFalse(mapData.hasMapContent)
+    }
+
+    // MARK: - Partial coordinate edge cases
+
+    func testVisitWithLatButNoLonIsSkipped() {
+        let detail = DayDetailViewState(
+            date: "2024-01-01",
+            visits: [
+                DayDetailViewState.VisitItem(
+                    startTime: nil, endTime: nil, semanticType: "HOME",
+                    placeID: nil, lat: 52.52, lon: nil, accuracyM: nil, sourceType: nil
+                )
+            ],
+            activities: [],
+            paths: [],
+            totalPathPointCount: 0,
+            hasContent: true
+        )
+        let mapData = DayMapDataExtractor.mapData(from: detail)
+        XCTAssertTrue(mapData.visitAnnotations.isEmpty)
+    }
+
+    func testPathWithEmptyPointsArrayIsSkipped() {
+        let detail = DayDetailViewState(
+            date: "2024-01-01",
+            visits: [],
+            activities: [],
+            paths: [
+                DayDetailViewState.PathItem(
+                    startTime: nil, endTime: nil, activityType: "WALKING",
+                    distanceM: 0, pointCount: 0, sourceType: nil,
+                    points: []
+                )
+            ],
+            totalPathPointCount: 0,
+            hasContent: true
+        )
+        let mapData = DayMapDataExtractor.mapData(from: detail)
+        XCTAssertTrue(mapData.pathOverlays.isEmpty)
+        XCTAssertFalse(mapData.hasMapContent)
+    }
+
+    func testIdenticalCoordinatesProduceValidRegion() {
+        let coords = [
+            DayMapCoordinate(lat: 52.52, lon: 13.41),
+            DayMapCoordinate(lat: 52.52, lon: 13.41),
+            DayMapCoordinate(lat: 52.52, lon: 13.41),
+        ]
+        let region = DayMapDataExtractor.computeRegion(from: coords)
+        XCTAssertNotNil(region)
+        XCTAssertGreaterThanOrEqual(region!.spanLat, 0.005)
+        XCTAssertGreaterThanOrEqual(region!.spanLon, 0.005)
+        XCTAssertEqual(region!.centerLat, 52.52)
+        XCTAssertEqual(region!.centerLon, 13.41)
+    }
+
+    func testMixedVisitsOnlyCoordinatedOnesAppear() {
+        let detail = DayDetailViewState(
+            date: "2024-01-01",
+            visits: [
+                DayDetailViewState.VisitItem(
+                    startTime: nil, endTime: nil, semanticType: "HOME",
+                    placeID: nil, lat: 52.52, lon: 13.41, accuracyM: nil, sourceType: nil
+                ),
+                DayDetailViewState.VisitItem(
+                    startTime: nil, endTime: nil, semanticType: "WORK",
+                    placeID: nil, lat: nil, lon: nil, accuracyM: nil, sourceType: nil
+                ),
+                DayDetailViewState.VisitItem(
+                    startTime: nil, endTime: nil, semanticType: "PARK",
+                    placeID: nil, lat: 52.50, lon: 13.40, accuracyM: nil, sourceType: nil
+                ),
+            ],
+            activities: [],
+            paths: [],
+            totalPathPointCount: 0,
+            hasContent: true
+        )
+        let mapData = DayMapDataExtractor.mapData(from: detail)
+        XCTAssertEqual(mapData.visitAnnotations.count, 2)
+        XCTAssertEqual(mapData.visitAnnotations[0].semanticType, "HOME")
+        XCTAssertEqual(mapData.visitAnnotations[1].semanticType, "PARK")
+        XCTAssertTrue(mapData.hasMapContent)
     }
 
     // MARK: - Second day (different data)
