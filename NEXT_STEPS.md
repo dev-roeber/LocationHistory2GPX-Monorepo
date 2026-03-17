@@ -2,9 +2,14 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Naechster Schritt: Phase 19.2 bestimmen. Kandidaten: GPX-Export aus Day-Detail, Datumsbereichs-Filter in der Day-Liste, weitere UX-Feinschliffe auf Basis realem iPhone-Betrieb. Wird nach Abschluss von Phase 19.1 aus dem Roadmap-Backlog gewaehlt.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Naechster Schritt: Phase 19.3 bestimmen. Kandidaten: GPX-Export aus Day-Detail, Datumsbereichs-Filter in der Day-Liste, weitere UX-Feinschliffe auf Basis realem iPhone-Betrieb.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus. Wird aufgenommen, sobald Zugang tatsaechlich verfuegbar ist.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.2 (2026-03-18):**
+- Clear-Button-Bedingungen auf message.kind == .error eingegrenzt
+- Ghost-Button nach clearContent() beseitigt (kein sichtbarer Loop mehr)
+- Toolbar und Empty-State in AppShellRootView.swift und ContentView.swift behoben
 
 **Abgeschlossene Phase 19.1 (2026-03-18):**
 - Tool-Name im Empty-State und Idle-Statustext kommuniziert

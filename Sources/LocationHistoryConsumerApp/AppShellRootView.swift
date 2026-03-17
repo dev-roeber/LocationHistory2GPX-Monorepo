@@ -38,7 +38,7 @@ struct AppShellRootView: View {
                 } label: {
                     Label(demoButtonTitle, systemImage: "testtube.2")
                 }
-                if session.hasLoadedContent || session.message != nil {
+                if session.hasLoadedContent || session.message?.kind == .error {
                     Button {
                         clearCurrentContent()
                     } label: {
@@ -194,7 +194,7 @@ private struct AppShellEmptyStateView: View {
                     Label("Load Demo Data", systemImage: "testtube.2")
                 }
                 .buttonStyle(.bordered)
-                if message != nil {
+                if message?.kind == .error {
                     Button(action: clearAction) {
                         Label("Clear", systemImage: "xmark.circle")
                     }

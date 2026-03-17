@@ -7,7 +7,7 @@ Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifizier
 
 ### Aktiver lokaler Fokus
 Lokale Produktweiterentwicklung (Phase 19.x): UX-Verbesserungen, Lesbarkeit, Robustheit.
-Aktuell in Umsetzung: Phase 19.1 – Day-Detail-Lesbarkeit und Onboarding-Klarheit.
+Phase 19.1 abgeschlossen. Aktuell: Phase 19.2 – Clear-Flow UX-Fix (Ghost-Button).
 
 ### Geparkt / Extern
 Apple-/Developer-/ASC-/TestFlight-/Release-Themen (Phasen 20–21): kein aktiver Fokus.
@@ -245,6 +245,24 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 **Betroffene Dateien:** `AppShellRootView.swift`, `AppSessionState.swift`, `AppContentSplitView.swift` (Core-Repo); `ContentView.swift` (Wrapper-Repo).
 
 **Nicht-Ziele:** Keine Lokalisierung. Kein Redesign. Keine neuen Features.
+
+### Phase 19.2 – UX: Clear-Flow Ghost-Button Fix
+
+**Datum:** 2026-03-18
+**Ziel:** Clear-Button verschwindet nach dem Clearen — kein sinnloser Loop mehr.
+
+- [x] Toolbar-Clear-Button nur noch sichtbar wenn hasLoadedContent oder message.kind == .error
+- [x] Empty-State-Clear-Button nur noch sichtbar wenn message.kind == .error
+
+**Problem vorher:** Nach clearContent() setzte der State message = AppUserMessage(kind: .info, ...). Die Clear-Button-Bedingung prueft message != nil, nicht die Art der Message. Resultat: Clear-Button blieb nach dem Clearen sichtbar, obwohl keine Error-Card angezeigt wurde und nichts zu clearen war. Erneutes Klicken erzeugte dieselbe info-Message → Endlosschleife.
+
+**Definition of Done:** Nach Clear kehrt die App in den sauberen Idle-Zustand zurueck. Kein Clear-Button sichtbar. Kein Loop.
+
+**Tests:** swift test gruen (61/61). xcodebuild build im Wrapper-Repo erfolgreich.
+
+**Betroffene Dateien:** AppShellRootView.swift (Core-Repo); ContentView.swift (Wrapper-Repo).
+
+**Nicht-Ziele:** Kein Redesign. Keine State-Machine-Aenderung. Keine neuen Features.
 
 ---
 
