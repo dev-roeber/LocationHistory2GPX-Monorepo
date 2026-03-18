@@ -2,9 +2,13 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.6 abgeschlossen. Naechster Schritt: Phase 19.7 bestimmen. Kandidaten: placeId-Darstellung, Toolbar-Kompression auf iPhone, weitere UX-Feinschliffe.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.7 abgeschlossen. Naechster Schritt: Phase 19.8 bestimmen. Kandidaten: Toolbar-Kompression auf iPhone, "sidebar"-Instruktionstext verbessern, Empty-State-Button-Layout.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.7 (2026-03-18):**
+- Rohe Google Place IDs aus Visit-Cards entfernt: kein technisches Rauschen mehr in visitCard()
+- Visit-Cards zeigen Typ-Label und Zeitspanne – klar und nutzbar
 
 **Abgeschlossene Phase 19.6 (2026-03-18):**
 - AppSourceSummaryCard aus Empty State entfernt: kein technisches Rauschen mehr im Idle-Zustand

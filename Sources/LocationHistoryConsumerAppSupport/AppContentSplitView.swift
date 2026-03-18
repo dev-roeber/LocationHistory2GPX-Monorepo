@@ -503,11 +503,6 @@ public struct AppDayDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            if let placeID = visit.placeID {
-                Label(placeID, systemImage: "building.2")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)

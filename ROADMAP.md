@@ -327,6 +327,27 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 ---
 
 ### Phase 19.6 – UX: Empty-State-Bereinigung
+---
+
+### Phase 19.7 – UX: PlaceID-Bereinigung in Visit-Cards
+
+**Datum:** 2026-03-18
+**Ziel:** Rohe Google Place IDs aus Visit-Cards entfernen. Die ID (z.B. ChIJP3Sa8ziYEmsRUKgyFmh9AQM) ist fuer Nutzer vollstaendig unlesbar und hat ohne Places-API keinen Wert.
+
+- [x] if-let-placeID-Block aus visitCard() in AppContentSplitView.swift entfernt
+- [x] Visit-Cards zeigen jetzt: Typ-Label + Zeitspanne (falls vorhanden) – klar und hinreichend
+
+**Problem vorher:** Jeder Visit-Card mit Place ID zeigte einen rohen Google-Identifier mit building.2-Icon in tertiaerer Farbe. Kein Nutzer kann diesen String interpretieren. Wirkt unfertig.
+
+**Jetzt:** Visit-Card zeigt Typ-Label (semanticType oder generisch "Visit") und Zeitspanne. Kein technisches Rauschen.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Core-Repo, visitCard). Wrapper-Repo via SPM automatisch aktuell.
+
+**Nicht-Ziele:** Keine Places-API-Integration. Kein Netzwerk. Kein Redesign. Keine neuen Features.
+
+
 
 **Datum:** 2026-03-18
 **Ziel:** AppSourceSummaryCard aus dem leeren (Idle-)Startzustand entfernen. Der Nutzer sieht beim ersten Oeffnen kein technisches Rauschen ("Source: None", "Schema: n/a"), sondern nur Titel, Erklaerungstext und Aktions-Buttons.
