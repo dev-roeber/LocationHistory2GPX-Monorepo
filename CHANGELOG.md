@@ -2,6 +2,11 @@
 
 ## 2026-03-18
 
+### Import Truth Sync
+- verbliebene Core-UI-Texte von `app_export`-Spezialfall auf den echten JSON-/ZIP-Import-Scope umgestellt
+- ZIP-Fehlermeldungen auf aktuelle Unterstuetzung fuer LH2GPX- und Google-Timeline-Archive korrigiert
+- `AGENTS.md`, README und Apple-/Xcode-Doku auf den realen Importstand synchronisiert
+
 ### Phase 20.2 – Live Recording MVP
 - foreground-only Live-Location fuer die Kartenansicht eingebaut
 - manuellen Ein/Aus-Schalter mit sauber modellierten Permission-Zustaenden hinzugefuegt

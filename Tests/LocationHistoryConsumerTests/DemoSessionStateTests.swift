@@ -102,7 +102,7 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertFalse(state.hasLoadedContent)
         XCTAssertNil(state.selectedDate)
         XCTAssertEqual(state.presentationState, .idle)
-        XCTAssertEqual(state.message?.title, "No app export loaded")
+        XCTAssertEqual(state.message?.title, "No location history loaded")
         XCTAssertEqual(state.sourceSummary.sourceValue, "None")
     }
 
@@ -143,23 +143,23 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertFalse(state.hasLoadedContent)
         XCTAssertNil(state.selectedDate)
         XCTAssertEqual(state.message?.kind, .info)
-        XCTAssertEqual(state.message?.title, "No app export loaded")
+        XCTAssertEqual(state.message?.title, "No location history loaded")
     }
 
     func testIdleAndFailureStatesHaveDistinctSourceSummaries() {
         var idleState = AppSessionState()
         XCTAssertEqual(idleState.presentationState, .idle)
-        XCTAssertEqual(idleState.sourceSummary.stateTitle, "No app export loaded")
+        XCTAssertEqual(idleState.sourceSummary.stateTitle, "No location history loaded")
         XCTAssertTrue(idleState.sourceSummary.statusText.contains("LocationHistory2GPX"))
 
         idleState.showFailure(
-            title: "Unable to open app export",
-            message: "Unable to decode app export file: broken.json",
+            title: "Unable to open location history",
+            message: "Unable to decode location history file: broken.json",
             preserveCurrentContent: false
         )
 
         XCTAssertEqual(idleState.presentationState, .failedWithoutContent)
-        XCTAssertEqual(idleState.sourceSummary.stateTitle, "Unable to open app export")
+        XCTAssertEqual(idleState.sourceSummary.stateTitle, "Unable to open location history")
         XCTAssertEqual(idleState.sourceSummary.sourceValue, "None")
     }
 

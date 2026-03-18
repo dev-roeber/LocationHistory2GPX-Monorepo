@@ -74,7 +74,7 @@ Die Query-Schicht in `Sources/LocationHistoryConsumer/Queries/` ist bewusst cons
 - `Sources/LocationHistoryConsumerAppSupport/` enthaelt generische Session-, Loader- und gemeinsame Inhaltsdarstellung fuer Apple-UI-Schichten.
 - `Sources/LocationHistoryConsumerDemoSupport/` bleibt fixture-zentrierte Demo-Unterstuetzung.
 - `Sources/LocationHistoryConsumerDemo/` bleibt Harness-/Verifikationsoberflaeche.
-- `Sources/LocationHistoryConsumerApp/` ist die kleine produktnaehere Einstiegsschicht fuer lokalen `app_export.json`-Import.
+- `Sources/LocationHistoryConsumerApp/` ist die kleine produktnaehere Einstiegsschicht fuer lokalen JSON-/ZIP-Import.
 - `docs/XCODE_RUNBOOK.md` dokumentiert den reproduzierbaren Xcode-Laufweg.
 - `docs/APPLE_VERIFICATION_CHECKLIST.md` dokumentiert die konkreten Apple-Pruefschritte und deren Status.
 - `docs/XCODE_APP_PREPARATION.md` bleibt die kleinere vorbereitende Notiz aus der Vorphase.
@@ -86,16 +86,16 @@ Die SwiftUI-Demo in `Sources/LocationHistoryConsumerDemo/` ist nur ein lokaler H
 - Sie kann auf Apple-Plattformen alternativ lokal eine `app_export.json` laden.
 - Sie nutzt nur Decoder + Query-Layer, keine neue Domain-Logik.
 - Sie fuehrt Quelle, Reset und Fehlerzustand bewusst nur in einer kleinen Demo-Session-Schicht.
-- Sie bleibt auf den eingefrorenen Consumer-Contract beschraenkt und importiert keine Google-Rohdaten.
+- Sie bleibt auf den eingefrorenen Consumer-Contract beschraenkt; der lokal begrenzte Google-Timeline-Import bleibt Consumer-seitig erlaubt.
 - Sie ist keine Produkt-App und fuehrt keine Persistenz ein.
 
 ## App-Shell
 
 Die kleine App-Shell in `Sources/LocationHistoryConsumerApp/` ist bewusst produktnaeher, aber weiter begrenzt:
-- primaerer Einstieg: lokales `app_export.json` oeffnen
+- primaerer Einstieg: lokale LH2GPX- oder Google-Timeline-Datei oeffnen
 - sekundaerer Fallback: Demo-Daten laden
 - gleiche Session-/Content-Typen wie die Demo
-- import-first Leerlaufzustand mit klarer Erklaerung des erwarteten lokalen `app_export.json`
+- import-first Leerlaufzustand mit klarer Erklaerung der unterstuetzten lokalen JSON-/ZIP-Dateien
 - kompakter Quellen-/Contract-Bereich fuer aktive Quelle, Schema-Version, Exportzeitpunkt, Input-Format und Tagesanzahl
 - klarer Open-/Replace-/Clear-Fluss ohne Persistenz oder Dateiverlauf
-- keine Persistenz, keine Maps, keine Suche, keine Google-Rohdaten
+- kein Sync, keine Server-/Cloud-Funktionen, kein Background-Tracking

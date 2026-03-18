@@ -387,7 +387,7 @@ public struct AppContentSplitView: View {
                     .foregroundStyle(.secondary)
                 Text("No Insights Available")
                     .font(.headline)
-                Text("Load an app export to see detailed insights.")
+                Text("Load a location history file to see detailed insights.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -472,7 +472,7 @@ public struct AppContentSplitView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open app_export.json / .zip"
+        session.hasLoadedContent ? "Open Another File" : "Open location history file"
     }
 
     private var demoButtonTitle: String {

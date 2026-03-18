@@ -17,7 +17,7 @@ Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 - [x] `LocationHistoryConsumerApp` baut fuer `platform=macOS`
 - [x] das gebaute App-Shell-Binary startet sichtbar in einer echten foreground-App-Session
 - [x] `Load Demo Data`
-- [x] `Open app_export.json`
+- [x] `Open location history file`
 - [x] `Open Another File` ersetzt bestehenden Inhalt
 - [x] `Clear` / Reset
 - [x] invalides JSON mit erhaltenem letztem gueltigen Inhalt
@@ -70,17 +70,17 @@ Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
   - kein sofortiger Crash
 - Status 2026-03-17:
   - verifiziert
-  - sichtbarer Startscreen mit `Open an app_export.json file` real bestaetigt
+  - sichtbarer Startscreen mit `Import your location history` real bestaetigt
   - kein Crash
   - Hinweis: der spezifische IDE-Lauf `Product > Run` wurde in dieser Phase nicht noch einmal separat als foreground-Nachweis festgehalten
 
-### 3. Open `app_export.json`
+### 3. Open location history file
 
 - Schritt:
-  - `Open app_export.json` klicken
+  - `Open location history file` klicken
   - z. B. `Fixtures/contract/golden_app_export_sample_small.json` waehlen
 - Erfolg gilt als:
-  - Status `Imported app export loaded`
+  - Status `Location history loaded` oder `Google Timeline loaded`
   - Quelle `Imported file: <dateiname>.json`
   - Overview, Day-Liste und Day-Detail sichtbar
 - Status 2026-03-17:
@@ -107,24 +107,24 @@ Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 - Schritt:
   - nach geladenem Inhalt `Clear` klicken
 - Erfolg gilt als:
-  - Rueckfall auf `No app export loaded`
+  - Rueckfall auf `No location history loaded`
   - Quelle `None`
   - Startbuttons wieder sichtbar
 - Status 2026-03-17:
   - verifiziert
-  - Rueckfall auf `Open an app_export.json file` und `No app export loaded` real bestaetigt
+  - Rueckfall auf `Import your location history` und `No location history loaded` real bestaetigt
 
 ### 6. Fehlerfall mit ungueltiger JSON
 
 - Schritt:
   - lokale Datei mit kaputtem JSON importieren
 - Erfolg gilt als:
-  - Fehlerzustand `Unable to open app export`
+  - Fehlerzustand `Unable to open file`, `Unsupported file format` oder `File could not be opened`
   - bei vorhandenem Inhalt bleibt letzter gueltiger Stand sichtbar
 - Status 2026-03-17:
   - verifiziert
-  - Fehlerkarte `Unable to open app export` erschien real
-  - Meldung `Unable to decode app export file: lh2gpx_invalid.json` erschien real
+  - Fehlerkarte fuer den jeweiligen Importfehler erschien real
+  - Meldung fuer den konkreten Decoder-/Formatfehler erschien real
   - letzter gueltiger importierter Inhalt blieb sichtbar
 
 ### 7. Leerer Export / no days

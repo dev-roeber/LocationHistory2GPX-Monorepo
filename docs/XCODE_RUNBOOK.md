@@ -8,7 +8,7 @@ Es fokussiert bewusst nur den bestehenden Consumer-Scope:
 - `LocationHistoryConsumer` bleibt der app_export-Consumer-Core
 - `LocationHistoryConsumerDemo` bleibt Harness/Sample
 - `LocationHistoryConsumerAppSupport` bleibt app-nahe Session-/State-/Composition-Schicht
-- `LocationHistoryConsumerApp` bleibt die produktnaehere App-Shell fuer lokalen `app_export.json`-Import
+- `LocationHistoryConsumerApp` bleibt die produktnaehere App-Shell fuer lokalen JSON-/ZIP-Import
 
 Keine Maps, keine Persistenz, keine Suche, kein Sync und keine Producer-Logik in Swift.
 
@@ -56,7 +56,7 @@ Die fuer diese Phase relevanten Schemes sind:
 - `LocationHistoryConsumerApp`
   - produktnaehere App-Shell
   - import-first Startzustand
-  - lokales `app_export.json` oeffnen
+  - lokale LH2GPX- oder Google-Timeline-Datei oeffnen
   - Demo-Daten nur als Fallback
 - `LocationHistoryConsumerDemo`
   - Harness-/Verifikationsoberflaeche
@@ -79,8 +79,8 @@ Die fuer diese Phase relevanten Schemes sind:
 Erwarteter Startzustand:
 
 - leerer import-first Screen
-- Titel `Open an app_export.json file`
-- primaerer Button `Open app_export.json`
+- Titel `Import your location history`
+- primaerer Button `Open location history file`
 - sekundaerer Button `Load Demo Data`
 - noch keine Persistenz oder Dateihistorie
 
@@ -102,9 +102,9 @@ Erwartet:
 - Day-Detail und Overview werden angezeigt
 - Toolbar zeigt danach `Open Another File`, `Reload Demo Data` und `Clear`
 
-## Lokalen `app_export.json`-Import pruefen
+## Lokalen Import pruefen
 
-Fuer den ersten lokalen Import muss kein echtes Produkt-Exportfile vorliegen. Eine Contract-Fixture aus dem Repo reicht fuer diesen UI-Laufweg:
+Fuer den ersten lokalen Import muss kein echtes Produkt-Exportfile vorliegen. Eine Contract-Fixture aus dem Repo reicht fuer LH2GPX-Dateien; alternativ kann eine reale Google-Timeline-Datei verwendet werden:
 
 - `Fixtures/contract/golden_app_export_sample_small.json`
 - `Fixtures/contract/golden_app_export_no_days_zero.json`
@@ -113,12 +113,12 @@ Fuer den ersten lokalen Import muss kein echtes Produkt-Exportfile vorliegen. Ei
 Schritte:
 
 1. App mit `LocationHistoryConsumerApp` starten
-2. `Open app_export.json` oder spaeter `Open Another File` klicken
-3. im Apple-Dateiimporter eine lokale JSON-Datei aus `Fixtures/contract/` waehlen
+2. `Open location history file` oder spaeter `Open Another File` klicken
+3. im Apple-Dateiimporter eine lokale JSON- oder ZIP-Datei waehlen
 
 Erwartet:
 
-- Statuskarte `Imported app export loaded`
+- Statuskarte `Location history loaded` oder `Google Timeline loaded`
 - aktive Quelle `Imported file: <dateiname>.json`
 - Overview wird angezeigt
 - Day-Liste und Day-Detail sind sichtbar
@@ -135,18 +135,18 @@ Mindestens diese kleinen UI-Laufwege pruefen:
 
 Erwartet:
 
-- Status `No app export loaded`
+- Status `No location history loaded`
 - aktive Quelle `None`
-- Buttons `Open app_export.json` und `Load Demo Data`
+- Buttons `Open location history file` und `Load Demo Data`
 
 ### Invalides JSON
 
 1. lokal eine kaputte JSON-Datei bereitstellen, z. B. mit Inhalt `{`
-2. ueber `Open app_export.json` importieren
+2. ueber `Open location history file` importieren
 
 Erwartet:
 
-- Fehlzustand `Unable to open app export`
+- Fehlzustand `Unable to open file` oder `Unsupported file format`
 - bei leerem Vorzustand bleibt keine aktive Quelle
 - bei bereits geladenem Inhalt bleibt letzter gueltiger Inhalt sichtbar
 
@@ -204,7 +204,7 @@ Stand 2026-03-17 wurde auf einer echten macOS-/Xcode-Maschine Folgendes real gep
 - echte interaktive Apple-UI-Laeufe wurden erfolgreich gegen die produktnahe App-Shell ausgefuehrt:
   - sichtbarer import-first Startscreen
   - `Load Demo Data`
-  - `Open app_export.json` ueber nativen Apple-Dateiimporter mit gueltiger lokaler Datei
+  - `Open location history file` ueber nativen Apple-Dateiimporter mit gueltiger lokaler Datei
   - `Open Another File` zum Ersetzen des aktuellen Inhalts
   - `Clear`
   - invalides JSON mit sichtbarer Fehlermeldung bei erhaltenem letztem gueltigen Inhalt
@@ -225,6 +225,6 @@ Nicht separat als eigener Nachweis festgehalten:
 
 - kein `.xcodeproj`, nur Swift Package
 - keine Signierung, keine Distribution, keine Entitlements-Arbeit
-- keine Persistenz, keine Maps, keine Suche, kein Sync
-- kein Google-Rohdatenimport
+- kein Sync und keine Cloud-/Server-Anteile
+- kein Background-Tracking und kein Auto-Resume laufender Live-Tracks
 - Apple-Verifikation ersetzt nicht `swift test`, und `swift test` ersetzt keinen echten Apple-UI-Lauf

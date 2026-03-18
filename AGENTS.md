@@ -4,13 +4,14 @@
 
 - Dieses Repo ist ausschliesslich Consumer des stabilen App-Exports aus `LocationHistory2GPX`.
 - Keine Producer-Verantwortung hierher ziehen.
-- Keine Google-Rohdaten parsern.
+- Keine allgemeine Producer-Pipeline fuer Google-Rohdaten hierher ziehen.
+- Der lokal begrenzte Import von Google-Timeline-`location-history.json` / `.zip` in die Consumer-App ist erlaubt.
 - Keine vollstaendige Produkt-App oder neue Produktfeatures in diesem Schritt bauen.
 - Read-only Query-/ViewState-Schicht ist erlaubt, solange sie contract-basiert bleibt.
 - Eine minimale lokale Demo-/Harness-Shell ist erlaubt, solange sie nur Decoder + Query-Layer nutzt.
 - Ein lokaler `app_export.json`-Import in der Demo ist erlaubt, solange er nur den Consumer-Contract laedt und keine Persistenz oder Producer-Logik einfuehrt.
 - Kleine Demo-Zustandslogik fuer Quelle, Reset, Auswahl und Fehler ist erlaubt, solange sie in der Harness-Schicht bleibt und testbar bleibt.
-- Eine kleine produktnahe App-Shell ist erlaubt, solange sie nur lokalen `app_export.json`-Import anbietet und dieselben Core-/Support-Typen wiederverwendet.
+- Eine kleine produktnahe App-Shell ist erlaubt, solange sie lokalen LH2GPX-`app_export.json`-/`.zip`-Import und den eng begrenzten Google-Timeline-Import anbietet und dieselben Core-/Support-Typen wiederverwendet.
 - Kleine app-nahe Informationsarchitektur fuer Quelle, Status, Replace- und Reset-Fluss ist erlaubt, solange sie nur Composition/State bleibt und keine neue Fachlogik einfuehrt.
 - Security-Scoped Bookmark-Persistenz fuer die zuletzt importierte Datei ist erlaubt, solange sie nur UserDefaults nutzt und keine Inhaltsdaten persistiert.
 - Ehrliche Apple-/Xcode-Vorbereitung ist erlaubt, solange Linux-Tests intakt bleiben und keine ungetestete Apple-Verifikation behauptet wird.

@@ -117,7 +117,7 @@ final class AppContentLoaderTests: XCTestCase {
         XCTAssertEqual(error.userFacingTitle, "No export found in ZIP")
     }
 
-    func testJsonNotFoundInZipDescriptionMentionsConversionWorkflow() throws {
+    func testJsonNotFoundInZipDescriptionMentionsSupportedZipContents() throws {
         let zipURL = try makeZip(entries: ["readme.txt": Data("hello".utf8)])
         defer { try? FileManager.default.removeItem(at: zipURL) }
 
@@ -127,8 +127,8 @@ final class AppContentLoaderTests: XCTestCase {
         } catch let error as AppContentLoaderError {
             let description = try XCTUnwrap(error.errorDescription)
             XCTAssertTrue(
-                description.contains("LocationHistory2GPX"),
-                "Error description should mention the required tool. Got: \(description)"
+                description.contains("Google Timeline"),
+                "Error description should mention supported ZIP contents. Got: \(description)"
             )
         }
     }
@@ -163,9 +163,9 @@ final class AppContentLoaderTests: XCTestCase {
         }
     }
 
-    func testJsonNotFoundInZipErrorDescriptionMentionsTool() throws {
+    func testJsonNotFoundInZipErrorDescriptionMentionsSingleSupportedJson() throws {
         // ZIP with an invalid JSON object (no valid LH2GPX export) → jsonNotFoundInZip.
-        // Description must mention the required tool, not a specific filename.
+        // Description must explain the supported single-entry rule.
         let zipURL = try makeZip(entries: ["other.json": Data("{}".utf8)])
         defer { try? FileManager.default.removeItem(at: zipURL) }
 
@@ -175,8 +175,8 @@ final class AppContentLoaderTests: XCTestCase {
         } catch let error as AppContentLoaderError {
             let description = try XCTUnwrap(error.errorDescription)
             XCTAssertTrue(
-                description.contains("LocationHistory2GPX"),
-                "Error description should mention the required tool. Got: \(description)"
+                description.contains("exactly one"),
+                "Error description should explain the expected ZIP contents. Got: \(description)"
             )
         }
     }
@@ -400,7 +400,7 @@ final class AppContentLoaderTests: XCTestCase {
         let error = AppContentLoaderError.multipleExportsInZip("archive.zip")
         let description = error.errorDescription ?? ""
         XCTAssertTrue(
-            description.contains("one"),
+            description.contains("Google Timeline"),
             "Error description should mention single export expectation. Got: \(description)"
         )
     }

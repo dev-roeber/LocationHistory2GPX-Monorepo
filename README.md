@@ -5,7 +5,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 ## Rolle dieses Repos
 
 - Consumer only
-- kein Parser fuer Google-Rohdaten
+- keine allgemeine Producer-Pipeline oder Takeout-Aufbereitung fuer Google-Rohdaten
 - keine GPX-/GeoJSON-/CSV-Erzeugung
 - keine fertige Produkt-App in diesem Schritt
 - offline-first, ohne Netzwerkcode, Analytics-Tracking oder Cloud-Sync
@@ -26,7 +26,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - Google-Timeline-`location-history.json` und `.zip` lokal direkt importieren
 - gegen Swift-Modelle decodieren
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
-- eine kleine produktnahe App-Shell-Struktur fuer lokalen `app_export.json`-Import bereitstellen
+- eine kleine produktnahe App-Shell-Struktur fuer lokalen JSON-/ZIP-Import bereitstellen
 - die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
 - foreground-only Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
@@ -60,7 +60,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
 - `Sources/LocationHistoryConsumerApp/`
-  - Produkt-App-Einstieg fuer lokalen `app_export.json`-Import
+  - Produkt-App-Einstieg fuer lokalen JSON-/ZIP-Import
 - `Sources/LocationHistoryConsumerDemo/`
   - Demo-/Harness-Einstieg fuer Fixture-zentrierte Verifikation
 - `Tests/LocationHistoryConsumerTests/`
@@ -157,7 +157,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
 - Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
-- startet mit lokalem `app_export.json`-Import als primaerem Einstieg
+- startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
@@ -179,7 +179,7 @@ Stand 2026-03-17 ist auf einer realen macOS-/Xcode-Maschine ehrlich verifiziert:
 - Xcode 26.3 erkennt die relevanten Swift-Package-Schemes
 - `LocationHistoryConsumerApp` baut fuer `platform=macOS` erfolgreich per `xcodebuild`
 - die produktnahe App-Shell startet sichtbar in einer echten foreground-App-Session
-- `Load Demo Data`, `Open app_export.json`, `Open Another File`, `Clear`, invalides JSON und ein echter Zero-Day-Import wurden als reale Apple-UI-Durchgaenge verifiziert
+- `Load Demo Data`, `Open location history file`, `Open Another File`, `Clear`, invalides JSON und ein echter Zero-Day-Import wurden als reale Apple-UI-Durchgaenge verifiziert
 - `swift test` laeuft mit dem echten Xcode-Developer-Dir gruen
 
 Stand 2026-03-17 ist noch offen:

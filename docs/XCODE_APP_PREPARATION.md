@@ -34,15 +34,15 @@ Alternativ kann das Verzeichnis in Xcode geoeffnet werden. Die produktnahe App-S
 - SwiftUI-basierte Demo- und App-Shell-Targets sind im Swift Package getrennt vorhanden.
 - `LocationHistoryConsumerApp` ist import-first und als spaetere Apple-Produkt-App-Huelle positioniert.
 - Gemeinsame app-nahe Session-/Import-Logik ist in `LocationHistoryConsumerAppSupport` gekapselt statt in Demo-Views.
-- Das Repo bleibt offline-only und konsumiert ausschliesslich `app_export.json` nach dem eingefrorenen Consumer-Contract.
+- Das Repo bleibt offline-only und konsumiert den eingefrorenen Consumer-Contract; lokal unterstuetzt die App inzwischen LH2GPX-`app_export.json`-/`.zip`-Import sowie den begrenzten Google-Timeline-Import.
 
 ## Was bewusst noch nicht vorbereitet ist
 
 - kein `.xcodeproj`
 - kein signierter Apple-App-Build
 - keine `Info.plist`-/Bundle-/Icon-/Entitlement-Ausarbeitung
-- keine Persistenz, Maps, Suche oder Cloud-Funktionen
-- kein Google-Rohdatenimport
+- keine Cloud-/Server-Funktionen
+- kein Background-Tracking oder Auto-Resume laufender Live-Tracks
 
 ## Lokale Verifikation
 
@@ -69,7 +69,7 @@ Stand 2026-03-17 ist auf einer echten macOS-/Xcode-Maschine zusaetzlich verifizi
 Stand 2026-03-17 wurde zusaetzlich in Phase 11/12 verifiziert:
 
 - sichtbarer interaktiver UI-Run mit manuell bestaetigter Fensterdarstellung
-- `Load Demo Data`, `Open app_export.json`, `Clear` und Fehlerfaelle als echte UI-Durchgaenge
+- `Load Demo Data`, `Open location history file`, `Clear` und Fehlerfaelle als echte UI-Durchgaenge
 - Details siehe `docs/APPLE_VERIFICATION_CHECKLIST.md`
 
 Wichtig fuer diese konkrete Maschine: das aktive `xcode-select` zeigte auf `/Library/Developer/CommandLineTools`; deshalb wurden Xcode-Build und SwiftPM-Test bewusst ueber `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` ausgefuehrt.

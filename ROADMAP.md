@@ -608,7 +608,7 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 
 **Problem vorher:** App startete automatisch mit zuletzt importierter Datei. Auf iPhone fuehrte das zu einem eingeschraenkten, schwer vorhersehbaren Einstiegspunkt. Nutzer landete direkt in der Navigation ohne sichtbaren Ausgangspunkt.
 
-**Jetzt:** Jeder App-Start beginnt mit dem manuellen Einstieg (Open app_export.json / Load Demo Data). Persistenz-Logik ist vollstaendig erhalten und kann jederzeit wieder aktiviert werden.
+**Jetzt:** Jeder App-Start beginnt mit dem manuellen Einstieg (Open location history file / Load Demo Data). Persistenz-Logik ist vollstaendig erhalten und kann jederzeit wieder aktiviert werden.
 
 **Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
 

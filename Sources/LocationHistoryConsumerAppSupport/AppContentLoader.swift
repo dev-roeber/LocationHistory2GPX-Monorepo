@@ -2,7 +2,7 @@ import Foundation
 import LocationHistoryConsumer
 import ZIPFoundation
 
-/// Errors that can occur when loading or decoding an app export.
+/// Errors that can occur when loading or decoding imported location-history data.
 public enum AppContentLoaderError: LocalizedError {
     case fixtureNotFound(String)
     case fileReadFailed(String)
@@ -35,18 +35,18 @@ public enum AppContentLoaderError: LocalizedError {
         case let .fileReadFailed(name):
             return "'\(name)' could not be read. The file may be corrupted or inaccessible."
         case let .unsupportedFormat(name):
-            return "'\(name)' is not a supported export format. Open a file created by the LocationHistory2GPX tool — either a .json export or a .zip containing it."
+            return "'\(name)' is not a supported location history format. Open an LH2GPX app_export.json or .zip from the LocationHistory2GPX tool, or a Google Timeline location-history.json or .zip."
         case let .decodeFailed(name):
             return "'\(name)' could not be decoded. The file may have been created with an incompatible version of the LocationHistory2GPX tool."
         case let .jsonNotFoundInZip(name):
-            return "'\(name)' does not contain a compatible LH2GPX export. This app only opens exports created by the LocationHistory2GPX tool. If you have a Google Timeline ZIP, use the tool to convert it first."
+            return "'\(name)' does not contain a supported location history export. The ZIP must contain exactly one compatible LH2GPX export JSON or one Google Timeline JSON such as location-history.json."
         case let .multipleExportsInZip(name):
-            return "'\(name)' contains multiple compatible exports. Place only one LH2GPX export per ZIP."
+            return "'\(name)' contains multiple compatible location history exports. Place only one LH2GPX export or one Google Timeline JSON per ZIP."
         }
     }
 }
 
-/// Decodes app exports (JSON or ZIP) and fixture files into `AppSessionContent`.
+/// Decodes imported location-history files (JSON or ZIP) and fixtures into `AppSessionContent`.
 public enum AppContentLoader {
     /// Name of the bundled demo fixture used by default when no file is imported.
     public static let defaultDemoFixtureName = "golden_app_export_sample_small"

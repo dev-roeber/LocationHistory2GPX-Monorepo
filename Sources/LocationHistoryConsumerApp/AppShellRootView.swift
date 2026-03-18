@@ -25,7 +25,7 @@ struct AppShellRootView: View {
                 NavigationStack {
                     Group {
                         if session.isLoading {
-                            ProgressView("Opening app export...")
+                            ProgressView("Opening location history...")
                         } else {
                             AppShellEmptyStateView(
                                 message: session.message,
@@ -91,7 +91,7 @@ struct AppShellRootView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open app_export.json / .zip"
+        session.hasLoadedContent ? "Open Another File" : "Open location history file"
     }
 
     private var demoButtonTitle: String {
@@ -170,7 +170,7 @@ private struct AppShellEmptyStateView: View {
             VStack(spacing: 8) {
                 Text("Import your location history")
                     .font(.title2.weight(.semibold))
-                Text("Export your location history using the LocationHistory2GPX tool, then open the resulting app_export.json or .zip file here.")
+                Text("Open an LH2GPX app_export.json or .zip from the LocationHistory2GPX tool — or a Google Timeline location-history.json or .zip from Google Takeout.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -182,7 +182,7 @@ private struct AppShellEmptyStateView: View {
 
             VStack(spacing: 10) {
                 Button(action: openAction) {
-                    Label("Open app_export.json / .zip", systemImage: "doc.badge.plus")
+                    Label("Open location history file", systemImage: "doc.badge.plus")
                 }
                 .buttonStyle(.borderedProminent)
                 Button(action: loadDemoAction) {

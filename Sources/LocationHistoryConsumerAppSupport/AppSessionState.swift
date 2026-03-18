@@ -182,14 +182,14 @@ public struct AppSessionState {
         switch presentationState {
         case .idle:
             return AppSourceSummary(
-                stateTitle: "No app export loaded",
+                stateTitle: "No location history loaded",
                 sourceLabel: "Active Source",
                 sourceValue: "None",
                 schemaVersion: nil,
                 inputFormat: nil,
                 exportedAt: nil,
                 dayCountText: nil,
-                statusText: message?.message ?? "Use the LocationHistory2GPX tool to create an app_export.json, then open it here. Demo data is available as a fallback."
+                statusText: message?.message ?? "Open an LH2GPX app_export.json or .zip from the LocationHistory2GPX tool, or a Google Timeline location-history.json or .zip. Demo data is available as a fallback."
             )
         case .loading:
             return AppSourceSummary(
@@ -212,13 +212,13 @@ public struct AppSessionState {
                 exportedAt: overview?.exportedAt,
                 dayCountText: dayCountText,
                 statusText: hasDays
-                    ? "Bundled demo data is active. Open a local app_export.json file to replace it."
+                    ? "Bundled demo data is active. Open a local location history file to replace it."
                     : "Bundled demo data decoded successfully but does not contain any day entries."
             )
         case .importedLoaded:
             let isGoogleTimeline = overview?.inputFormat == "google_timeline"
             return AppSourceSummary(
-                stateTitle: isGoogleTimeline ? "Google Timeline loaded" : "Imported app export loaded",
+                stateTitle: isGoogleTimeline ? "Google Timeline loaded" : "Location history loaded",
                 sourceLabel: "Active Source",
                 sourceValue: sourceDescription ?? "Imported file",
                 schemaVersion: overview?.schemaVersion,
@@ -231,14 +231,14 @@ public struct AppSessionState {
             )
         case .failedWithoutContent:
             return AppSourceSummary(
-                stateTitle: message?.title ?? "Unable to open app export",
+                stateTitle: message?.title ?? "Unable to open location history",
                 sourceLabel: "Active Source",
                 sourceValue: "None",
                 schemaVersion: nil,
                 inputFormat: nil,
                 exportedAt: nil,
                 dayCountText: nil,
-                statusText: "No app export is currently active. Open a local app_export.json file or load demo data."
+                statusText: "No location history is currently active. Open a local location history file or load demo data."
             )
         case .failedWithContent:
             return AppSourceSummary(
@@ -278,7 +278,7 @@ public struct AppSessionState {
         } else if content.overview.inputFormat == "google_timeline" {
             title = "Google Timeline loaded"
         } else {
-            title = "Imported app export ready"
+            title = "Location history ready"
         }
         message = AppUserMessage(
             kind: .info,
@@ -323,8 +323,8 @@ public struct AppSessionState {
         exportSelection.clearAll()
         message = AppUserMessage(
             kind: .info,
-            title: "No app export loaded",
-            message: "Open a local app_export.json file or load the bundled demo data."
+            title: "No location history loaded",
+            message: "Open a local location history file or load the bundled demo data."
         )
     }
 }
