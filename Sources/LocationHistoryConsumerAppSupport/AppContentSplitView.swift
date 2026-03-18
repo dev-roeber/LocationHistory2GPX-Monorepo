@@ -50,6 +50,7 @@ private enum AppTimeDisplay {
 public struct AppContentSplitView: View {
     @Binding private var session: AppSessionState
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var isOverviewPushed = false
 
     public init(session: Binding<AppSessionState>) {
         self._session = session
@@ -65,16 +66,51 @@ public struct AppContentSplitView: View {
                 )
             )
             .navigationTitle("Days")
+            #if os(iOS)
+            .toolbar {
+                if horizontalSizeClass == .compact {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            isOverviewPushed = true
+                        } label: {
+                            Label("Overview", systemImage: "chart.bar.doc.horizontal")
+                        }
+                    }
+                }
+            }
+            #endif
+            .navigationDestination(isPresented: $isOverviewPushed) {
+                ScrollView {
+                    overviewPaneContent
+                        .padding()
+                }
+                .navigationTitle("Overview")
+            }
         } detail: {
             detailPane
         }
-        .task { sanitizeCompactSelection() }
-        .onChange(of: session.daySummaries) { _ in sanitizeCompactSelection() }
+        .task { resetForCompact() }
+        .onChange(of: session.daySummaries) { _ in resetForCompact() }
     }
 
-    private func sanitizeCompactSelection() {
+    private func resetForCompact() {
         guard horizontalSizeClass == .compact else { return }
-        session.sanitizeSelectionIfContentEmpty()
+        session.selectDay(nil)
+    }
+
+    @ViewBuilder
+    private var overviewPaneContent: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            AppSessionStatusView(
+                summary: session.sourceSummary,
+                message: session.message,
+                isLoading: session.isLoading,
+                hasDays: session.hasDays
+            )
+            if let overview = session.overview {
+                AppOverviewSection(overview: overview)
+            }
+        }
     }
 
     @ViewBuilder
@@ -92,18 +128,10 @@ public struct AppContentSplitView: View {
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    AppSessionStatusView(
-                        summary: session.sourceSummary,
-                        message: session.message,
-                        isLoading: session.isLoading,
-                        hasDays: session.hasDays
-                    )
-                    if let overview = session.overview {
-                        AppOverviewSection(overview: overview)
-                    }
+                    overviewPaneContent
                     if session.hasDays {
                         Label(
-                            "Select a day from the sidebar to view details.",
+                            "Select a day from the list to view details.",
                             systemImage: "hand.tap"
                         )
                         .font(.subheadline)

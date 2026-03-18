@@ -347,6 +347,28 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 
 **Nicht-Ziele:** Keine Places-API-Integration. Kein Netzwerk. Kein Redesign. Keine neuen Features.
 
+---
+
+### Phase 19.8 – UX: Overview auf iPhone compact zugaenglich + Day List als Landing
+
+**Datum:** 2026-03-18
+**Ziel:** Overview auf iPhone compact erreichbar machen. Beim Laden von Inhalten soll der Nutzer auf der Day List landen statt direkt im Day Detail des ersten Tages. Expliziter "Overview"-Button im Navigations-Header der Day List auf compact.
+
+- [x] resetForCompact() ersetzt sanitizeCompactSelection(): bei Content-Load auf compact wird Selektion zurueckgesetzt
+- [x] "Overview"-Button in Day-List-Toolbar (nur compact, nur iOS) navigiert per .navigationDestination zur Overview-Ansicht
+- [x] overviewPaneContent als wiederverwendbarer ViewBuilder extrahiert (genutzt in detailPane und compact-Overview)
+- [x] "Select a day from the sidebar" korrigiert zu "Select a day from the list" (platform-neutral)
+
+**Problem vorher:** Beim Laden (Demo oder Import) wurde selectedDate automatisch auf den ersten Tag gesetzt. NavigationSplitView compact pushte sofort in Day Detail. Nutzer sah weder Day List noch Overview als Landing. Overview war auf iPhone compact nie erreichbar.
+
+**Jetzt:** Beim Laden wird selectedDate auf compact zurueckgesetzt. Nutzer landet auf der Day List. Expliziter "Overview"-Button (chart.bar.doc.horizontal) oben links oeffnet die Overview per Push. Day Detail via Zeilentipp in der Liste erreichbar. Alle wichtigen Seiten erreichbar.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Core-Repo). Wrapper-Repo via SPM automatisch aktuell.
+
+**Nicht-Ziele:** Kein iPad-Fokus. Keine neue Architektur. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
+
 
 
 **Datum:** 2026-03-18

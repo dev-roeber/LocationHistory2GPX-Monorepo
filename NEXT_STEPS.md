@@ -2,9 +2,14 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.7 abgeschlossen. Naechster Schritt: Phase 19.8 bestimmen. Kandidaten: Toolbar-Kompression auf iPhone, "sidebar"-Instruktionstext verbessern, Empty-State-Button-Layout.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.8 abgeschlossen. Naechster Schritt: Phase 19.9 bestimmen. Kandidaten: Toolbar-Kompression auf iPhone (drei Buttons + lange Titel), Empty-State-Button-Layout auf iPhone.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.8 (2026-03-18):**
+- Day List als Landing auf iPhone compact: kein Auto-Push in Day Detail beim Laden
+- Overview-Button in Day-List-Toolbar (compact/iOS): explizit zugaenglich
+- "sidebar"-Text korrigiert zu "list" (platform-neutral)
 
 **Abgeschlossene Phase 19.7 (2026-03-18):**
 - Rohe Google Place IDs aus Visit-Cards entfernt: kein technisches Rauschen mehr in visitCard()
