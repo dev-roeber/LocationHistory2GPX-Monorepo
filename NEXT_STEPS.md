@@ -2,10 +2,21 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.21b abgeschlossen (Google Timeline JSON direkt importierbar). Kein konkret naechster Schritt definiert.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.22 abgeschlossen (Import async, ZIP-Robustheit, UX-Strings, sortedDays-Redundanz). Kein konkret naechster Schritt definiert.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. **Accessibility-Audit – bewusst geparkt** – Kein konkreter Bug, kein Trigger. Kein aktiver Fokus.
 4. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.22 (2026-03-18):**
+- Import async: loadImportedFile auf Task.detached, ProgressView animiert jetzt
+- loadBundledDemo entfernt fälschliches ImportBookmarkStore.clear()
+- Wrapper-UI: Button, Empty-State, ProgressView nennen Google Timeline explizit
+- "google_timeline" → "Google Timeline" im Display-Layer (sourceSummary)
+- stateTitle + show(content:) titel sind format-abhängig (Google Timeline vs. App Export)
+- ZIP-Größengrenze: Einträge >256 MB werden ausgeschlossen
+- ZIP einmalige Extraktion: Kandidaten werden nur einmal geladen
+- sortedDays in insights(from:) nur einmal berechnet
+- 96/96 Tests grün (Core); LH2GPXWrapper Wrapper-Commit 9e80823
 
 **Abgeschlossene Phase 19.21b (2026-03-18):**
 - Google Timeline JSON direkt importierbar (ohne ZIP); hasValidEntry-Guard fuer leere Arrays
