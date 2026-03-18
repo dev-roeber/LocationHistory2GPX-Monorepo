@@ -44,6 +44,33 @@ Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
 **Nicht-Ziele:** Kein iPad-Fokus. Keine neue Business-Logik. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
 
 ---
+
+### Phase 19.11 – UX: Insights-Tab + Activity/Visit-Breakdown + Overview-Enhancement
+
+**Datum:** 2026-03-18
+**Ziel:** Dritter Tab "Insights" fuer iPhone mit tiefer Statistik-Auswertung. Bisher ungenutzte Daten aus dem Query-Layer (stats.activities, stats.periods, Visit-Typen, Durchschnitte) endlich sichtbar machen. Overview-Tab mit Datumsbereich und Gesamtdistanz erweitern.
+
+- [x] Neues Datenmodell: ExportInsights mit DateRange, ActivityBreakdown, VisitTypeBreakdown, PeriodBreakdown, DayAverages
+- [x] Neue Query: AppExportQueries.insights(from:) — extrahiert Insights aus stats.activities (wenn vorhanden), sonst Fallback aus Day-Daten; aggregiert Visit-Typen, berechnet Tagesdurchschnitte
+- [x] AppSessionState + AppSessionContent um insights erweitert
+- [x] Neuer "Insights"-Tab im iPhone-TabView (3 Tabs: Overview, Days, Insights)
+- [x] Insights-Inhalt: Daily Averages (4 Stat-Cards), Activity Types (Cards mit Count, Distanz, Dauer, Geschwindigkeit), Visit Types (Icons + Count), Period Breakdown (wenn vorhanden)
+- [x] Overview-Tab erweitert: Datumsbereich-Header, Total Distance als prominente Anzeige
+- [x] iPad regular: Insights unterhalb von Overview im Detail-Pane (alles scrollbar)
+- [x] Visit-Typ-Icons: HOME=house, WORK=briefcase, CAFE=cup, PARK=leaf, LEISURE=gamecontroller, EVENT=star, STAY=bed
+- [x] Graceful Degradation: wenn stats.activities fehlt, werden Basisdaten aus Day-Entries abgeleitet; wenn stats.periods fehlt, wird die Sektion ausgeblendet
+
+**Problem vorher:** Die App zeigte nur 4 Basiszahlen (Days, Visits, Activities, Paths) und Activity-Typ-Namen als Comma-Text. Die reichen Statistiken aus stats.activities (Distanz, Dauer, Geschwindigkeit pro Typ) und stats.periods (Monats-/Jahresbreakdown) waren im Datenmodell komplett dekodiert aber nie in der UI sichtbar. Visit-Typen (HOME, WORK, CAFE, etc.) wurden nie aggregiert gezeigt. Kein Datumsbereich, keine Gesamtdistanz, keine Tagesdurchschnitte.
+
+**Jetzt:** Die App hat einen vollwertigen Insights-Tab mit 4 Sektionen. Activity Types zeigen Count, Gesamtdistanz, Dauer und Durchschnittsgeschwindigkeit. Visit Types zeigen semantische Icons. Daily Averages liefern schnelle Orientierung. Die Overview zeigt Datumsbereich und Gesamtdistanz. Die App nutzt jetzt die vorhandenen Daten so aus, wie es fuer ein professionelles Produkt erwartet wird.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** ExportInsights.swift (neu, Core-Repo). AppExportQueries.swift (Core-Repo). AppSessionState.swift (Core-Repo). AppContentSplitView.swift (Core-Repo). Wrapper-Repo via SPM automatisch aktuell.
+
+**Nicht-Ziele:** Keine Charts/Graphen. Kein iPad-Fokus. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
+
+---
 ## Geparkt / Extern
 Apple-/Developer-/ASC-/TestFlight-/Release-Themen (Phasen 20–21): kein aktiver Fokus.
 Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeglich sind.
@@ -472,6 +499,33 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 **Betroffene Dateien:** AppContentSplitView.swift (Core-Repo, Haupt-Rewrite). AppShellRootView.swift (Core-Repo, Closure-Uebergabe). ContentView.swift (Wrapper-Repo, Closure-Uebergabe).
 
 **Nicht-Ziele:** Kein iPad-Fokus. Keine neue Business-Logik. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
+
+---
+
+### Phase 19.11 – UX: Insights-Tab + Activity/Visit-Breakdown + Overview-Enhancement
+
+**Datum:** 2026-03-18
+**Ziel:** Dritter Tab "Insights" fuer iPhone mit tiefer Statistik-Auswertung. Bisher ungenutzte Daten aus dem Query-Layer (stats.activities, stats.periods, Visit-Typen, Durchschnitte) endlich sichtbar machen. Overview-Tab mit Datumsbereich und Gesamtdistanz erweitern.
+
+- [x] Neues Datenmodell: ExportInsights mit DateRange, ActivityBreakdown, VisitTypeBreakdown, PeriodBreakdown, DayAverages
+- [x] Neue Query: AppExportQueries.insights(from:) — extrahiert Insights aus stats.activities (wenn vorhanden), sonst Fallback aus Day-Daten; aggregiert Visit-Typen, berechnet Tagesdurchschnitte
+- [x] AppSessionState + AppSessionContent um insights erweitert
+- [x] Neuer "Insights"-Tab im iPhone-TabView (3 Tabs: Overview, Days, Insights)
+- [x] Insights-Inhalt: Daily Averages (4 Stat-Cards), Activity Types (Cards mit Count, Distanz, Dauer, Geschwindigkeit), Visit Types (Icons + Count), Period Breakdown (wenn vorhanden)
+- [x] Overview-Tab erweitert: Datumsbereich-Header, Total Distance als prominente Anzeige
+- [x] iPad regular: Insights unterhalb von Overview im Detail-Pane (alles scrollbar)
+- [x] Visit-Typ-Icons: HOME=house, WORK=briefcase, CAFE=cup, PARK=leaf, LEISURE=gamecontroller, EVENT=star, STAY=bed
+- [x] Graceful Degradation: wenn stats.activities fehlt, werden Basisdaten aus Day-Entries abgeleitet; wenn stats.periods fehlt, wird die Sektion ausgeblendet
+
+**Problem vorher:** Die App zeigte nur 4 Basiszahlen (Days, Visits, Activities, Paths) und Activity-Typ-Namen als Comma-Text. Die reichen Statistiken aus stats.activities (Distanz, Dauer, Geschwindigkeit pro Typ) und stats.periods (Monats-/Jahresbreakdown) waren im Datenmodell komplett dekodiert aber nie in der UI sichtbar. Visit-Typen (HOME, WORK, CAFE, etc.) wurden nie aggregiert gezeigt. Kein Datumsbereich, keine Gesamtdistanz, keine Tagesdurchschnitte.
+
+**Jetzt:** Die App hat einen vollwertigen Insights-Tab mit 4 Sektionen. Activity Types zeigen Count, Gesamtdistanz, Dauer und Durchschnittsgeschwindigkeit. Visit Types zeigen semantische Icons. Daily Averages liefern schnelle Orientierung. Die Overview zeigt Datumsbereich und Gesamtdistanz. Die App nutzt jetzt die vorhandenen Daten so aus, wie es fuer ein professionelles Produkt erwartet wird.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** ExportInsights.swift (neu, Core-Repo). AppExportQueries.swift (Core-Repo). AppSessionState.swift (Core-Repo). AppContentSplitView.swift (Core-Repo). Wrapper-Repo via SPM automatisch aktuell.
+
+**Nicht-Ziele:** Keine Charts/Graphen. Kein iPad-Fokus. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
 
 ---
 ## Geparkt / Extern

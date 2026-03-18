@@ -39,6 +39,7 @@ public struct AppSessionContent {
     public let export: AppExport
     public let overview: ExportOverview
     public let daySummaries: [DaySummary]
+    public let insights: ExportInsights
     public let selectedDate: String?
     public let source: AppContentSource
 
@@ -46,6 +47,7 @@ public struct AppSessionContent {
         self.export = export
         self.overview = AppExportQueries.overview(from: export)
         self.daySummaries = AppExportQueries.daySummaries(from: export)
+        self.insights = AppExportQueries.insights(from: export)
         self.selectedDate = self.daySummaries.first?.date
         self.source = source
     }
@@ -95,6 +97,10 @@ public struct AppSessionState {
 
     public var overview: ExportOverview? {
         content?.overview
+    }
+
+    public var insights: ExportInsights? {
+        content?.insights
     }
 
     public var daySummaries: [DaySummary] {

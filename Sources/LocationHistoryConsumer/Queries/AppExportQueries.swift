@@ -110,6 +110,95 @@ public enum AppExportQueries {
         }
     }
 
+
+    public static func insights(from export: AppExport) -> ExportInsights {
+        let days = sortedDays(in: export)
+        let dayCount = days.count
+
+        let dateRange: InsightsDateRange? = days.isEmpty ? nil : InsightsDateRange(
+            firstDate: days.first!.date,
+            lastDate: days.last!.date
+        )
+
+        let totalDistanceM = days.reduce(0.0) { total, day in
+            total + day.paths.reduce(0.0) { $0 + ($1.distanceM ?? 0) }
+        }
+
+        let activityBreakdown: [ActivityBreakdownItem]
+        if let statsActivities = export.stats?.activities, !statsActivities.isEmpty {
+            activityBreakdown = statsActivities.map { key, value in
+                ActivityBreakdownItem(
+                    activityType: key,
+                    count: value.count,
+                    totalDistanceKM: value.totalDistanceKM,
+                    totalDurationH: value.totalDurationH,
+                    avgSpeedKMH: value.avgSpeedKMH
+                )
+            }.sorted { $0.totalDistanceKM > $1.totalDistanceKM }
+        } else {
+            var typeCounts: [String: Int] = [:]
+            var typeDistances: [String: Double] = [:]
+            for day in days {
+                for activity in day.activities {
+                    let type = activity.activityType ?? "UNKNOWN"
+                    typeCounts[type, default: 0] += 1
+                    typeDistances[type, default: 0] += (activity.distanceM ?? 0) / 1000
+                }
+            }
+            activityBreakdown = typeCounts.map { key, count in
+                ActivityBreakdownItem(
+                    activityType: key,
+                    count: count,
+                    totalDistanceKM: typeDistances[key] ?? 0,
+                    totalDurationH: 0,
+                    avgSpeedKMH: 0
+                )
+            }.sorted { $0.totalDistanceKM > $1.totalDistanceKM }
+        }
+
+        var visitTypeCounts: [String: Int] = [:]
+        for day in days {
+            for visit in day.visits {
+                let type = visit.semanticType ?? "UNKNOWN"
+                visitTypeCounts[type, default: 0] += 1
+            }
+        }
+        let visitTypeBreakdown = visitTypeCounts.map { key, count in
+            VisitTypeItem(semanticType: key, count: count)
+        }.sorted { $0.count > $1.count }
+
+        let periodBreakdown = (export.stats?.periods ?? []).map { period in
+            PeriodBreakdownItem(
+                label: period.label,
+                year: period.year,
+                month: period.month,
+                days: period.days,
+                visits: period.visits,
+                activities: period.activities,
+                paths: period.paths,
+                distanceM: period.distanceM
+            )
+        }
+
+        let totalVisits = days.reduce(0) { $0 + $1.visits.count }
+        let totalActivities = days.reduce(0) { $0 + $1.activities.count }
+        let totalPaths = days.reduce(0) { $0 + $1.paths.count }
+
+        return ExportInsights(
+            dateRange: dateRange,
+            totalDistanceM: totalDistanceM,
+            activityBreakdown: activityBreakdown,
+            visitTypeBreakdown: visitTypeBreakdown,
+            periodBreakdown: periodBreakdown,
+            averagesPerDay: DayAverages(
+                avgVisitsPerDay: dayCount > 0 ? Double(totalVisits) / Double(dayCount) : 0,
+                avgActivitiesPerDay: dayCount > 0 ? Double(totalActivities) / Double(dayCount) : 0,
+                avgPathsPerDay: dayCount > 0 ? Double(totalPaths) / Double(dayCount) : 0,
+                avgDistancePerDayM: dayCount > 0 ? totalDistanceM / Double(dayCount) : 0
+            )
+        )
+    }
+
     private static func sortedDays(in export: AppExport) -> [Day] {
         export.data.days.sorted { $0.date < $1.date }
     }

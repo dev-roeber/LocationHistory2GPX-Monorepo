@@ -178,6 +178,22 @@ public struct AppContentSplitView: View {
             .tabItem {
                 Label("Days", systemImage: "calendar")
             }
+
+            NavigationStack {
+                ScrollView {
+                    insightsPaneContent
+                        .padding()
+                }
+                .navigationTitle("Insights")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        actionsMenu
+                    }
+                }
+            }
+            .tabItem {
+                Label("Insights", systemImage: "chart.xyaxis.line")
+            }
         }
         .onChange(of: session.daySummaries) { _ in
             daysNavigationPath = NavigationPath()
@@ -241,6 +257,17 @@ public struct AppContentSplitView: View {
     @ViewBuilder
     private var overviewPaneContent: some View {
         VStack(alignment: .leading, spacing: 24) {
+            if let range = session.insights?.dateRange {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar.circle.fill")
+                        .foregroundColor(.accentColor)
+                        .font(.title3)
+                    Text("\(AppDateDisplay.mediumDate(range.firstDate)) – \(AppDateDisplay.mediumDate(range.lastDate))")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             AppSessionStatusView(
                 summary: session.sourceSummary,
                 message: session.message,
@@ -250,6 +277,44 @@ public struct AppContentSplitView: View {
             if let overview = session.overview {
                 AppOverviewSection(overview: overview)
             }
+
+            if let insights = session.insights, insights.totalDistanceM > 0 {
+                HStack(spacing: 12) {
+                    Image(systemName: "road.lanes")
+                        .font(.title3)
+                        .foregroundColor(.accentColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Total Distance")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(formatDistance(insights.totalDistanceM))
+                            .font(.title3.weight(.semibold))
+                    }
+                    Spacer()
+                }
+                .padding(12)
+                .background(Color.accentColor.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var insightsPaneContent: some View {
+        if let insights = session.insights {
+            AppInsightsContentView(insights: insights)
+        } else {
+            VStack(spacing: 12) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                Text("No Insights Available")
+                    .font(.headline)
+                Text("Load an app export to see detailed insights.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 200)
         }
     }
 
@@ -269,6 +334,7 @@ public struct AppContentSplitView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     overviewPaneContent
+                    insightsPaneContent
                     if session.hasDays {
                         Label(
                             "Select a day from the list to view details.",
@@ -828,6 +894,187 @@ public struct AppDayDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
+    }
+}
+
+
+// MARK: - Insights Content View
+
+private struct AppInsightsContentView: View {
+    let insights: ExportInsights
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            // Daily Averages
+            insightSection("Daily Averages", icon: "chart.bar.fill") {
+                let avg = insights.averagesPerDay
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                    avgCard(String(format: "%.1f", avg.avgVisitsPerDay), label: "Visits / Day", icon: "mappin.and.ellipse", color: .blue)
+                    avgCard(String(format: "%.1f", avg.avgActivitiesPerDay), label: "Activities / Day", icon: "figure.walk", color: .green)
+                    avgCard(String(format: "%.1f", avg.avgPathsPerDay), label: "Paths / Day", icon: "location.north.line", color: .orange)
+                    avgCard(formatDistance(avg.avgDistancePerDayM), label: "Distance / Day", icon: "road.lanes", color: .purple)
+                }
+            }
+
+            // Activity Types
+            if !insights.activityBreakdown.isEmpty {
+                insightSection("Activity Types", icon: "figure.walk") {
+                    ForEach(Array(insights.activityBreakdown.enumerated()), id: \.offset) { _, item in
+                        activityBreakdownCard(item)
+                    }
+                }
+            }
+
+            // Visit Types
+            if !insights.visitTypeBreakdown.isEmpty {
+                insightSection("Visit Types", icon: "mappin.and.ellipse") {
+                    ForEach(Array(insights.visitTypeBreakdown.enumerated()), id: \.offset) { _, item in
+                        visitTypeRow(item)
+                    }
+                }
+            }
+
+            // Period Breakdown
+            if !insights.periodBreakdown.isEmpty {
+                insightSection("Period Breakdown", icon: "calendar.badge.clock") {
+                    ForEach(Array(insights.periodBreakdown.enumerated()), id: \.offset) { _, item in
+                        periodRow(item)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func insightSection<Content: View>(
+        _ title: String,
+        icon: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(title, systemImage: icon)
+                .font(.title3.weight(.semibold))
+            content()
+        }
+    }
+
+    @ViewBuilder
+    private func avgCard(_ value: String, label: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundColor(color)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.headline.monospacedDigit())
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(10)
+        .background(color.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func activityBreakdownCard(_ item: ActivityBreakdownItem) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(item.activityType.capitalized)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("\(item.count)×")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+            HStack(spacing: 16) {
+                if item.totalDistanceKM > 0 {
+                    Label(String(format: "%.1f km", item.totalDistanceKM), systemImage: "ruler")
+                }
+                if item.totalDurationH > 0 {
+                    Label(formatDuration(item.totalDurationH), systemImage: "clock")
+                }
+                if item.avgSpeedKMH > 0 {
+                    Label(String(format: "%.1f km/h", item.avgSpeedKMH), systemImage: "speedometer")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.green.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func visitTypeRow(_ item: VisitTypeItem) -> some View {
+        HStack {
+            Image(systemName: iconForVisitType(item.semanticType))
+                .foregroundColor(.blue)
+                .frame(width: 24)
+            Text(item.semanticType.capitalized)
+                .font(.subheadline)
+            Spacer()
+            Text("\(item.count)")
+                .font(.subheadline.weight(.medium).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.blue.opacity(0.08))
+                .clipShape(Capsule())
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func periodRow(_ item: PeriodBreakdownItem) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(item.label)
+                .font(.subheadline.weight(.medium))
+            HStack(spacing: 16) {
+                Label("\(item.days) days", systemImage: "calendar")
+                Label("\(item.visits) visits", systemImage: "mappin.and.ellipse")
+                if item.distanceM > 0 {
+                    Label(formatDistance(item.distanceM), systemImage: "ruler")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.secondary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func formatDuration(_ hours: Double) -> String {
+        if hours < 1 {
+            return String(format: "%.0f min", hours * 60)
+        }
+        let h = Int(hours)
+        let m = Int((hours - Double(h)) * 60)
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+    }
+
+    private func iconForVisitType(_ type: String) -> String {
+        switch type.uppercased() {
+        case "HOME": return "house.fill"
+        case "WORK": return "briefcase.fill"
+        case "CAFE": return "cup.and.saucer.fill"
+        case "PARK": return "leaf.fill"
+        case "LEISURE": return "gamecontroller.fill"
+        case "EVENT": return "star.fill"
+        case "STAY": return "bed.double.fill"
+        default: return "mappin"
+        }
     }
 }
 #endif
