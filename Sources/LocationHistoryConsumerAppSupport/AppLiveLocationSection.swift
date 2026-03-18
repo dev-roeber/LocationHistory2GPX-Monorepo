@@ -41,9 +41,7 @@ public struct AppLiveLocationSection: View {
             .frame(height: 220)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            if !liveLocation.recordedTracks.isEmpty {
-                savedTracksList
-            }
+            savedTracksSection
 
             Text("Completed live tracks are saved when you switch recording off. No automatic resume runs after app relaunch.")
                 .font(.caption)
@@ -150,6 +148,10 @@ public struct AppLiveLocationSection: View {
                     .clipShape(Capsule())
             }
 
+            Text("Tap a saved track to open the Track Editor.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
             ForEach(liveLocation.recordedTracks) { track in
                 Button {
                     selectedRecordedTrack = track
@@ -173,6 +175,25 @@ public struct AppLiveLocationSection: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var savedTracksSection: some View {
+        if liveLocation.recordedTracks.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Track Editor", systemImage: "slider.horizontal.3")
+                    .font(.subheadline.weight(.semibold))
+                Text("Record a short live track, switch Record off, then tap the saved track here to edit points, insert midpoints or delete the track.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color.secondary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        } else {
+            savedTracksList
         }
     }
 
