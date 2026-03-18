@@ -224,37 +224,17 @@ public struct AppContentSplitView: View {
         }
     }
 
-    @ViewBuilder
     private var compactDayList: some View {
         let summaries = filteredDaySummaries
         let groups = groupByMonth(summaries)
-        if session.daySummaries.isEmpty {
-            AppDayListEmptyView()
-        } else if summaries.isEmpty {
-            VStack(spacing: 12) {
-                Image(systemName: "magnifyingglass")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                Text("No Results")
-                    .font(.headline)
-                Text("No days match \"\(daySearchText)\".")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(24)
-        } else if groups.count == 1 {
-            List {
+        return List {
+            if groups.count == 1 {
                 ForEach(groups[0].summaries, id: \.date) { summary in
                     NavigationLink(value: summary.date) {
                         AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date))
                     }
                 }
-            }
-        } else {
-            List {
+            } else {
                 ForEach(groups) { group in
                     Section(group.title) {
                         ForEach(group.summaries, id: \.date) { summary in
@@ -264,6 +244,26 @@ public struct AppContentSplitView: View {
                         }
                     }
                 }
+            }
+        }
+        .overlay {
+            if session.daySummaries.isEmpty {
+                AppDayListEmptyView()
+            } else if summaries.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    Text("No Results")
+                        .font(.headline)
+                    Text("No days match \"\(daySearchText)\".")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(24)
             }
         }
     }

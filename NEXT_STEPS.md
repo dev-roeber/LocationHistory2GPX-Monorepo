@@ -2,9 +2,13 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.17 abgeschlossen (Import UX Hardening). Naechster Schritt: Searchable-Days-List Schwarz-Bug (dark mode, VStack ohne Hintergrund). Danach: Accessibility-Audit.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.18 abgeschlossen (Searchable Days List Dark Mode Fix). Naechster Schritt: Accessibility-Audit.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.18 (2026-03-18):**
+- compactDayList immer mit List als Root; No-Results + Empty als .overlay
+- Schwarz-Bug im Dark Mode behoben; 81/81 Tests gruen
 
 **Abgeschlossene Phase 19.17 (2026-03-18):**
 - userFacingTitle pro Error-Case in AppContentLoaderError

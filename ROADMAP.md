@@ -4,19 +4,29 @@
 
 ### Abgeschlossen
 Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
-Lokale Produktweiterentwicklung: Phasen 19.10–19.17 abgeschlossen.
+Lokale Produktweiterentwicklung: Phasen 19.10–19.18 abgeschlossen.
 
 ### Aktiver lokaler Fokus
 Lokale Produktweiterentwicklung (Phase 19.x): UX-Verbesserungen, Lesbarkeit, Robustheit.
-Phasen 19.1–19.17 abgeschlossen. Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
-
-### Bekannte offene Bugs (nicht Teil der abgeschlossenen Phasen)
-- **Searchable Days List – Schwarz-Bug (iOS dark mode):** compactDayList wechselt bei Sucheingabe zwischen List und VStack. Der VStack hat keinen Hintergrund; im dark mode erscheint der nackte NavigationStack-Hintergrund als schwarze Flaeche. Reproduzierbar bei beliebiger Sucheingabe.
+Phasen 19.1–19.18 abgeschlossen. Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
 
 ### Persistenz-Status
 Auto-Restore (ImportBookmarkStore) ist technisch implementiert und funktioniert korrekt (Phase 15).
 Aktuell bewusst deaktiviert (Phase 19.5): App startet immer manuell (Open / Demo). Kein automatisches Wiederherstellen der letzten Datei.
 Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
+
+### Phase 19.18 – Searchable Days List Dark Mode Fix
+
+**Datum:** 2026-03-18
+**Ziel:** Schwarz-Bug in der Days-List bei Sucheingabe beheben.
+
+- [x] compactDayList: immer `List` als Root-View
+- [x] No-Results-State und Empty-State als `.overlay` auf der List statt als VStack-Ersatz
+- [x] Dark-Mode-Hintergrund der List bleibt korrekt bei jeder Sucheingabe erhalten
+
+**Problem vorher:** compactDayList wechselte bei leerer Suche zwischen `List` (mit Hintergrund) und `VStack` (ohne Hintergrund). Im Dark Mode erschien der nackte NavigationStack-Hintergrund als schwarze Flaeche.
+
+---
 
 ### Phase 19.17 – Import Entry / Error UX Hardening
 
