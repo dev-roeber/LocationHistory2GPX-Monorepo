@@ -332,7 +332,11 @@ public struct AppContentSplitView: View {
             }
 
             if let overview = session.overview {
-                AppOverviewSection(overview: overview)
+                AppOverviewSection(
+                    overview: overview,
+                    onDaysTap: horizontalSizeClass == .compact ? { selectedTab = 1 } : nil,
+                    onInsightsTap: horizontalSizeClass == .compact ? { selectedTab = 2 } : nil
+                )
             }
 
             if let insights = session.insights, !insights.activeFilterDescriptions.isEmpty {
@@ -696,9 +700,13 @@ public struct AppMessageCard: View {
 
 public struct AppOverviewSection: View {
     let overview: ExportOverview
+    var onDaysTap: (() -> Void)? = nil
+    var onInsightsTap: (() -> Void)? = nil
 
-    public init(overview: ExportOverview) {
+    public init(overview: ExportOverview, onDaysTap: (() -> Void)? = nil, onInsightsTap: (() -> Void)? = nil) {
         self.overview = overview
+        self.onDaysTap = onDaysTap
+        self.onInsightsTap = onInsightsTap
     }
 
     private let columns = [
@@ -711,17 +719,33 @@ public struct AppOverviewSection: View {
                 .font(.title3.weight(.semibold))
 
             LazyVGrid(columns: columns, spacing: 12) {
-                statCard("\(overview.dayCount)", label: "Days", icon: "calendar", color: .blue)
-                statCard("\(overview.totalVisitCount)", label: "Visits", icon: "mappin.and.ellipse", color: .purple)
-                statCard("\(overview.totalActivityCount)", label: "Activities", icon: "figure.walk", color: .green)
-                statCard("\(overview.totalPathCount)", label: "Paths", icon: "location.north.line", color: .orange)
+                statCard("\(overview.dayCount)", label: "Days", icon: "calendar", color: .blue, action: onDaysTap)
+                statCard("\(overview.totalVisitCount)", label: "Visits", icon: "mappin.and.ellipse", color: .purple, action: onInsightsTap)
+                statCard("\(overview.totalActivityCount)", label: "Activities", icon: "figure.walk", color: .green, action: onInsightsTap)
+                statCard("\(overview.totalPathCount)", label: "Paths", icon: "location.north.line", color: .orange, action: onInsightsTap)
             }
-
         }
     }
 
     @ViewBuilder
-    private func statCard(_ value: String, label: String, icon: String, color: Color) -> some View {
+    private func statCard(_ value: String, label: String, icon: String, color: Color, action: (() -> Void)? = nil) -> some View {
+        Group {
+            if let action {
+                Button(action: action) {
+                    statCardBody(value, label: label, icon: icon, color: color, isInteractive: true)
+                }
+                .buttonStyle(.plain)
+            } else {
+                statCardBody(value, label: label, icon: icon, color: color, isInteractive: false)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
+        .accessibilityAddTraits(action != nil ? .isButton : [])
+    }
+
+    @ViewBuilder
+    private func statCardBody(_ value: String, label: String, icon: String, color: Color, isInteractive: Bool) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.title3)
@@ -731,9 +755,12 @@ public struct AppOverviewSection: View {
             Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if isInteractive {
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(color.opacity(0.5))
+            }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(value) \(label)")
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(color.opacity(0.08))
@@ -952,6 +979,8 @@ public struct AppDayDetailView: View {
             }
             #endif
 
+            DayTimelineView(detail: detail)
+
             let dayDistance = detail.paths.reduce(0.0) { $0 + ($1.distanceM ?? 0) }
             HStack(spacing: 12) {
                 quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse", color: .blue)
@@ -1135,6 +1164,97 @@ public struct AppDayDetailView: View {
     }
 }
 
+
+// MARK: - Day Timeline
+
+private struct DayTimelineView: View {
+    let detail: DayDetailViewState
+
+    private static let isoParser = ISO8601DateFormatter()
+
+    private struct Slot: Identifiable {
+        let id: Int
+        let start: Date
+        let end: Date
+    }
+
+    private func makeSlots(_ pairs: [(start: String?, end: String?)]) -> [Slot] {
+        pairs.enumerated().compactMap { idx, pair in
+            guard let s = pair.start.flatMap(Self.isoParser.date(from:)),
+                  let e = pair.end.flatMap(Self.isoParser.date(from:)),
+                  e > s else { return nil }
+            return Slot(id: idx, start: s, end: e)
+        }
+    }
+
+    private var visitSlots: [Slot] {
+        makeSlots(detail.visits.map { ($0.startTime, $0.endTime) })
+    }
+
+    private var activitySlots: [Slot] {
+        makeSlots(detail.activities.map { ($0.startTime, $0.endTime) })
+    }
+
+    private var bounds: (start: Date, end: Date)? {
+        let all = visitSlots + activitySlots
+        guard let earliest = all.map(\.start).min(),
+              let latest = all.map(\.end).max(),
+              latest > earliest else { return nil }
+        return (earliest, latest)
+    }
+
+    var body: some View {
+        if let b = bounds {
+            let span = b.end.timeIntervalSince(b.start)
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Timeline", systemImage: "clock.arrow.2.circlepath")
+                    .font(.headline)
+                VStack(alignment: .leading, spacing: 6) {
+                    if !visitSlots.isEmpty {
+                        timelineRow(slots: visitSlots, color: CardAccent.visit, label: "Visits", bounds: b, span: span)
+                    }
+                    if !activitySlots.isEmpty {
+                        timelineRow(slots: activitySlots, color: CardAccent.activity, label: "Activities", bounds: b, span: span)
+                    }
+                }
+                HStack {
+                    Text(b.start.formatted(date: .omitted, time: .shortened))
+                    Spacer()
+                    Text(b.end.formatted(date: .omitted, time: .shortened))
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .background(Color.secondary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    @ViewBuilder
+    private func timelineRow(slots: [Slot], color: Color, label: String, bounds: (start: Date, end: Date), span: TimeInterval) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(width: 58, alignment: .trailing)
+            GeometryReader { geo in
+                ZStack(alignment: .topLeading) {
+                    Color.clear
+                    ForEach(slots) { slot in
+                        let xFrac = slot.start.timeIntervalSince(bounds.start) / span
+                        let wFrac = slot.end.timeIntervalSince(slot.start) / span
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(color.opacity(0.75))
+                            .frame(width: max(4, wFrac * geo.size.width), height: 16)
+                            .offset(x: xFrac * geo.size.width)
+                    }
+                }
+            }
+            .frame(height: 16)
+        }
+    }
+}
 
 // MARK: - Insights Content View
 
