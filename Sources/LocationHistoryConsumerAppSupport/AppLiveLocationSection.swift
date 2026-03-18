@@ -7,6 +7,7 @@ public struct AppLiveLocationSection: View {
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @State private var mapPosition: MapCameraPosition = .automatic
     @State private var hasSeededMap = false
+    @State private var selectedRecordedTrack: RecordedTrack?
 
     public init(liveLocation: LiveLocationFeatureModel) {
         self._liveLocation = ObservedObject(wrappedValue: liveLocation)
@@ -54,6 +55,11 @@ public struct AppLiveLocationSection: View {
         .onChange(of: liveLocation.currentLocation?.timestamp) { _, _ in
             guard !hasSeededMap else { return }
             centerOnCurrentLocation()
+        }
+        .sheet(item: $selectedRecordedTrack) { track in
+            NavigationStack {
+                AppRecordedTrackEditorView(track: track, liveLocation: liveLocation)
+            }
         }
     }
 
@@ -131,23 +137,41 @@ public struct AppLiveLocationSection: View {
 
     private var savedTracksList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Saved Live Tracks")
-                .font(.subheadline.weight(.semibold))
+            HStack {
+                Text("Saved Live Tracks")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("\(liveLocation.recordedTracks.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
+            }
 
-            ForEach(Array(liveLocation.recordedTracks.prefix(3))) { track in
-                HStack(spacing: 10) {
-                    Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                        .foregroundColor(.green)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(savedTrackTitle(track))
-                            .font(.subheadline)
-                        Text("\(track.pointCount) points · \(formatDistance(track.distanceM))")
-                            .font(.caption)
+            ForEach(liveLocation.recordedTracks) { track in
+                Button {
+                    selectedRecordedTrack = track
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                            .foregroundColor(.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(savedTrackTitle(track))
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "slider.horizontal.3")
                             .foregroundStyle(.secondary)
                     }
-                    Spacer()
+                    .padding(.vertical, 2)
                 }
-                .padding(.vertical, 2)
+                .buttonStyle(.plain)
             }
         }
     }

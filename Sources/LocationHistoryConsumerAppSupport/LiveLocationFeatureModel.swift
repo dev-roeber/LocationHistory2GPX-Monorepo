@@ -119,6 +119,25 @@ public final class LiveLocationFeatureModel: ObservableObject {
         authorization = client?.authorization ?? .restricted
     }
 
+    public func updateRecordedTrack(_ track: RecordedTrack) {
+        var updatedTracks = recordedTracks
+        guard let index = updatedTracks.firstIndex(where: { $0.id == track.id }) else {
+            return
+        }
+
+        updatedTracks[index] = track
+        persistRecordedTracks(updatedTracks)
+    }
+
+    public func deleteRecordedTrack(id: UUID) {
+        let updatedTracks = recordedTracks.filter { $0.id != id }
+        guard updatedTracks.count != recordedTracks.count else {
+            return
+        }
+
+        persistRecordedTracks(updatedTracks)
+    }
+
     private func startRecordingFlow() {
         persistenceErrorMessage = nil
 
@@ -158,13 +177,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
         var updatedTracks = recordedTracks
         updatedTracks.insert(finishedTrack, at: 0)
-
-        do {
-            try store.saveTracks(updatedTracks)
-            recordedTracks = updatedTracks
-        } catch {
-            persistenceErrorMessage = "Live track could not be saved."
-        }
+        persistRecordedTracks(updatedTracks)
     }
 
     private func handleAuthorizationChange(_ authorization: LiveLocationAuthorization) {
@@ -209,6 +222,16 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
     private func isDisplayQuality(_ sample: LiveLocationSample) -> Bool {
         sample.horizontalAccuracyM > 0 && sample.horizontalAccuracyM <= 100
+    }
+
+    private func persistRecordedTracks(_ tracks: [RecordedTrack]) {
+        do {
+            try store.saveTracks(tracks)
+            recordedTracks = tracks.sorted { $0.startedAt > $1.startedAt }
+            persistenceErrorMessage = nil
+        } catch {
+            persistenceErrorMessage = "Live track changes could not be saved."
+        }
     }
 }
 

@@ -81,6 +81,47 @@ final class LiveLocationFeatureModelTests: XCTestCase {
         XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
     }
 
+    func testUpdateRecordedTrackReplacesExistingTrackAndPersists() {
+        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+        let existingTrack = makeTrack()
+        let updatedTrack = RecordedTrack(
+            id: existingTrack.id,
+            startedAt: existingTrack.startedAt,
+            endedAt: existingTrack.endedAt,
+            dayKey: existingTrack.dayKey,
+            distanceM: 125,
+            captureMode: existingTrack.captureMode,
+            points: existingTrack.points + [
+                RecordedTrackPoint(
+                    latitude: 52.5206,
+                    longitude: 13.4006,
+                    timestamp: existingTrack.endedAt.addingTimeInterval(10),
+                    horizontalAccuracyM: 6
+                ),
+            ]
+        )
+        let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
+        let model = LiveLocationFeatureModel(client: client, store: store)
+
+        model.updateRecordedTrack(updatedTrack)
+
+        XCTAssertEqual(model.recordedTracks, [updatedTrack])
+        XCTAssertEqual(store.savedTracks, [updatedTrack])
+        XCTAssertNil(model.persistenceErrorMessage)
+    }
+
+    func testDeleteRecordedTrackRemovesExistingTrackAndPersists() {
+        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+        let existingTrack = makeTrack()
+        let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
+        let model = LiveLocationFeatureModel(client: client, store: store)
+
+        model.deleteRecordedTrack(id: existingTrack.id)
+
+        XCTAssertTrue(model.recordedTracks.isEmpty)
+        XCTAssertTrue(store.savedTracks.isEmpty)
+    }
+
     private func sample(offsetSeconds: TimeInterval, latitude: Double, longitude: Double, accuracy: Double) -> LiveLocationSample {
         LiveLocationSample(
             latitude: latitude,
