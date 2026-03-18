@@ -2,9 +2,13 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.14 abgeschlossen. Naechster Schritt: Phase 19.15 bestimmen. Kandidaten: Day-Detail-Timeline (Gantt, M-L), Overview-Stat-Cards tappbar, Accessibility-Audit, ZIP-Import (Dependency noetig).
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.15 abgeschlossen. Naechster Schritt: Phase 19.16 = ZIP-Import (Dependency noetig). Danach: Accessibility-Audit als Kandidat.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.15 (2026-03-18):**
+- Day-Detail-Timeline: Gantt-Zeitleiste (Visits blau, Activities gruen) mit GeometryReader
+- Overview-Stat-Cards: Days → Days-Tab, Visits/Activities/Paths → Insights-Tab (nur iPhone)
 
 **Abgeschlossene Phase 19.14 (2026-03-18):**
 - Days-Tab: Suchfeld + Highlight-Markierungen (Busiest/Longest-Tage)
