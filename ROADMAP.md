@@ -14,7 +14,37 @@ Auto-Restore (ImportBookmarkStore) ist technisch implementiert und funktioniert 
 Aktuell bewusst deaktiviert (Phase 19.5): App startet immer manuell (Open / Demo). Kein automatisches Wiederherstellen der letzten Datei.
 Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
 
-### Geparkt / Extern
+#
+### Phase 19.10 – UX: iPhone TabView-Navigation + Visual Polish
+
+**Datum:** 2026-03-18
+**Ziel:** iPhone-Navigation grundlegend ueberarbeiten. TabView fuer compact (Overview + Days Tabs), farbcodierte Cards, Monatsgruppierung in Day List, farbige Stat-Cards, Actions-Menu in AppContentSplitView integriert.
+
+- [x] Adaptive Layout: TabView mit zwei Tabs (Overview + Days) fuer iPhone compact, NavigationSplitView bleibt fuer iPad regular
+- [x] Actions-Menu (Open/Demo/Clear) in AppContentSplitView integriert statt extern vom Parent
+- [x] NavigationStack mit NavigationLink in Days-Tab: saubere Push-Navigation zu Day Detail
+- [x] NavigationPath-Reset bei Content-Wechsel (neuer Import/Demo poppt zum Day-List-Root)
+- [x] Farbcodierte Cards: Visit=blau, Activity=gruen, Path=orange (linker Farbbalken + getoeneter Hintergrund)
+- [x] Farbige Stat-Cards in Overview (Days=blau, Visits=lila, Activities=gruen, Paths=orange)
+- [x] Farbige Quick-Stats in Day Detail (gleiche Farbzuordnung)
+- [x] Monatsgruppierung in Day List (Section Headers nach Monat, nur bei >1 Monat)
+- [x] Distanzanzeige in Day-List-Rows (totalPathDistanceM, wenn >0)
+- [x] Workarounds entfernt: isOverviewPushed, resetForCompact(), onChange-resetForCompact
+- [x] AppDayRow als wiederverwendbare private View extrahiert (shared zwischen compact/regular)
+- [x] coloredCard ViewBuilder-Helper fuer einheitliche Card-Darstellung
+
+**Problem vorher:** NavigationSplitView kollabierte auf iPhone zu einem Stack. Overview war nur per Toolbar-Button erreichbar, nicht per Tab. Cards (Visit/Activity/Path) waren visuell identisch (gleiches Grau). Day List war flach ohne Monatsstruktur. Stat-Cards alle gleichfarben. Workarounds (resetForCompact, isOverviewPushed) waren noetig fuer brauchbare compact-Navigation.
+
+**Jetzt:** iPhone zeigt eine echte TabView mit Overview-Tab und Days-Tab. Jeder Tab hat eigenen NavigationStack. Overview ist immer einen Tab-Tipp entfernt. Day Detail wird per NavigationLink gepusht. Cards sind farblich differenziert. Day List zeigt Monate. Stat-Cards haben individuelle Farben. Die App wirkt wie eine echte iPhone-App statt wie ein Demo-Viewer.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Core-Repo, Haupt-Rewrite). AppShellRootView.swift (Core-Repo, Closure-Uebergabe). ContentView.swift (Wrapper-Repo, Closure-Uebergabe).
+
+**Nicht-Ziele:** Kein iPad-Fokus. Keine neue Business-Logik. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
+
+---
+## Geparkt / Extern
 Apple-/Developer-/ASC-/TestFlight-/Release-Themen (Phasen 20–21): kein aktiver Fokus.
 Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeglich sind.
 
@@ -414,6 +444,36 @@ Bleibt geparkt bis Developer-Account-Zugang und tatsaechliche Durchfuehrung moeg
 
 ---
 
+
+### Phase 19.10 – UX: iPhone TabView-Navigation + Visual Polish
+
+**Datum:** 2026-03-18
+**Ziel:** iPhone-Navigation grundlegend ueberarbeiten. TabView fuer compact (Overview + Days Tabs), farbcodierte Cards, Monatsgruppierung in Day List, farbige Stat-Cards, Actions-Menu in AppContentSplitView integriert.
+
+- [x] Adaptive Layout: TabView mit zwei Tabs (Overview + Days) fuer iPhone compact, NavigationSplitView bleibt fuer iPad regular
+- [x] Actions-Menu (Open/Demo/Clear) in AppContentSplitView integriert statt extern vom Parent
+- [x] NavigationStack mit NavigationLink in Days-Tab: saubere Push-Navigation zu Day Detail
+- [x] NavigationPath-Reset bei Content-Wechsel (neuer Import/Demo poppt zum Day-List-Root)
+- [x] Farbcodierte Cards: Visit=blau, Activity=gruen, Path=orange (linker Farbbalken + getoeneter Hintergrund)
+- [x] Farbige Stat-Cards in Overview (Days=blau, Visits=lila, Activities=gruen, Paths=orange)
+- [x] Farbige Quick-Stats in Day Detail (gleiche Farbzuordnung)
+- [x] Monatsgruppierung in Day List (Section Headers nach Monat, nur bei >1 Monat)
+- [x] Distanzanzeige in Day-List-Rows (totalPathDistanceM, wenn >0)
+- [x] Workarounds entfernt: isOverviewPushed, resetForCompact(), onChange-resetForCompact
+- [x] AppDayRow als wiederverwendbare private View extrahiert (shared zwischen compact/regular)
+- [x] coloredCard ViewBuilder-Helper fuer einheitliche Card-Darstellung
+
+**Problem vorher:** NavigationSplitView kollabierte auf iPhone zu einem Stack. Overview war nur per Toolbar-Button erreichbar, nicht per Tab. Cards (Visit/Activity/Path) waren visuell identisch (gleiches Grau). Day List war flach ohne Monatsstruktur. Stat-Cards alle gleichfarben. Workarounds (resetForCompact, isOverviewPushed) waren noetig fuer brauchbare compact-Navigation.
+
+**Jetzt:** iPhone zeigt eine echte TabView mit Overview-Tab und Days-Tab. Jeder Tab hat eigenen NavigationStack. Overview ist immer einen Tab-Tipp entfernt. Day Detail wird per NavigationLink gepusht. Cards sind farblich differenziert. Day List zeigt Monate. Stat-Cards haben individuelle Farben. Die App wirkt wie eine echte iPhone-App statt wie ein Demo-Viewer.
+
+**Tests:** swift test gruen (70/70). xcodebuild build im Wrapper-Repo BUILD SUCCEEDED.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Core-Repo, Haupt-Rewrite). AppShellRootView.swift (Core-Repo, Closure-Uebergabe). ContentView.swift (Wrapper-Repo, Closure-Uebergabe).
+
+**Nicht-Ziele:** Kein iPad-Fokus. Keine neue Business-Logik. Keine Persistenz-Aktivierung. Keine Apple-/ASC-Arbeit.
+
+---
 ## Geparkt / Extern
 
 > **Apple-/Developer-/ASC-/TestFlight-/Release-Themen bleiben geparkt,**

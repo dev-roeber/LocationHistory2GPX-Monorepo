@@ -29,6 +29,11 @@ private enum AppDateDisplay {
         guard let d = isoFormatter.date(from: iso) else { return "" }
         return d.formatted(.dateTime.weekday(.wide))
     }
+
+    static func monthYear(_ iso: String) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return String(iso.prefix(7)) }
+        return d.formatted(.dateTime.month(.wide).year())
+    }
 }
 
 // MARK: - Time Formatting
@@ -45,18 +50,171 @@ private enum AppTimeDisplay {
     }
 }
 
-// MARK: - Main Split View
+// MARK: - Card Accent Colors
+
+private enum CardAccent {
+    static let visit = Color.blue
+    static let activity = Color.green
+    static let path = Color.orange
+}
+
+// MARK: - Distance Formatting
+
+private func formatDistance(_ meters: Double) -> String {
+    guard meters >= 0, meters.isFinite else { return "–" }
+    let measurement = Measurement(value: meters, unit: UnitLength.meters)
+    return measurement.formatted(.measurement(width: .abbreviated, usage: .road))
+}
+
+// MARK: - Month Grouping
+
+private struct MonthGroup: Identifiable {
+    let key: String
+    let title: String
+    let summaries: [DaySummary]
+    var id: String { key }
+}
+
+private func groupByMonth(_ summaries: [DaySummary]) -> [MonthGroup] {
+    var groups: [(key: String, summaries: [DaySummary])] = []
+    var currentKey: String?
+    var currentSummaries: [DaySummary] = []
+
+    for summary in summaries {
+        let key = String(summary.date.prefix(7))
+        if key != currentKey {
+            if let prevKey = currentKey {
+                groups.append((key: prevKey, summaries: currentSummaries))
+            }
+            currentKey = key
+            currentSummaries = [summary]
+        } else {
+            currentSummaries.append(summary)
+        }
+    }
+    if let prevKey = currentKey {
+        groups.append((key: prevKey, summaries: currentSummaries))
+    }
+
+    return groups.map { group in
+        MonthGroup(
+            key: group.key,
+            title: AppDateDisplay.monthYear(group.summaries[0].date),
+            summaries: group.summaries
+        )
+    }
+}
+
+// MARK: - Main Content View (Adaptive Layout)
 
 public struct AppContentSplitView: View {
     @Binding private var session: AppSessionState
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var isOverviewPushed = false
+    @State private var daysNavigationPath = NavigationPath()
 
-    public init(session: Binding<AppSessionState>) {
+    private let onOpen: () -> Void
+    private let onLoadDemo: () -> Void
+    private let onClear: () -> Void
+
+    public init(
+        session: Binding<AppSessionState>,
+        onOpen: @escaping () -> Void = {},
+        onLoadDemo: @escaping () -> Void = {},
+        onClear: @escaping () -> Void = {}
+    ) {
         self._session = session
+        self.onOpen = onOpen
+        self.onLoadDemo = onLoadDemo
+        self.onClear = onClear
     }
 
     public var body: some View {
+        if horizontalSizeClass == .compact {
+            compactTabView
+        } else {
+            regularSplitView
+        }
+    }
+
+    // MARK: - Compact (iPhone) Tab View
+
+    private var compactTabView: some View {
+        TabView {
+            NavigationStack {
+                ScrollView {
+                    overviewPaneContent
+                        .padding()
+                }
+                .navigationTitle("Overview")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        actionsMenu
+                    }
+                }
+            }
+            .tabItem {
+                Label("Overview", systemImage: "chart.bar.doc.horizontal")
+            }
+
+            NavigationStack(path: $daysNavigationPath) {
+                compactDayList
+                    .navigationTitle("Days")
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            actionsMenu
+                        }
+                    }
+                    .navigationDestination(for: String.self) { date in
+                        ScrollView {
+                            AppDayDetailView(
+                                detail: session.content?.detail(for: date),
+                                hasDays: true
+                            )
+                            .padding()
+                        }
+                        .navigationTitle(AppDateDisplay.longDate(date))
+                    }
+            }
+            .tabItem {
+                Label("Days", systemImage: "calendar")
+            }
+        }
+        .onChange(of: session.daySummaries) { _ in
+            daysNavigationPath = NavigationPath()
+        }
+    }
+
+    @ViewBuilder
+    private var compactDayList: some View {
+        let groups = groupByMonth(session.daySummaries)
+        if session.daySummaries.isEmpty {
+            AppDayListEmptyView()
+        } else if groups.count == 1 {
+            List {
+                ForEach(groups[0].summaries, id: \.date) { summary in
+                    NavigationLink(value: summary.date) {
+                        AppDayRow(summary: summary)
+                    }
+                }
+            }
+        } else {
+            List {
+                ForEach(groups) { group in
+                    Section(group.title) {
+                        ForEach(group.summaries, id: \.date) { summary in
+                            NavigationLink(value: summary.date) {
+                                AppDayRow(summary: summary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Regular (iPad) Split View
+
+    private var regularSplitView: some View {
         NavigationSplitView {
             AppDayListView(
                 summaries: session.daySummaries,
@@ -66,38 +224,19 @@ public struct AppContentSplitView: View {
                 )
             )
             .navigationTitle("Days")
-            #if os(iOS)
-            .toolbar {
-                if horizontalSizeClass == .compact {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            isOverviewPushed = true
-                        } label: {
-                            Label("Overview", systemImage: "chart.bar.doc.horizontal")
-                                .labelStyle(.titleAndIcon)
-                        }
-                    }
-                }
-            }
-            #endif
-            .navigationDestination(isPresented: $isOverviewPushed) {
-                ScrollView {
-                    overviewPaneContent
-                        .padding()
-                }
-                .navigationTitle("Overview")
-            }
         } detail: {
-            detailPane
+            Group {
+                detailPane
+            }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    actionsMenu
+                }
+            }
         }
-        .task { resetForCompact() }
-        .onChange(of: session.daySummaries) { _ in resetForCompact() }
     }
 
-    private func resetForCompact() {
-        guard horizontalSizeClass == .compact else { return }
-        session.selectDay(nil)
-    }
+    // MARK: - Shared Content
 
     @ViewBuilder
     private var overviewPaneContent: some View {
@@ -119,11 +258,11 @@ public struct AppContentSplitView: View {
         if let detail = session.selectedDetail {
             ScrollView {
                 AppDayDetailView(
-                        detail: detail,
-                        hasDays: true,
-                        onBackToOverview: horizontalSizeClass == .compact ? { session.selectDay(nil) } : nil
-                    )
-                    .padding()
+                    detail: detail,
+                    hasDays: true,
+                    onBackToOverview: { session.selectDay(nil) }
+                )
+                .padding()
             }
             .navigationTitle(AppDateDisplay.longDate(detail.date))
         } else {
@@ -143,6 +282,39 @@ public struct AppContentSplitView: View {
             }
             .navigationTitle("Overview")
         }
+    }
+
+    // MARK: - Actions Menu
+
+    @ViewBuilder
+    private var actionsMenu: some View {
+        Menu {
+            Button {
+                onOpen()
+            } label: {
+                Label(openButtonTitle, systemImage: "doc.badge.plus")
+            }
+            Button(action: onLoadDemo) {
+                Label(demoButtonTitle, systemImage: "testtube.2")
+            }
+            if session.hasLoadedContent || session.message?.kind == .error {
+                Divider()
+                Button(role: .destructive, action: onClear) {
+                    Label("Clear", systemImage: "xmark.circle")
+                }
+            }
+        } label: {
+            Label("Actions", systemImage: "ellipsis.circle")
+        }
+    }
+
+    private var openButtonTitle: String {
+        session.hasLoadedContent ? "Open Another File" : "Open app_export.json"
+    }
+
+    private var demoButtonTitle: String {
+        session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName)
+            ? "Reload Demo" : "Demo Data"
     }
 }
 
@@ -301,10 +473,10 @@ public struct AppOverviewSection: View {
                 .font(.title3.weight(.semibold))
 
             LazyVGrid(columns: columns, spacing: 12) {
-                statCard("\(overview.dayCount)", label: "Days", icon: "calendar")
-                statCard("\(overview.totalVisitCount)", label: "Visits", icon: "mappin.and.ellipse")
-                statCard("\(overview.totalActivityCount)", label: "Activities", icon: "figure.walk")
-                statCard("\(overview.totalPathCount)", label: "Paths", icon: "location.north.line")
+                statCard("\(overview.dayCount)", label: "Days", icon: "calendar", color: .blue)
+                statCard("\(overview.totalVisitCount)", label: "Visits", icon: "mappin.and.ellipse", color: .purple)
+                statCard("\(overview.totalActivityCount)", label: "Activities", icon: "figure.walk", color: .green)
+                statCard("\(overview.totalPathCount)", label: "Paths", icon: "location.north.line", color: .orange)
             }
 
             if !overview.statsActivityTypes.isEmpty {
@@ -320,11 +492,11 @@ public struct AppOverviewSection: View {
     }
 
     @ViewBuilder
-    private func statCard(_ value: String, label: String, icon: String) -> some View {
+    private func statCard(_ value: String, label: String, icon: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(.accentColor)
+                .foregroundColor(color)
             Text(value)
                 .font(.title2.weight(.bold).monospacedDigit())
             Text(label)
@@ -335,12 +507,41 @@ public struct AppOverviewSection: View {
         .accessibilityLabel("\(value) \(label)")
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(Color.secondary.opacity(0.06))
+        .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
-// MARK: - Day List
+// MARK: - Day Row
+
+private struct AppDayRow: View {
+    let summary: DaySummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(AppDateDisplay.weekday(summary.date))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(AppDateDisplay.mediumDate(summary.date))
+                .font(.headline)
+            HStack(spacing: 12) {
+                Label("\(summary.visitCount)", systemImage: "mappin.and.ellipse")
+                Label("\(summary.activityCount)", systemImage: "figure.walk")
+                Label("\(summary.pathCount)", systemImage: "location.north.line")
+                if summary.totalPathDistanceM > 0 {
+                    Label(formatDistance(summary.totalPathDistanceM), systemImage: "ruler")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(summary.visitCount) Visits, \(summary.activityCount) Activities, \(summary.pathCount) Paths")
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Day List (Selection-based, for regular layout)
 
 public struct AppDayListView: View {
     let summaries: [DaySummary]
@@ -353,16 +554,34 @@ public struct AppDayListView: View {
 
     public var body: some View {
         if summaries.isEmpty {
-            emptyDayList
+            AppDayListEmptyView()
         } else {
-            List(summaries, id: \.date, selection: $selectedDate) { summary in
-                dayRow(summary)
-                    .tag(summary.date)
+            let groups = groupByMonth(summaries)
+            if groups.count == 1 {
+                List(summaries, id: \.date, selection: $selectedDate) { summary in
+                    AppDayRow(summary: summary)
+                        .tag(summary.date)
+                }
+            } else {
+                List(selection: $selectedDate) {
+                    ForEach(groups) { group in
+                        Section(group.title) {
+                            ForEach(group.summaries, id: \.date) { summary in
+                                AppDayRow(summary: summary)
+                                    .tag(summary.date)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+}
 
-    private var emptyDayList: some View {
+// MARK: - Day List Empty
+
+private struct AppDayListEmptyView: View {
+    var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.largeTitle)
@@ -379,27 +598,26 @@ public struct AppDayListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(24)
     }
+}
 
-    @ViewBuilder
-    private func dayRow(_ summary: DaySummary) -> some View {
+// MARK: - Colored Card Helper
+
+@ViewBuilder
+private func coloredCard<Content: View>(
+    color: Color,
+    @ViewBuilder content: () -> Content
+) -> some View {
+    HStack(spacing: 0) {
+        color
+            .frame(width: 4)
         VStack(alignment: .leading, spacing: 4) {
-            Text(AppDateDisplay.weekday(summary.date))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text(AppDateDisplay.mediumDate(summary.date))
-                .font(.headline)
-            HStack(spacing: 12) {
-                Label("\(summary.visitCount)", systemImage: "mappin.and.ellipse")
-                Label("\(summary.activityCount)", systemImage: "figure.walk")
-                Label("\(summary.pathCount)", systemImage: "location.north.line")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(summary.visitCount) Visits, \(summary.activityCount) Activities, \(summary.pathCount) Paths")
+            content()
         }
-        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(color.opacity(0.06))
     }
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 }
 
 // MARK: - Day Detail
@@ -415,7 +633,6 @@ public struct AppDayDetailView: View {
         self.onBackToOverview = onBackToOverview
     }
 
-    // Convenience init for use within the split view
     init(detail: DayDetailViewState) {
         self.detail = detail
         self.hasDays = true
@@ -464,9 +681,9 @@ public struct AppDayDetailView: View {
             #endif
 
             HStack(spacing: 16) {
-                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse")
-                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk")
-                quickStat("\(detail.paths.count)", label: "Paths", icon: "location.north.line")
+                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse", color: .blue)
+                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk", color: .green)
+                quickStat("\(detail.paths.count)", label: "Paths", icon: "location.north.line", color: .orange)
             }
 
             if !detail.visits.isEmpty {
@@ -524,7 +741,7 @@ public struct AppDayDetailView: View {
 
     @ViewBuilder
     private func visitCard(_ visit: DayDetailViewState.VisitItem) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        coloredCard(color: CardAccent.visit) {
             Text(visit.semanticType?.capitalized ?? "Visit")
                 .font(.subheadline.weight(.medium))
             if let start = visit.startTime, let end = visit.endTime {
@@ -533,15 +750,11 @@ public struct AppDayDetailView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.secondary.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     @ViewBuilder
     private func activityCard(_ activity: DayDetailViewState.ActivityItem) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        coloredCard(color: CardAccent.activity) {
             Text(activity.activityType?.capitalized ?? "Activity")
                 .font(.subheadline.weight(.medium))
             HStack(spacing: 12) {
@@ -555,15 +768,11 @@ public struct AppDayDetailView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.secondary.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     @ViewBuilder
     private func pathCard(_ path: DayDetailViewState.PathItem) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        coloredCard(color: CardAccent.path) {
             Text(path.activityType?.capitalized ?? "Path")
                 .font(.subheadline.weight(.medium))
             HStack(spacing: 12) {
@@ -575,18 +784,14 @@ public struct AppDayDetailView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.secondary.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     @ViewBuilder
-    private func quickStat(_ value: String, label: String, icon: String) -> some View {
+    private func quickStat(_ value: String, label: String, icon: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(.accentColor)
+                .foregroundColor(color)
             Text(value)
                 .font(.headline.monospacedDigit())
             Text(label)
@@ -597,14 +802,8 @@ public struct AppDayDetailView: View {
         .accessibilityLabel("\(value) \(label)")
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .background(Color.secondary.opacity(0.06))
+        .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private func formatDistance(_ meters: Double) -> String {
-        guard meters >= 0, meters.isFinite else { return "–" }
-        let measurement = Measurement(value: meters, unit: UnitLength.meters)
-        return measurement.formatted(.measurement(width: .abbreviated, usage: .road))
     }
 
     @ViewBuilder
