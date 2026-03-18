@@ -29,7 +29,7 @@ private enum AppDateDisplay {
     }
 
     static func weekday(_ iso: String) -> String {
-        guard let d = isoFormatter.date(from: iso) else { return "" }
+        guard let d = isoFormatter.date(from: iso) else { return iso }
         return d.formatted(.dateTime.weekday(.wide))
     }
 
@@ -911,10 +911,26 @@ private func iconForActivityType(_ type: String?) -> String {
     case "IN PASSENGER VEHICLE": return "car.fill"
     case "IN BUS": return "bus.fill"
     case "RUNNING": return "figure.run"
-    case "IN TRAIN": return "tram.fill"
+    case "IN TRAIN": return "train.side.front.car"
     case "IN SUBWAY": return "tram.fill"
     case "FLYING": return "airplane"
     default: return "figure.walk"
+    }
+}
+
+private func displayNameForActivityType(_ type: String?, default defaultName: String = "Activity") -> String {
+    switch (type ?? "").uppercased() {
+    case "WALKING":              return "Walking"
+    case "CYCLING":              return "Cycling"
+    case "RUNNING":              return "Running"
+    case "FLYING":               return "Flying"
+    case "IN PASSENGER VEHICLE": return "Car"
+    case "IN BUS":               return "Bus"
+    case "IN TRAIN":             return "Train"
+    case "IN SUBWAY":            return "Subway"
+    default:
+        guard let type else { return defaultName }
+        return type.capitalized
     }
 }
 
@@ -1069,7 +1085,7 @@ public struct AppDayDetailView: View {
                 Image(systemName: iconForActivityType(activity.activityType))
                     .foregroundColor(CardAccent.activity)
                     .font(.subheadline)
-                Text(activity.activityType?.capitalized ?? "Activity")
+                Text(displayNameForActivityType(activity.activityType))
                     .font(.subheadline.weight(.medium))
             }
             HStack(spacing: 12) {
@@ -1092,7 +1108,7 @@ public struct AppDayDetailView: View {
                 Image(systemName: iconForActivityType(path.activityType))
                     .foregroundColor(CardAccent.path)
                     .font(.subheadline)
-                Text(path.activityType?.capitalized ?? "Path")
+                Text(displayNameForActivityType(path.activityType, default: "Path"))
                     .font(.subheadline.weight(.medium))
             }
             HStack(spacing: 12) {
@@ -1308,7 +1324,7 @@ private struct AppInsightsContentView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
+        VStack(alignment: .leading, spacing: 24) {
 
             // Distance Over Time
             #if canImport(Charts)
@@ -1420,7 +1436,7 @@ private struct AppInsightsContentView: View {
     private func activityBreakdownCard(_ item: ActivityBreakdownItem) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(item.activityType.capitalized)
+                Text(displayNameForActivityType(item.activityType))
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text("\(item.count)×")
