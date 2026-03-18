@@ -4,11 +4,29 @@
 
 ### Abgeschlossen
 Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
-Lokale Produktweiterentwicklung: Phasen 19.10–19.21b abgeschlossen.
+Lokale Produktweiterentwicklung: Phasen 19.10–19.27 abgeschlossen.
+Phase 20.1: Export-MVP (GPX, Tage-Selektion, fileExporter) abgeschlossen (2026-03-18).
 
 ### Aktiver lokaler Fokus
-Lokale Produktweiterentwicklung (Phase 19.x): UX-Verbesserungen, Lesbarkeit, Robustheit.
-Phasen 19.1–19.21b abgeschlossen. Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
+Export-Funktionalitaet (Phase 20.x): GPX-Export MVP fertig. Naechste moegliche Erweiterungen: weitere Formate (KML/CSV), per-Track-Selektion, Visits als Waypoints.
+Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
+
+### Phase 20.1 – Export MVP: GPX-Export mit app-weiter Tages-Selektion
+
+**Datum:** 2026-03-18
+**Ziel:** Nutzer kann Tage fuer GPX-Export markieren und Datei per System-Share-Sheet speichern/teilen.
+
+- [x] `GPXBuilder` (Core): GPX 1.1, Path.points → Tracks, XML-Escaping, Dateinamen-Helfer
+- [x] `ExportSelectionState` (AppSupport): Value-Type Set<String>, in AppSessionState eingebettet
+- [x] `GPXDocument: FileDocument` fuer fileExporter-Flow
+- [x] `AppExportView`: Tage-Liste mit Checkboxen, Select All/Deselect All, GPX-Format-Badge,
+      Export-Button (disabled bei leerer Auswahl oder keine Routes), Fehlermeldung, Empty State
+- [x] `ExportFormat` Enum: GPX jetzt aktiv, Architektur fuer KML/CSV/etc. vorbereitet
+- [x] 4. Tab "Export" (iPhone/compact) mit Badge fuer ausgewaehlte Tage
+- [x] "Export..." Menueintrag + Sheet fuer iPad/regular Layout
+- [x] AppDayRow: Export-Badge-Icon wenn Tag fuer Export markiert
+- [x] 16 neue Tests (GPXBuilder + ExportSelectionState); 112/112 gruen
+- Bewusst nicht in diesem Schritt: Visits als Waypoints, per-Track-Selektion, KML/CSV
 
 ### Persistenz-Status
 Auto-Restore (ImportBookmarkStore) ist technisch implementiert und funktioniert korrekt (Phase 15).

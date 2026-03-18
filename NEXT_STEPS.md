@@ -2,40 +2,27 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.27 abgeschlossen (Hygiene/Docs). Kein konkret naechster Schritt definiert.
-2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
-3. **Accessibility-Audit – bewusst geparkt** – Kein konkreter Bug, kein Trigger. Kein aktiver Fokus.
+1. **Export-Erweiterungen (Phase 20.x)** – MVP fertig. Moegliche Folgeschritte:
+   - per-Track-Selektion (einzelne Routes innerhalb eines Tages auswaehlen)
+   - Visits/Activities als GPX-Waypoints exportieren
+   - Weitere Formate: KML, CSV (ExportFormat Enum bereits vorbereitet)
+   - Exportierter Dateiname anpassbar machen
+2. **Phase 21 – App Store / TestFlight – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang.
+3. **Accessibility-Audit – bewusst geparkt** – Kein konkreter Bug, kein Trigger.
 4. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
 
-**Abgeschlossene Phase 19.27 (2026-03-18):**
-- DemoSupport-Typealiases entfernt; DemoDataLoader nutzt AppSessionContent direkt
-- Public-API-Docs (///) auf AppSessionState, AppContentLoader, DemoDataLoader
-- Dead Code entfernt: leeres .task {} + restoreBookmarkedFile() aus AppShellRootView
-- AppDateDisplay.isoFormatter: Kommentar zu en_US_POSIX-Pflicht
+**Abgeschlossene Phase 20.1 (2026-03-18):**
+- GPXBuilder: Path.points → GPX 1.1 Tracks, XML-Escaping, Dateinamen-Helfer
+- ExportSelectionState: value-type Set<String>, in AppSessionState eingebettet (app-weit)
+- GPXDocument: FileDocument fuer fileExporter-Flow
+- AppExportView: 4. Tab (iPhone) + Sheet (iPad), Checkboxen, Select All, Export-Button
+- ExportFormat Enum: GPX aktiv, KML/CSV-Architektur vorbereitet
+- AppDayRow: Export-Badge wenn Tag selektiert
+- 16 neue Tests; 112/112 gruen
 
-**Abgeschlossene Phase 19.26 (2026-03-18):**
-- AppContentSplitView.swift (1677 Zeilen) in 6 Dateien aufgeteilt:
-  AppDisplayHelpers, AppSessionStatusView, AppOverviewSection,
-  AppDayListView, AppDayDetailView, AppInsightsContentView
-- Hauptview AppContentSplitView.swift auf 444 Zeilen reduziert
-- Alle shared Helfer als internal deklariert (module-weit nutzbar)
-
-**Abgeschlossene Phase 19.25 (2026-03-18):**
-- "Paths" -> "Routes" im gesamten Display-Layer
-- Daily Averages nur bei daySummaries.count >= 2
-- Distance Chart: "Route distances only" Caption
-- Activity Breakdown: colorForActivityType() pro Typ (Walking=gruen, etc.)
-
-**Abgeschlossene Phase 19.24 (2026-03-18):**
-- DayTimelineView: VoiceOver-Label (accessibilitySummary)
-- coloredCard: .accessibilityElement(children: .combine)
-- iOS-16 Map-Fallback; dayTimeRange .secondary; statusText .secondary
-- Empty States: "No Content"->"Nothing Recorded", "No Day Selected"->"Select a Day",
-  "No Day Details"->"No Day Entries"
-
-**Abgeschlossene Phase 19.23 (2026-03-18):**
-- CI: GitHub Actions swift-test.yml (Core) + xcode-test.yml (Wrapper)
-- SwiftLint: .swiftlint.yml in beiden Repos, Clean-Exit-0-Baseline
-- ZIPFoundation: .upToNextMinor(from: "0.9.19"), Package.resolved committed
-- onChange deprecated -> .task(id:) (iOS 15+, nicht deprecated)
-- Wrapper-Tests: 8 echte Unit-Tests (8/8 gruen, iPhone 17 iOS 26.3.1)
+**Abgeschlossene Phasen 19.23–19.27 (2026-03-18):**
+- 19.27: DemoSupport-Typealiases entfernt, Public-API-Docs, Dead Code entfernt
+- 19.26: God-File Split (AppContentSplitView 1677->444 Zeilen, 6 neue Dateien)
+- 19.25: "Paths"->"Routes", Daily Averages Guard, Activity-Breakdown-Farben
+- 19.24: Accessibility (VoiceOver, coloredCard, iOS-16 Fallback, Empty States)
+- 19.23: CI/CD, SwiftLint, ZIPFoundation-Pin, onChange-Fix, Wrapper-Tests
