@@ -5,6 +5,7 @@ import LocationHistoryConsumer
 // MARK: - Day Row
 
 struct AppDayRow: View {
+    @EnvironmentObject private var preferences: AppPreferences
     let summary: DaySummary
     var highlightIcons: [String] = []
     var isSelectedForExport: Bool = false
@@ -36,7 +37,7 @@ struct AppDayRow: View {
                 Label("\(summary.activityCount)", systemImage: "figure.walk")
                 Label("\(summary.pathCount)", systemImage: "location.north.line")
                 if summary.totalPathDistanceM > 0 {
-                    Label(formatDistance(summary.totalPathDistanceM), systemImage: "ruler")
+                    Label(formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit), systemImage: "ruler")
                 }
             }
             .font(.caption)

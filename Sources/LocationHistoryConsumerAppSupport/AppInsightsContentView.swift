@@ -13,6 +13,7 @@ enum ActivityMetric: String, CaseIterable {
 }
 
 struct AppInsightsContentView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     let insights: ExportInsights
     let daySummaries: [DaySummary]
     let onDayTap: ((String) -> Void)?
@@ -80,7 +81,7 @@ struct AppInsightsContentView: View {
                         avgCard(String(format: "%.1f", avg.avgVisitsPerDay), label: "Visits / Day", icon: "mappin.and.ellipse", color: .blue)
                         avgCard(String(format: "%.1f", avg.avgActivitiesPerDay), label: "Activities / Day", icon: "figure.walk", color: .green)
                         avgCard(String(format: "%.1f", avg.avgPathsPerDay), label: "Routes / Day", icon: "location.north.line", color: .orange)
-                        avgCard(formatDistance(avg.avgDistancePerDayM), label: "Distance / Day", icon: "road.lanes", color: .purple)
+                        avgCard(formatDistance(avg.avgDistancePerDayM, unit: preferences.distanceUnit), label: "Distance / Day", icon: "road.lanes", color: .purple)
                     }
                 }
             }
@@ -191,13 +192,13 @@ struct AppInsightsContentView: View {
             }
             HStack(spacing: 16) {
                 if item.totalDistanceKM > 0 {
-                    Label(String(format: "%.1f km", item.totalDistanceKM), systemImage: "ruler")
+                    Label(formatDistance(item.totalDistanceKM * 1000, unit: preferences.distanceUnit), systemImage: "ruler")
                 }
                 if item.totalDurationH > 0 {
                     Label(formatDuration(item.totalDurationH), systemImage: "clock")
                 }
                 if item.avgSpeedKMH > 0 {
-                    Label(String(format: "%.1f km/h", item.avgSpeedKMH), systemImage: "speedometer")
+                    Label(formatSpeed(item.avgSpeedKMH, unit: preferences.distanceUnit), systemImage: "speedometer")
                 }
             }
             .font(.caption)
@@ -239,7 +240,7 @@ struct AppInsightsContentView: View {
                 Label("\(item.days) days", systemImage: "calendar")
                 Label("\(item.visits) visits", systemImage: "mappin.and.ellipse")
                 if item.distanceM > 0 {
-                    Label(formatDistance(item.distanceM), systemImage: "ruler")
+                    Label(formatDistance(item.distanceM, unit: preferences.distanceUnit), systemImage: "ruler")
                 }
             }
             .font(.caption)
@@ -262,7 +263,7 @@ struct AppInsightsContentView: View {
                 if let date = Self.chartDateFormatter.date(from: summary.date) {
                     BarMark(
                         x: .value("Date", date, unit: .day),
-                        y: .value("km", summary.totalPathDistanceM / 1000)
+                        y: .value(distanceAxisLabel(unit: preferences.distanceUnit), distanceValue(summary.totalPathDistanceM, unit: preferences.distanceUnit))
                     )
                     .foregroundStyle(Color.accentColor)
                     .cornerRadius(3)
@@ -270,7 +271,7 @@ struct AppInsightsContentView: View {
             }
         }
         .chartXAxis(showXAxis ? .automatic : .hidden)
-        .chartYAxisLabel("km", alignment: .trailing)
+        .chartYAxisLabel(distanceAxisLabel(unit: preferences.distanceUnit), alignment: .trailing)
         .chartOverlay { proxy in
             GeometryReader { geometry in
                 Rectangle()
@@ -298,15 +299,15 @@ struct AppInsightsContentView: View {
         let showDistance = activityMetric == .distance && hasDistance
         Chart {
             ForEach(items, id: \.activityType) { item in
-                let xVal = showDistance ? item.totalDistanceKM : Double(item.count)
+                let xVal = showDistance ? distanceValue(item.totalDistanceKM * 1000, unit: preferences.distanceUnit) : Double(item.count)
                 BarMark(
-                    x: .value(showDistance ? "km" : "Count", xVal),
+                    x: .value(showDistance ? distanceAxisLabel(unit: preferences.distanceUnit) : "Count", xVal),
                     y: .value("Type", item.activityType.capitalized)
                 )
                 .foregroundStyle(Color.green)
                 .cornerRadius(4)
                 .annotation(position: .trailing) {
-                    Text(showDistance ? String(format: "%.1f", item.totalDistanceKM) : "\(item.count)")
+                    Text(showDistance ? String(format: "%.1f", distanceValue(item.totalDistanceKM * 1000, unit: preferences.distanceUnit)) : "\(item.count)")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

@@ -30,6 +30,7 @@ public enum ExportFormat: String, CaseIterable, Identifiable {
 /// Displays all available days with checkboxes, a format picker,
 /// and a button that triggers the system file-export flow.
 public struct AppExportView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     @Binding var session: AppSessionState
     @State private var selectedFormat: ExportFormat = .gpx
     @State private var isExporting = false
@@ -136,7 +137,7 @@ public struct AppExportView: View {
                             .foregroundStyle(.secondary)
                     }
                     if summary.totalPathDistanceM > 0 {
-                        Label(formatDistance(summary.totalPathDistanceM), systemImage: "ruler")
+                        Label(formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit), systemImage: "ruler")
                             .foregroundStyle(.secondary)
                     }
                     if summary.pathCount == 0 {

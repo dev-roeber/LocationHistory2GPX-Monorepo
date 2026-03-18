@@ -8,6 +8,7 @@ import MapKit
 // MARK: - Day Detail
 
 public struct AppDayDetailView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     let detail: DayDetailViewState?
     let hasDays: Bool
     let onBackToOverview: (() -> Void)?
@@ -90,7 +91,7 @@ public struct AppDayDetailView: View {
                 quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk", color: .green)
                 quickStat("\(detail.paths.count)", label: "Routes", icon: "location.north.line", color: .orange)
                 if dayDistance > 0 {
-                    quickStat(formatDistance(dayDistance), label: "Distance", icon: "road.lanes", color: .purple)
+                    quickStat(formatDistance(dayDistance, unit: preferences.distanceUnit), label: "Distance", icon: "road.lanes", color: .purple)
                 }
             }
 
@@ -180,7 +181,7 @@ public struct AppDayDetailView: View {
                     Label("\(AppTimeDisplay.time(start)) – \(AppTimeDisplay.time(end))", systemImage: "clock")
                 }
                 if let dist = activity.distanceM {
-                    Label(formatDistance(dist), systemImage: "ruler")
+                    Label(formatDistance(dist, unit: preferences.distanceUnit), systemImage: "ruler")
                 }
             }
             .font(.caption)
@@ -201,7 +202,7 @@ public struct AppDayDetailView: View {
             HStack(spacing: 12) {
                 Label("\(path.pointCount) points", systemImage: "location.north.line")
                 if let dist = path.distanceM {
-                    Label(formatDistance(dist), systemImage: "ruler")
+                    Label(formatDistance(dist, unit: preferences.distanceUnit), systemImage: "ruler")
                 }
             }
             .font(.caption)

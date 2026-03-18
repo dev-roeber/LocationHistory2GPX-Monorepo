@@ -4,6 +4,7 @@ import MapKit
 
 @available(iOS 17.0, macOS 14.0, *)
 public struct AppLiveLocationSection: View {
+    @EnvironmentObject private var preferences: AppPreferences
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @State private var mapPosition: MapCameraPosition = .automatic
     @State private var hasSeededMap = false
@@ -102,7 +103,7 @@ public struct AppLiveLocationSection: View {
                 .stroke(.green, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             }
         }
-        .mapStyle(.standard(elevation: .realistic))
+        .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard(elevation: .realistic))
         .overlay(alignment: .topTrailing) {
             Button(action: centerOnCurrentLocation) {
                 Image(systemName: "location.fill")
@@ -163,7 +164,7 @@ public struct AppLiveLocationSection: View {
                             Text(savedTrackTitle(track))
                                 .font(.subheadline)
                                 .foregroundStyle(.primary)
-                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM))")
+                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

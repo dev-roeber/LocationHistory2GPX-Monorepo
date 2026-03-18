@@ -5,6 +5,7 @@ import LocationHistoryConsumer
 // MARK: - Main Content View (Adaptive Layout)
 
 public struct AppContentSplitView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     @Binding private var session: AppSessionState
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -13,6 +14,7 @@ public struct AppContentSplitView: View {
     @State private var daySearchText = ""
     @State private var isShowingExportSheet = false
     @State private var isShowingTracksLibrary = false
+    @State private var isShowingOptions = false
 
     private let onOpen: () -> Void
     private let onLoadDemo: () -> Void
@@ -138,6 +140,13 @@ public struct AppContentSplitView: View {
         .task(id: session.daySummaries) {
             daysNavigationPath = NavigationPath()
             daySearchText = ""
+            selectedTab = preferences.startTab.tabIndex
+        }
+        .onAppear {
+            selectedTab = preferences.startTab.tabIndex
+        }
+        .onChange(of: preferences.startTab) { newValue in
+            selectedTab = newValue.tabIndex
         }
     }
 
@@ -234,7 +243,7 @@ public struct AppContentSplitView: View {
                         Text("Total Distance")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(formatDistance(insights.totalDistanceM))
+                        Text(formatDistance(insights.totalDistanceM, unit: preferences.distanceUnit))
                             .font(.title3.weight(.semibold))
                     }
                     Spacer()
@@ -295,7 +304,7 @@ public struct AppContentSplitView: View {
                     if let longest = insights.longestDistanceDay {
                         highlightCard(
                             title: "Longest Distance",
-                            value: longest.value,
+                            value: longestDistanceValue(for: longest),
                             date: AppDateDisplay.mediumDate(longest.date),
                             icon: "road.lanes",
                             color: .purple,
@@ -444,6 +453,12 @@ public struct AppContentSplitView: View {
             Button(action: onLoadDemo) {
                 Label(demoButtonTitle, systemImage: "testtube.2")
             }
+            Divider()
+            Button {
+                isShowingOptions = true
+            } label: {
+                Label("Options", systemImage: "slider.horizontal.3")
+            }
             if session.hasDays && horizontalSizeClass != .compact {
                 Divider()
                 Button {
@@ -464,6 +479,7 @@ public struct AppContentSplitView: View {
         .sheet(isPresented: $isShowingExportSheet) {
             NavigationStack {
                 AppExportView(session: $session)
+                    .environmentObject(preferences)
                     .navigationTitle("Export")
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
@@ -475,13 +491,24 @@ public struct AppContentSplitView: View {
         .sheet(isPresented: $isShowingTracksLibrary) {
             NavigationStack {
                 tracksLibrarySheetContent
+                    .environmentObject(preferences)
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Done") { isShowingTracksLibrary = false }
+                }
+            }
+        }
+        .sheet(isPresented: $isShowingOptions) {
+            NavigationStack {
+                AppOptionsView(preferences: preferences)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { isShowingOptions = false }
                         }
                     }
             }
         }
+    }
     }
 
     private var liveTracksOverviewSection: some View {
@@ -509,7 +536,7 @@ public struct AppContentSplitView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(savedTrackTitle(latestTrack))
                             .font(.subheadline.weight(.semibold))
-                        Text("\(latestTrack.pointCount) points · \(formatDistance(latestTrack.distanceM))")
+                        Text("\(latestTrack.pointCount) points · \(formatDistance(latestTrack.distanceM, unit: preferences.distanceUnit))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -570,6 +597,13 @@ public struct AppContentSplitView: View {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: track.startedAt)
+    }
+
+    private func longestDistanceValue(for highlight: DayHighlight) -> String {
+        guard let summary = session.daySummaries.first(where: { $0.date == highlight.date }) else {
+            return highlight.value
+        }
+        return formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit)
     }
 }
 

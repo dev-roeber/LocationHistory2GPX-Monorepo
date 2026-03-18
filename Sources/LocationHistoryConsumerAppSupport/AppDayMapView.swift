@@ -5,8 +5,8 @@ import LocationHistoryConsumer
 
 @available(iOS 17.0, macOS 14.0, *)
 public struct AppDayMapView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     let mapData: DayMapData
-    @State private var useHybrid = false
 
     public init(mapData: DayMapData) {
         self.mapData = mapData
@@ -19,15 +19,15 @@ public struct AppDayMapView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(alignment: .topTrailing) {
                     Button {
-                        useHybrid.toggle()
+                        preferences.preferredMapStyle.toggle()
                     } label: {
-                        Image(systemName: useHybrid ? "map" : "globe")
+                        Image(systemName: preferences.preferredMapStyle.isHybrid ? "map" : "globe")
                             .font(.caption)
                             .padding(7)
                             .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .padding(8)
-                    .accessibilityLabel(useHybrid ? "Switch to standard map" : "Switch to satellite map")
+                    .accessibilityLabel(preferences.preferredMapStyle.isHybrid ? "Switch to standard map" : "Switch to satellite map")
                 }
                 .accessibilityLabel(mapAccessibilityLabel)
         }
@@ -74,7 +74,7 @@ public struct AppDayMapView: View {
                 .tint(visitMarkerColor(for: visit.semanticType))
             }
         }
-        .mapStyle(useHybrid ? .hybrid : .standard)
+        .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
     }
 
     private func visitMarkerColor(for semanticType: String?) -> Color {

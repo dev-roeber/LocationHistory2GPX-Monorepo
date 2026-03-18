@@ -30,6 +30,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
 - foreground-only Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
+- lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab und technische Importdetails speichern
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -60,7 +61,8 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
 - `Sources/LocationHistoryConsumerApp/`
-  - Produkt-App-Einstieg fuer lokalen JSON-/ZIP-Import
+- Produkt-App-Einstieg fuer lokalen JSON-/ZIP-Import
+- lokale Optionen-Seite mit `UserDefaults`-basierten App-Preferences
 - `Sources/LocationHistoryConsumerDemo/`
   - Demo-/Harness-Einstieg fuer Fixture-zentrierte Verifikation
 - `Tests/LocationHistoryConsumerTests/`
@@ -154,9 +156,10 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
 - Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
+- Optionen-Seite fuer lokale Darstellung/Steuerung: Distanz-Einheit, Start-Tab, Kartenstil, technische Importdetails
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
-- Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
+- Toolbar-Aktionen mit Icons: Import, Demo Data, Options, Clear
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo

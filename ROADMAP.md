@@ -4,13 +4,29 @@
 
 ### Abgeschlossen
 Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
-Lokale Produktweiterentwicklung: Phasen 19.10–19.27 abgeschlossen.
+Lokale Produktweiterentwicklung: Phasen 19.10–19.28 abgeschlossen.
 Phase 20.1: Export-MVP (GPX, Tage-Selektion, fileExporter) abgeschlossen (2026-03-18).
 Phase 20.2: Foreground-only Live-Recording-MVP abgeschlossen (2026-03-18).
 
 ### Aktiver lokaler Fokus
 Live-Recording-Folgearbeiten: Background-Location, Draft-/Resume-Modell, Recorded-Track-Export und eine eigene Verlaufs-UI fuer aufgezeichnete Tracks sind bewusst offen.
 Export-Funktionalitaet (Phase 20.x): GPX-Export MVP fertig. Naechste moegliche Erweiterungen: weitere Formate (KML/CSV), per-Track-Selektion, Visits als Waypoints.
+
+### Phase 19.28 – Lokale Optionen / Produktsteuerung
+
+**Datum:** 2026-03-19
+**Ziel:** Eine echte Optionen-Seite fuer die iPhone-App einfuehren, mit wenigen glaubwuerdigen lokalen Einstellungen statt Fake-Toggles.
+
+- [x] Neue `AppPreferences`-Domain auf Basis von `UserDefaults`
+- [x] Option fuer Distanz-Einheit (`Kilometers` / `Miles`)
+- [x] Option fuer den Start-Tab auf iPhone (`Overview`, `Days`, `Insights`, `Export`)
+- [x] Option fuer den bevorzugten Kartenstil (`Standard`, `Satellite Hybrid`)
+- [x] Option zum Ein-/Ausblenden technischer Importdetails
+- [x] `AppOptionsView` als echte Optionen-Seite mit Bereichen fuer Darstellung, Karten, Privacy und Technical
+- [x] Optionen im Core-App-Einstieg und im Wrapper ueber das bestehende Actions-Menue erreichbar
+- [x] App-weite Wirkung: Distanz-/Speed-Formatierung, Kartenstil, Start-Tab und technische Metadaten folgen jetzt denselben lokalen Preferences
+- [x] 4 neue Tests fuer Default-Werte, Persistenz, Reset und Fallback-Handling; `swift test` jetzt 135/135 gruen
+- Bewusst nicht in diesem Schritt: Cloud-/Sync-/Server-Toggles, Background-Location-Optionen, Fake-Privacy-Controls
 
 ### Phase 20.2 – Live Recording MVP: aktueller Standort, foreground-only Track, getrennte Persistenz
 

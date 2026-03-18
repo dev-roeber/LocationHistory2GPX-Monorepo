@@ -60,10 +60,45 @@ enum CardAccent {
 
 // MARK: - Distance Formatting
 
-func formatDistance(_ meters: Double) -> String {
+func formatDistance(_ meters: Double, unit: AppDistanceUnitPreference = .metric) -> String {
     guard meters >= 0, meters.isFinite else { return "–" }
-    let measurement = Measurement(value: meters, unit: UnitLength.meters)
-    return measurement.formatted(.measurement(width: .abbreviated, usage: .road))
+    switch unit {
+    case .metric:
+        if meters >= 1000 {
+            return String(format: "%.1f km", meters / 1000)
+        }
+        return "\(Int(meters.rounded())) m"
+    case .imperial:
+        let miles = meters * 0.000_621_371
+        if miles >= 0.1 {
+            return String(format: "%.1f mi", miles)
+        }
+        let feet = meters * 3.28084
+        return "\(Int(feet.rounded())) ft"
+    }
+}
+
+func distanceValue(_ meters: Double, unit: AppDistanceUnitPreference) -> Double {
+    switch unit {
+    case .metric:
+        return meters / 1000
+    case .imperial:
+        return meters * 0.000_621_371
+    }
+}
+
+func distanceAxisLabel(unit: AppDistanceUnitPreference) -> String {
+    unit.shortLabel
+}
+
+func formatSpeed(_ kilometersPerHour: Double, unit: AppDistanceUnitPreference) -> String {
+    guard kilometersPerHour >= 0, kilometersPerHour.isFinite else { return "–" }
+    switch unit {
+    case .metric:
+        return String(format: "%.1f km/h", kilometersPerHour)
+    case .imperial:
+        return String(format: "%.1f mph", kilometersPerHour * 0.621_371)
+    }
 }
 
 // MARK: - Month Grouping

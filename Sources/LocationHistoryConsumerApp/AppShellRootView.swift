@@ -9,7 +9,9 @@ import UniformTypeIdentifiers
 struct AppShellRootView: View {
     @State private var session = AppSessionState()
     @State private var isImportingFile = false
+    @State private var isShowingOptions = false
     @StateObject private var liveLocation = LiveLocationFeatureModel()
+    @StateObject private var preferences = AppPreferences()
 
     var body: some View {
         Group {
@@ -44,6 +46,7 @@ struct AppShellRootView: View {
                 }
             }
         }
+        .environmentObject(preferences)
         #if canImport(UniformTypeIdentifiers)
         .fileImporter(
             isPresented: $isImportingFile,
@@ -52,6 +55,16 @@ struct AppShellRootView: View {
             onCompletion: handleImportResult
         )
         #endif
+        .sheet(isPresented: $isShowingOptions) {
+            NavigationStack {
+                AppOptionsView(preferences: preferences)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { isShowingOptions = false }
+                        }
+                    }
+            }
+        }
     }
 
     @ViewBuilder
@@ -64,6 +77,12 @@ struct AppShellRootView: View {
             }
             Button(action: loadBundledDemo) {
                 Label(demoButtonTitle, systemImage: "testtube.2")
+            }
+            Divider()
+            Button {
+                isShowingOptions = true
+            } label: {
+                Label("Options", systemImage: "slider.horizontal.3")
             }
             if session.hasLoadedContent || session.message?.kind == .error {
                 Divider()

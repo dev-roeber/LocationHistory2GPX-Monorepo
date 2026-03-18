@@ -4,6 +4,7 @@ import MapKit
 
 @available(iOS 17.0, macOS 14.0, *)
 struct AppRecordedTrackEditorView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     @Environment(\.dismiss) private var dismiss
 
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
@@ -72,7 +73,7 @@ struct AppRecordedTrackEditorView: View {
             LabeledContent("Started", value: draft.startedAt.formatted(date: .abbreviated, time: .shortened))
             LabeledContent("Ended", value: draft.endedAt.formatted(date: .abbreviated, time: .shortened))
             LabeledContent("Points", value: "\(draft.pointCount)")
-            LabeledContent("Distance", value: formatDistance(draft.distanceM))
+            LabeledContent("Distance", value: formatDistance(draft.distanceM, unit: preferences.distanceUnit))
             if let message = draft.validationMessage {
                 Label(message, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)

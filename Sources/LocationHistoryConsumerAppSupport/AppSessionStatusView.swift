@@ -50,6 +50,7 @@ public struct AppSessionStatusView: View {
 // MARK: - Source Summary Card
 
 public struct AppSourceSummaryCard: View {
+    @EnvironmentObject private var preferences: AppPreferences
     let summary: AppSourceSummary
     @State private var isExpanded = false
 
@@ -71,7 +72,7 @@ public struct AppSourceSummaryCard: View {
             summaryRow("Source", value: summary.sourceValue, icon: "doc")
 
             let hasDetails = summary.schemaVersion != nil || summary.inputFormat != nil || summary.exportedAt != nil || summary.dayCountText != nil
-            if hasDetails {
+            if hasDetails && preferences.showsTechnicalImportDetails {
                 DisclosureGroup(isExpanded: $isExpanded) {
                     VStack(alignment: .leading, spacing: 10) {
                         if let v = summary.schemaVersion {
@@ -89,7 +90,7 @@ public struct AppSourceSummaryCard: View {
                     }
                     .padding(.top, 6)
                 } label: {
-                    Text("Details")
+                    Text("Technical Details")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

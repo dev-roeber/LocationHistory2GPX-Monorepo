@@ -3,6 +3,7 @@ import SwiftUI
 
 @available(iOS 17.0, macOS 14.0, *)
 struct AppRecordedTracksLibraryView: View {
+    @EnvironmentObject private var preferences: AppPreferences
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
 
     init(liveLocation: LiveLocationFeatureModel) {
@@ -58,7 +59,7 @@ struct AppRecordedTracksLibraryView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(savedTrackTitle(track))
                             .font(.subheadline.weight(.semibold))
-                        Text("\(track.pointCount) points · \(formatDistance(track.distanceM))")
+                        Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
