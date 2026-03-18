@@ -6,6 +6,7 @@ import LocationHistoryConsumer
 @available(iOS 17.0, macOS 14.0, *)
 public struct AppDayMapView: View {
     let mapData: DayMapData
+    @State private var useHybrid = false
 
     public init(mapData: DayMapData) {
         self.mapData = mapData
@@ -16,6 +17,18 @@ public struct AppDayMapView: View {
             mapContent(region: region)
                 .frame(height: 280)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        useHybrid.toggle()
+                    } label: {
+                        Image(systemName: useHybrid ? "map" : "globe")
+                            .font(.caption)
+                            .padding(7)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .padding(8)
+                    .accessibilityLabel(useHybrid ? "Switch to standard map" : "Switch to satellite map")
+                }
                 .accessibilityLabel(mapAccessibilityLabel)
         }
     }
@@ -58,10 +71,23 @@ public struct AppDayMapView: View {
                         longitude: visit.coordinate.lon
                     )
                 )
-                .tint(.red)
+                .tint(visitMarkerColor(for: visit.semanticType))
             }
         }
-        .mapStyle(.standard)
+        .mapStyle(useHybrid ? .hybrid : .standard)
+    }
+
+    private func visitMarkerColor(for semanticType: String?) -> Color {
+        switch (semanticType ?? "").uppercased() {
+        case "HOME": return .blue
+        case "WORK": return .indigo
+        case "CAFE", "RESTAURANT", "FOOD": return .orange
+        case "PARK", "NATURE", "GARDEN": return .green
+        case "LEISURE", "GYM", "SPORT", "FITNESS": return .teal
+        case "EVENT", "CONCERT": return .yellow
+        case "STAY", "HOTEL", "ACCOMMODATION": return .mint
+        default: return .red
+        }
     }
 
     private func polylineColor(for activityType: String?) -> Color {

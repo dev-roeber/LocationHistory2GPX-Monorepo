@@ -115,6 +115,7 @@ public struct AppContentSplitView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var daysNavigationPath = NavigationPath()
     @State private var selectedTab = 0
+    @State private var daySearchText = ""
 
     private let onOpen: () -> Void
     private let onLoadDemo: () -> Void
@@ -130,6 +131,20 @@ public struct AppContentSplitView: View {
         self.onOpen = onOpen
         self.onLoadDemo = onLoadDemo
         self.onClear = onClear
+    }
+
+    private var filteredDaySummaries: [DaySummary] {
+        guard !daySearchText.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return session.daySummaries
+        }
+        return session.daySummaries.filter { $0.date.localizedCaseInsensitiveContains(daySearchText) }
+    }
+
+    private func highlightIconsFor(_ date: String) -> [String] {
+        var icons: [String] = []
+        if session.insights?.busiestDay?.date == date { icons.append("flame.fill") }
+        if session.insights?.longestDistanceDay?.date == date { icons.append("road.lanes") }
+        return icons
     }
 
     public var body: some View {
@@ -164,6 +179,7 @@ public struct AppContentSplitView: View {
             NavigationStack(path: $daysNavigationPath) {
                 compactDayList
                     .navigationTitle("Days")
+                    .searchable(text: $daySearchText, prompt: "Search by date")
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) {
                             actionsMenu
@@ -204,19 +220,36 @@ public struct AppContentSplitView: View {
         }
         .onChange(of: session.daySummaries) { _ in
             daysNavigationPath = NavigationPath()
+            daySearchText = ""
         }
     }
 
     @ViewBuilder
     private var compactDayList: some View {
-        let groups = groupByMonth(session.daySummaries)
+        let summaries = filteredDaySummaries
+        let groups = groupByMonth(summaries)
         if session.daySummaries.isEmpty {
             AppDayListEmptyView()
+        } else if summaries.isEmpty {
+            VStack(spacing: 12) {
+                Image(systemName: "magnifyingglass")
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                Text("No Results")
+                    .font(.headline)
+                Text("No days match \"\(daySearchText)\".")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(24)
         } else if groups.count == 1 {
             List {
                 ForEach(groups[0].summaries, id: \.date) { summary in
                     NavigationLink(value: summary.date) {
-                        AppDayRow(summary: summary)
+                        AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date))
                     }
                 }
             }
@@ -226,7 +259,7 @@ public struct AppContentSplitView: View {
                     Section(group.title) {
                         ForEach(group.summaries, id: \.date) { summary in
                             NavigationLink(value: summary.date) {
-                                AppDayRow(summary: summary)
+                                AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date))
                             }
                         }
                     }
@@ -712,12 +745,25 @@ public struct AppOverviewSection: View {
 
 private struct AppDayRow: View {
     let summary: DaySummary
+    var highlightIcons: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(AppDateDisplay.weekday(summary.date))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            HStack {
+                Text(AppDateDisplay.weekday(summary.date))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if !highlightIcons.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(highlightIcons, id: \.self) { icon in
+                            Image(systemName: icon)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
             Text(AppDateDisplay.mediumDate(summary.date))
                 .font(.headline)
             HStack(spacing: 12) {
@@ -1092,15 +1138,53 @@ public struct AppDayDetailView: View {
 
 // MARK: - Insights Content View
 
+private enum ActivityMetric: String, CaseIterable {
+    case count = "Count"
+    case distance = "Distance"
+}
+
 private struct AppInsightsContentView: View {
     let insights: ExportInsights
     let daySummaries: [DaySummary]
     let onDayTap: ((String) -> Void)?
+    @State private var activityMetric: ActivityMetric = .count
+
+    private static let chartDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
 
     init(insights: ExportInsights, daySummaries: [DaySummary] = [], onDayTap: ((String) -> Void)? = nil) {
         self.insights = insights
         self.daySummaries = daySummaries
         self.onDayTap = onDayTap
+    }
+
+    private struct WeekdayStat: Identifiable {
+        let id: Int
+        let name: String
+        let avgEvents: Double
+    }
+
+    private var weekdayStats: [WeekdayStat] {
+        guard daySummaries.count >= 3 else { return [] }
+        var buckets: [Int: (total: Int, count: Int)] = [:]
+        for summary in daySummaries {
+            guard let date = Self.chartDateFormatter.date(from: summary.date) else { continue }
+            let wd = Calendar.current.component(.weekday, from: date)
+            let events = summary.visitCount + summary.activityCount
+            let b = buckets[wd] ?? (total: 0, count: 0)
+            buckets[wd] = (total: b.total + events, count: b.count + 1)
+        }
+        // Mon(2)..Sat(7), Sun(1) last
+        let order = [2, 3, 4, 5, 6, 7, 1]
+        let names = [1: "Sun", 2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri", 7: "Sat"]
+        return order.compactMap { wd in
+            guard let b = buckets[wd], b.count > 0 else { return nil }
+            return WeekdayStat(id: wd, name: names[wd]!, avgEvents: Double(b.total) / Double(b.count))
+        }
     }
 
     var body: some View {
@@ -1131,6 +1215,13 @@ private struct AppInsightsContentView: View {
             if !insights.activityBreakdown.isEmpty {
                 insightSection("Activity Types", icon: "figure.walk") {
                     #if canImport(Charts)
+                    Picker("", selection: $activityMetric) {
+                        ForEach(ActivityMetric.allCases, id: \.self) { m in
+                            Text(m.rawValue).tag(m)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom, 4)
                     activityTypeChart
                     #endif
                     ForEach(Array(insights.activityBreakdown.enumerated()), id: \.offset) { _, item in
@@ -1150,6 +1241,15 @@ private struct AppInsightsContentView: View {
                     }
                 }
             }
+
+            // By Day of Week
+            #if canImport(Charts)
+            if !weekdayStats.isEmpty {
+                insightSection("By Day of Week", icon: "chart.bar") {
+                    weekdayChart
+                }
+            }
+            #endif
 
             // Period Breakdown
             if !insights.periodBreakdown.isEmpty {
@@ -1281,12 +1381,14 @@ private struct AppInsightsContentView: View {
         let showXAxis = daySummaries.count <= 10
         Chart {
             ForEach(daySummaries, id: \.date) { summary in
-                BarMark(
-                    x: .value("Date", summary.date),
-                    y: .value("km", summary.totalPathDistanceM / 1000)
-                )
-                .foregroundStyle(Color.accentColor.gradient)
-                .cornerRadius(3)
+                if let date = Self.chartDateFormatter.date(from: summary.date) {
+                    BarMark(
+                        x: .value("Date", date, unit: .day),
+                        y: .value("km", summary.totalPathDistanceM / 1000)
+                    )
+                    .foregroundStyle(Color.accentColor)
+                    .cornerRadius(3)
+                }
             }
         }
         .chartXAxis(showXAxis ? .automatic : .hidden)
@@ -1297,10 +1399,12 @@ private struct AppInsightsContentView: View {
                     .fill(.clear)
                     .contentShape(Rectangle())
                     .onTapGesture { location in
-                        if let onDayTap,
-                           let date: String = proxy.value(atX: location.x - geometry.frame(in: .local).minX) {
-                            if daySummaries.contains(where: { $0.date == date }) {
-                                onDayTap(date)
+                        guard let onDayTap else { return }
+                        let x = location.x - geometry.frame(in: .local).minX
+                        if let tappedDate: Date = proxy.value(atX: x) {
+                            let iso = Self.chartDateFormatter.string(from: tappedDate)
+                            if daySummaries.contains(where: { $0.date == iso }) {
+                                onDayTap(iso)
                             }
                         }
                     }
@@ -1311,26 +1415,27 @@ private struct AppInsightsContentView: View {
 
     @ViewBuilder
     private var activityTypeChart: some View {
-        let totalCount = insights.activityBreakdown.reduce(0) { $0 + $1.count }
-        if totalCount > 0 {
-            Chart {
-                ForEach(insights.activityBreakdown, id: \.activityType) { item in
-                    BarMark(
-                        x: .value("Count", item.count),
-                        y: .value("Type", item.activityType.capitalized)
-                    )
-                    .foregroundStyle(Color.green.gradient)
-                    .cornerRadius(4)
-                    .annotation(position: .trailing) {
-                        Text("\(item.count)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+        let items = insights.activityBreakdown
+        let hasDistance = items.contains(where: { $0.totalDistanceKM > 0 })
+        let showDistance = activityMetric == .distance && hasDistance
+        Chart {
+            ForEach(items, id: \.activityType) { item in
+                let xVal = showDistance ? item.totalDistanceKM : Double(item.count)
+                BarMark(
+                    x: .value(showDistance ? "km" : "Count", xVal),
+                    y: .value("Type", item.activityType.capitalized)
+                )
+                .foregroundStyle(Color.green)
+                .cornerRadius(4)
+                .annotation(position: .trailing) {
+                    Text(showDistance ? String(format: "%.1f", item.totalDistanceKM) : "\(item.count)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .chartXAxis(.hidden)
-            .frame(height: CGFloat(max(insights.activityBreakdown.count, 1)) * 40 + 8)
         }
+        .chartXAxis(.hidden)
+        .frame(height: CGFloat(max(items.count, 1)) * 40 + 8)
     }
 
     @ViewBuilder
@@ -1343,7 +1448,7 @@ private struct AppInsightsContentView: View {
                         x: .value("Count", item.count),
                         y: .value("Type", item.semanticType.capitalized)
                     )
-                    .foregroundStyle(Color.blue.gradient)
+                    .foregroundStyle(Color.blue)
                     .cornerRadius(4)
                     .annotation(position: .trailing) {
                         Text("\(item.count)")
@@ -1355,6 +1460,22 @@ private struct AppInsightsContentView: View {
             .chartXAxis(.hidden)
             .frame(height: CGFloat(max(insights.visitTypeBreakdown.count, 1)) * 40 + 8)
         }
+    }
+    @ViewBuilder
+    private var weekdayChart: some View {
+        Chart {
+            ForEach(weekdayStats) { stat in
+                BarMark(
+                    x: .value("Day", stat.name),
+                    y: .value("Avg", stat.avgEvents)
+                )
+                .foregroundStyle(Color.indigo)
+                .cornerRadius(4)
+            }
+        }
+        .chartYAxisLabel("avg events", alignment: .trailing)
+        .frame(height: 110)
+        .padding(.bottom, 2)
     }
     #endif
 

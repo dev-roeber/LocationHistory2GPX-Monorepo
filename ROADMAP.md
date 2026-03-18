@@ -72,6 +72,33 @@ Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
 
 ---
 
+### Phase 19.14 – Days Navigation + Insights Depth
+
+**Datum:** 2026-03-18
+**Ziel:** Days-Tab mit Suche und Highlight-Markierungen. Insights mit Wochentags-Chart, Count/Distance-Umschalter fuer Activity-Types und verbesserter Distanz-Zeitachse. Map mit Style-Toggle und farbcodierten Visit-Markern.
+
+- [x] Days-Tab: Suchfeld (filtert nach Datum, z.B. "2024-03" oder "2024-03-15")
+- [x] Days-Tab: Busiest Day + Longest Distance Day in der Tagesliste markiert (flame / road Icon)
+- [x] Days-Tab: Suchfeld-Reset bei Content-Wechsel
+- [x] Insights: Distance-Over-Time-Chart nutzt echte Date-Achse (temporal, nicht kategorisch)
+- [x] Insights: Activity-Type-Chart Count/Distance-Toggle (Segmented Picker)
+- [x] Insights: Neuer "By Day of Week" Wochentags-Chart (Mon-Sun, avg events per weekday, ab 3 Tagen)
+- [x] Insights: Chart-Farben ohne .gradient (bessere Dark-Mode-Lesbarkeit)
+- [x] Map: Style-Toggle (Standard / Satellite Hybrid) als overlay Button
+- [x] Map: Visit-Marker farbkodiert nach Typ (HOME=blau, WORK=indigo, CAFE=orange, PARK=gruen, etc.)
+
+**Problem vorher:** Days-Liste war nicht durchsuchbar. Highlight-Tage waren nur in Overview sichtbar, nicht in der Tagesliste. Distance-Chart hatte kategorische Achse (String-Dates). Activity-Type-Chart zeigte nur Count, nicht Distanz. Kein Wochentags-Muster sichtbar. Map immer Standard, alle Visit-Marker rot.
+
+**Jetzt:** Days-Tab ist durchsuchbar. Busiest/Longest-Tage haben subtile Icons in der Liste. Distance-Chart hat korrekte temporale Achse mit Luecken bei fehlenden Tagen. Activity-Chart umschaltbar zwischen Count und Distanz. Neuer Wochentags-Chart zeigt Aktivitaetsmuster Mo-So. Map hat Style-Toggle und farbige Visit-Marker nach Typ.
+
+**Tests:** swift test gruen (70/70). swift build + xcodebuild BUILD SUCCEEDED.
+
+**Betroffene Dateien:** AppContentSplitView.swift (Days-Suche, Highlight-Icons, Charts). AppDayMapView.swift (Style-Toggle, Visit-Marker-Farben).
+
+**Nicht-Ziele:** Kein iPad-Fokus. Keine Persistenz. Keine Apple-/ASC-Arbeit. Stat-Cards-Drilldown (naechster Run). Day-Timeline/Gantt (separater Run). ZIP-Import (Dependency noetig).
+
+---
+
 ### Phase 19.13 – Visual Insights: Swift Charts + tappbare Navigation + Politur
 
 **Datum:** 2026-03-18
