@@ -12,6 +12,7 @@ public struct AppContentSplitView: View {
     @State private var selectedTab = 0
     @State private var daySearchText = ""
     @State private var isShowingExportSheet = false
+    @State private var isShowingTracksLibrary = false
 
     private let onOpen: () -> Void
     private let onLoadDemo: () -> Void
@@ -247,6 +248,8 @@ public struct AppContentSplitView: View {
                 overviewHighlights(insights)
             }
 
+            liveTracksOverviewSection
+
             if let overview = session.overview {
                 AppOverviewSection(
                     overview: overview,
@@ -469,6 +472,80 @@ public struct AppContentSplitView: View {
                     }
             }
         }
+        .sheet(isPresented: $isShowingTracksLibrary) {
+            NavigationStack {
+                tracksLibrarySheetContent
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { isShowingTracksLibrary = false }
+                        }
+                    }
+            }
+        }
+    }
+
+    private var liveTracksOverviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Track Editor", systemImage: "slider.horizontal.3")
+                        .font(.headline)
+                    Text(liveTracksOverviewMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Open") {
+                    isShowingTracksLibrary = true
+                }
+                .buttonStyle(.borderedProminent)
+            }
+
+            if let latestTrack = liveLocation.recordedTracks.first {
+                HStack(spacing: 12) {
+                    Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(savedTrackTitle(latestTrack))
+                            .font(.subheadline.weight(.semibold))
+                        Text("\(latestTrack.pointCount) points · \(formatDistance(latestTrack.distanceM))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("\(liveLocation.recordedTracks.count) saved")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.green.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var tracksLibrarySheetContent: some View {
+        if #available(iOS 17.0, macOS 14.0, *) {
+            AppRecordedTracksLibraryView(liveLocation: liveLocation)
+        } else {
+            VStack(spacing: 12) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                Text("Track Library Unavailable")
+                    .font(.headline)
+                Text("Saved live tracks can be edited on platforms that support the track editor.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(24)
+            .navigationTitle("Tracks")
+        }
     }
 
     private var openButtonTitle: String {
@@ -478,6 +555,21 @@ public struct AppContentSplitView: View {
     private var demoButtonTitle: String {
         session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName)
             ? "Reload Demo" : "Demo Data"
+    }
+
+    private var liveTracksOverviewMessage: String {
+        if liveLocation.recordedTracks.isEmpty {
+            return "Saved live tracks and point editing live here. Record a short track on any day, then open it from this library."
+        }
+        return "Open your saved live tracks directly from Overview to edit points, insert midpoints or delete a track."
+    }
+
+    private func savedTrackTitle(_ track: RecordedTrack) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: track.startedAt)
     }
 }
 

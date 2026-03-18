@@ -36,7 +36,7 @@ public struct LiveLocationSample: Equatable {
     }
 }
 
-public struct RecordedTrackPoint: Codable, Equatable {
+public struct RecordedTrackPoint: Codable, Equatable, Hashable {
     public let latitude: Double
     public let longitude: Double
     public let timestamp: Date
@@ -55,11 +55,11 @@ public struct RecordedTrackPoint: Codable, Equatable {
     }
 }
 
-public enum RecordedTrackCaptureMode: String, Codable, Equatable {
+public enum RecordedTrackCaptureMode: String, Codable, Equatable, Hashable {
     case foregroundWhileInUse
 }
 
-public struct RecordedTrack: Codable, Equatable, Identifiable {
+public struct RecordedTrack: Codable, Equatable, Identifiable, Hashable {
     public let id: UUID
     public let startedAt: Date
     public let endedAt: Date
