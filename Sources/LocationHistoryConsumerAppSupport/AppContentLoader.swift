@@ -164,10 +164,13 @@ public enum AppContentLoader {
             throw AppContentLoaderError.fileReadFailed(sourceName)
         }
 
-        // Pre-check: Google Location History exports use a JSON array as root.
-        // Attempting to decode them as AppExport would produce a misleading error.
-        if (try? JSONSerialization.jsonObject(with: data)) is [Any] {
-            throw AppContentLoaderError.unsupportedFormat(sourceName)
+        // If the file is a JSON array, try Google Timeline conversion before giving up.
+        if GoogleTimelineConverter.isGoogleTimeline(data) {
+            do {
+                return try GoogleTimelineConverter.convert(data: data)
+            } catch {
+                throw AppContentLoaderError.unsupportedFormat(sourceName)
+            }
         }
 
         do {

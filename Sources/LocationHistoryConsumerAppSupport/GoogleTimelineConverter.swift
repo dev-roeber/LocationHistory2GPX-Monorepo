@@ -22,6 +22,11 @@ enum GoogleTimelineConverter {
         guard let entries = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else {
             throw ConversionError.notGoogleTimeline
         }
+        // Require at least one entry with a parseable startTime; otherwise this is not
+        // a recognisable Google Timeline export (e.g. empty array, random JSON array).
+        let hasValidEntry = entries.contains { ($0["startTime"] as? String).flatMap(parseISO) != nil }
+        guard hasValidEntry else { throw ConversionError.notGoogleTimeline }
+
         let exportDict = buildExportDict(from: entries)
         let exportData = try JSONSerialization.data(withJSONObject: exportDict)
         return try AppExportDecoder.decode(data: exportData)

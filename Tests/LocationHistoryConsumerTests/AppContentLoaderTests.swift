@@ -6,9 +6,9 @@ final class AppContentLoaderTests: XCTestCase {
 
     // MARK: - Format detection: Google Location History (array root)
 
-    func testRejectsGoogleTimelineFormatWithUnsupportedFormatError() throws {
-        // Google Location History exports use a JSON array as root element.
-        // This is the format found in files named "location-history.json" from Google Takeout.
+    func testImportsGoogleTimelineJsonDirectly() throws {
+        // Google Timeline JSON (array root) can now be imported directly —
+        // the app converts it to AppExport on the fly.
         let googleTimelineJson = """
         [
           {
@@ -29,13 +29,8 @@ final class AppContentLoaderTests: XCTestCase {
         let url = try writeTemp(json: googleTimelineJson, filename: "location-history.json")
         defer { try? FileManager.default.removeItem(at: url) }
 
-        XCTAssertThrowsError(try AppContentLoader.loadImportedContent(from: url)) { error in
-            guard case AppContentLoaderError.unsupportedFormat(let name) = error else {
-                XCTFail("Expected unsupportedFormat but got: \(error)")
-                return
-            }
-            XCTAssertTrue(name.contains("location-history.json"), "Error should reference the filename: \(name)")
-        }
+        let content = try AppContentLoader.loadImportedContent(from: url)
+        XCTAssertFalse(content.daySummaries.isEmpty, "Should convert and load Google Timeline JSON")
     }
 
     func testRejectsMinimalJsonArrayWithUnsupportedFormatError() throws {
@@ -431,6 +426,15 @@ final class AppContentLoaderTests: XCTestCase {
         }
         let content = try AppContentLoader.loadImportedContent(from: url)
         XCTAssertGreaterThan(content.daySummaries.count, 0, "Should load days from real Google Timeline ZIP")
+    }
+
+    func testRealLocationHistoryJsonOnDesktop() throws {
+        let url = URL(fileURLWithPath: "/Users/sebastian/Desktop/location-history.json")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("location-history.json not on Desktop")
+        }
+        let content = try AppContentLoader.loadImportedContent(from: url)
+        XCTAssertGreaterThan(content.daySummaries.count, 0, "Should load days from real Google Timeline JSON")
     }
 
     // MARK: - Helpers
