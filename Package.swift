@@ -30,13 +30,19 @@ let package = Package(
             targets: ["LocationHistoryConsumerApp"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
+    ],
     targets: [
         .target(
             name: "LocationHistoryConsumer"
         ),
         .target(
             name: "LocationHistoryConsumerAppSupport",
-            dependencies: ["LocationHistoryConsumer"]
+            dependencies: [
+                "LocationHistoryConsumer",
+                .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+            ]
         ),
         .target(
             name: "LocationHistoryConsumerDemoSupport",

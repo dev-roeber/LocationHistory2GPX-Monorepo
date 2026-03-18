@@ -536,7 +536,7 @@ public struct AppContentSplitView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open app_export.json"
+        session.hasLoadedContent ? "Open Another File" : "Open app_export.json / .zip"
     }
 
     private var demoButtonTitle: String {
