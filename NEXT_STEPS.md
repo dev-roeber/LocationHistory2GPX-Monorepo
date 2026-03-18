@@ -2,10 +2,17 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.22 abgeschlossen (Import async, ZIP-Robustheit, UX-Strings, sortedDays-Redundanz). Kein konkret naechster Schritt definiert.
+1. **Lokale Produktweiterentwicklung (aktiver Fokus)** – Phase 19.23 abgeschlossen (CI, SwiftLint, ZIPFoundation-Pin, onChange-Fix, Wrapper-Tests). Kein konkret naechster Schritt definiert.
 2. **Phase 20 / Phase 21 – bewusst geparkt** – Erfordert Apple Developer Account / ASC-Zugang. Kein aktiver Fokus.
 3. **Accessibility-Audit – bewusst geparkt** – Kein konkreter Bug, kein Trigger. Kein aktiver Fokus.
 4. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.23 (2026-03-18):**
+- CI: GitHub Actions swift-test.yml (Core) + xcode-test.yml (Wrapper)
+- SwiftLint: .swiftlint.yml in beiden Repos, Clean-Exit-0-Baseline
+- ZIPFoundation: .upToNextMinor(from: "0.9.19"), Package.resolved committed
+- onChange deprecated → .task(id:) (iOS 15+, nicht deprecated)
+- Wrapper-Tests: 8 echte Unit-Tests (8/8 grün, iPhone 17 iOS 26.3.1)
 
 **Abgeschlossene Phase 19.22 (2026-03-18):**
 - Import async: loadImportedFile auf Task.detached, ProgressView animiert jetzt
