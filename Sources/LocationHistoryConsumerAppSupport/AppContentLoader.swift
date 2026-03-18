@@ -9,18 +9,33 @@ public enum AppContentLoaderError: LocalizedError {
     case decodeFailed(String)
     case jsonNotFoundInZip(String)
 
+    public var userFacingTitle: String {
+        switch self {
+        case .fixtureNotFound:
+            return "Demo data unavailable"
+        case .fileReadFailed:
+            return "Unable to read file"
+        case .unsupportedFormat:
+            return "Unsupported file format"
+        case .decodeFailed:
+            return "File could not be opened"
+        case .jsonNotFoundInZip:
+            return "No export found in ZIP"
+        }
+    }
+
     public var errorDescription: String? {
         switch self {
         case let .fixtureNotFound(name):
             return "Demo fixture not found: \(name).json"
         case let .fileReadFailed(name):
-            return "Unable to read app export file: \(name)"
+            return "'\(name)' could not be read. The file may be corrupted or inaccessible."
         case let .unsupportedFormat(name):
-            return "'\(name)' has an unsupported format. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool."
+            return "'\(name)' is not a supported export format. Open a file created by the LocationHistory2GPX tool — either app_export.json or a .zip containing it."
         case let .decodeFailed(name):
-            return "'\(name)' could not be opened. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool."
+            return "'\(name)' could not be decoded. The file may have been created with an incompatible version of the LocationHistory2GPX tool."
         case let .jsonNotFoundInZip(name):
-            return "'\(name)' does not contain an app_export.json file."
+            return "'\(name)' does not contain an app_export.json. This app only opens exports created by the LocationHistory2GPX tool. If you have a Google Timeline ZIP, use the tool to convert it first, then open the resulting app_export.json or .zip here."
         }
     }
 }

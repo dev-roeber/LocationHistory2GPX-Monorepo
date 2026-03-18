@@ -99,6 +99,45 @@ final class AppContentLoaderTests: XCTestCase {
         }
     }
 
+    // MARK: - userFacingTitle
+
+    func testFileReadFailedHasUserFacingTitle() {
+        let error = AppContentLoaderError.fileReadFailed("test.zip")
+        XCTAssertFalse(error.userFacingTitle.isEmpty)
+        XCTAssertEqual(error.userFacingTitle, "Unable to read file")
+    }
+
+    func testUnsupportedFormatHasSpecificUserFacingTitle() {
+        let error = AppContentLoaderError.unsupportedFormat("location-history.json")
+        XCTAssertEqual(error.userFacingTitle, "Unsupported file format")
+    }
+
+    func testDecodeFailedHasSpecificUserFacingTitle() {
+        let error = AppContentLoaderError.decodeFailed("export.json")
+        XCTAssertEqual(error.userFacingTitle, "File could not be opened")
+    }
+
+    func testJsonNotFoundInZipHasSpecificUserFacingTitle() {
+        let error = AppContentLoaderError.jsonNotFoundInZip("takeout.zip")
+        XCTAssertEqual(error.userFacingTitle, "No export found in ZIP")
+    }
+
+    func testJsonNotFoundInZipDescriptionMentionsConversionWorkflow() throws {
+        let zipURL = try makeZip(entries: ["readme.txt": Data("hello".utf8)])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        do {
+            _ = try AppContentLoader.loadImportedContent(from: zipURL)
+            XCTFail("Expected jsonNotFoundInZip error")
+        } catch let error as AppContentLoaderError {
+            let description = try XCTUnwrap(error.errorDescription)
+            XCTAssertTrue(
+                description.contains("LocationHistory2GPX"),
+                "Error description should mention the required tool. Got: \(description)"
+            )
+        }
+    }
+
     // MARK: - ZIP Import: error cases
 
     func testZipWithInvalidContent_throwsFileReadFailed() throws {

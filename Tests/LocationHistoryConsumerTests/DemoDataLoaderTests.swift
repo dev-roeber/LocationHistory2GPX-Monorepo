@@ -36,7 +36,7 @@ final class DemoDataLoaderTests: XCTestCase {
         try Data("{".utf8).write(to: invalidURL)
 
         XCTAssertThrowsError(try DemoDataLoader.loadImportedContent(from: invalidURL)) { error in
-            XCTAssertEqual(error.localizedDescription, "'broken_app_export.json' could not be opened. LH2GPX requires an app_export.json created by the LocationHistory2GPX tool.")
+            XCTAssertEqual(error.localizedDescription, "'broken_app_export.json' could not be decoded. The file may have been created with an incompatible version of the LocationHistory2GPX tool.")
         }
     }
 
@@ -44,7 +44,7 @@ final class DemoDataLoaderTests: XCTestCase {
         let missingURL = temporaryDirectoryURL().appendingPathComponent("missing_app_export.json")
 
         XCTAssertThrowsError(try DemoDataLoader.loadImportedContent(from: missingURL)) { error in
-            XCTAssertEqual(error.localizedDescription, "Unable to read app export file: missing_app_export.json")
+            XCTAssertEqual(error.localizedDescription, "'missing_app_export.json' could not be read. The file may be corrupted or inaccessible.")
         }
     }
 

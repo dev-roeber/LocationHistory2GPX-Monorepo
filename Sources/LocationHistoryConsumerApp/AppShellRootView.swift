@@ -146,7 +146,7 @@ struct AppShellRootView: View {
                 return
             }
             session.showFailure(
-                title: "Unable to open app export",
+                title: "Unable to open file",
                 message: error.localizedDescription,
                 preserveCurrentContent: session.hasLoadedContent
             )
@@ -167,7 +167,7 @@ struct AppShellRootView: View {
             session.show(content: content)
         } catch {
             session.showFailure(
-                title: "Unable to open app export",
+                title: (error as? AppContentLoaderError)?.userFacingTitle ?? "Unable to open file",
                 message: error.localizedDescription,
                 preserveCurrentContent: session.hasLoadedContent
             )
@@ -199,7 +199,7 @@ private struct AppShellEmptyStateView: View {
             VStack(spacing: 8) {
                 Text("Import your location history")
                     .font(.title2.weight(.semibold))
-                Text("Open a local app_export.json or .zip file created with the LocationHistory2GPX tool to explore your location history offline.")
+                Text("Export your location history using the LocationHistory2GPX tool, then open the resulting app_export.json or .zip file here.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
