@@ -563,10 +563,8 @@ public struct AppDayDetailView: View {
 
     private func formatDistance(_ meters: Double) -> String {
         guard meters >= 0, meters.isFinite else { return "–" }
-        if meters >= 1000 {
-            return String(format: "%.1f km", meters / 1000)
-        }
-        return String(format: "%.0f m", meters)
+        let measurement = Measurement(value: meters, unit: UnitLength.meters)
+        return measurement.formatted(.measurement(width: .abbreviated, usage: .road))
     }
 
     @ViewBuilder
