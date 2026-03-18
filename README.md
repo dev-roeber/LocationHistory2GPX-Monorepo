@@ -151,7 +151,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
 - startet mit lokalem `app_export.json`-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
-- merkt sich die zuletzt importierte Datei per Security-Scoped Bookmark und laedt sie beim Neustart automatisch
+- Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - bleibt offline-only und fuehrt keine neue Business-Logik ein
 
 ## Apple-/Xcode-Vorbereitung
