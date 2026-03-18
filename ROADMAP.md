@@ -15,6 +15,23 @@ Auto-Restore (ImportBookmarkStore) ist technisch implementiert und funktioniert 
 Aktuell bewusst deaktiviert (Phase 19.5): App startet immer manuell (Open / Demo). Kein automatisches Wiederherstellen der letzten Datei.
 Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
 
+### Phase 19.20 – ZIP-Import: Dateiname-agnostisch
+
+**Datum:** 2026-03-18
+**Ziel:** ZIP-Import nicht mehr auf exakten Dateinamen `app_export.json` beschraenken.
+
+- [x] `loadZipContent`: alle `.json`-Kandidaten im ZIP sammeln (case-insensitive, `__MACOSX/` + Hidden-Files ignoriert)
+- [x] Jeden Kandidaten inhaltlich gegen AppExportDecoder pruefen (Contract unveraendert)
+- [x] 0 gueltige → `jsonNotFoundInZip`; 1 gueltige → laden; mehrere gueltige → `app_export.json` bevorzugen, sonst `multipleExportsInZip`
+- [x] Neuer Error-Case `multipleExportsInZip` mit `userFacingTitle` + `errorDescription`
+- [x] `jsonNotFoundInZip` errorDescription nennt nicht mehr `app_export.json` als Pflicht
+- [x] 7 neue Tests; 88/88 gruen
+- [x] Wrapper README aktualisiert
+
+**Problem vorher:** `loadZipContent` suchte exakt `app_export.json` an Root oder als `/app_export.json`-Pfadsuffix. Jede andere Benennung fiel durch.
+
+---
+
 ### Phase 19.18 – Searchable Days List Dark Mode Fix
 
 **Datum:** 2026-03-18
@@ -152,7 +169,7 @@ Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
 **Ziel:** app_export.json direkt aus einer .zip-Datei importieren.
 
 - [x] Package.swift: ZipFoundation 0.9.19+ als SPM-Dependency; LocationHistoryConsumerAppSupport verknuepft
-- [x] AppContentLoader: loadImportedContent erkennt .zip per Dateiendung; loadZipContent sucht app_export.json an Root und in Unterverzeichnissen
+- [x] AppContentLoader: loadImportedContent erkennt .zip per Dateiendung; loadZipContent sucht alle .json-Kandidaten im ZIP (dateiname-agnostisch, __MACOSX ignoriert)
 - [x] Neuer Fehler jsonNotFoundInZip mit sprechender Meldung
 - [x] AppShellRootView (Core-App-Target): fileImporter akzeptiert .json und .zip
 - [x] ContentView (Wrapper, tatsaechlich auf iPhone): fileImporter korrigiert auf [.json, .zip]; Labels aktualisiert

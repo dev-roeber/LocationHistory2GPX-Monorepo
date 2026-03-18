@@ -168,7 +168,9 @@ final class AppContentLoaderTests: XCTestCase {
         }
     }
 
-    func testJsonNotFoundInZipErrorDescriptionMentionsFile() throws {
+    func testJsonNotFoundInZipErrorDescriptionMentionsTool() throws {
+        // ZIP with an invalid JSON object (no valid LH2GPX export) → jsonNotFoundInZip.
+        // Description must mention the required tool, not a specific filename.
         let zipURL = try makeZip(entries: ["other.json": Data("{}".utf8)])
         defer { try? FileManager.default.removeItem(at: zipURL) }
 
@@ -178,8 +180,8 @@ final class AppContentLoaderTests: XCTestCase {
         } catch let error as AppContentLoaderError {
             let description = try XCTUnwrap(error.errorDescription)
             XCTAssertTrue(
-                description.contains("app_export.json"),
-                "Error description should mention app_export.json. Got: \(description)"
+                description.contains("LocationHistory2GPX"),
+                "Error description should mention the required tool. Got: \(description)"
             )
         }
     }
@@ -213,18 +215,106 @@ final class AppContentLoaderTests: XCTestCase {
         XCTAssertFalse(content.daySummaries.isEmpty, "Should have loaded day summaries from nested ZIP entry")
     }
 
-    func testZipWithGoogleTimelineFormat_throwsUnsupportedFormat() throws {
-        // ZIP containing an app_export.json that is actually a Google Timeline array
+    func testZipWithGoogleTimelineFormat_throwsJsonNotFoundInZip() throws {
+        // ZIP containing a JSON array (e.g. Google Timeline) is not a valid LH2GPX export.
+        // Since no valid export is found, the result is jsonNotFoundInZip (not unsupportedFormat).
         let googleJson = Data("[{}]".utf8)
         let zipURL = try makeZip(entries: ["app_export.json": googleJson])
         defer { try? FileManager.default.removeItem(at: zipURL) }
 
         XCTAssertThrowsError(try AppContentLoader.loadImportedContent(from: zipURL)) { error in
-            guard case AppContentLoaderError.unsupportedFormat = error else {
-                XCTFail("Expected unsupportedFormat but got: \(error)")
+            guard case AppContentLoaderError.jsonNotFoundInZip = error else {
+                XCTFail("Expected jsonNotFoundInZip but got: \(error)")
                 return
             }
         }
+    }
+
+    // MARK: - ZIP Import: filename-agnostic loading
+
+    func testZipWithValidExportButCustomFilename_loadsSuccessfully() throws {
+        // Valid LH2GPX export stored under a non-standard filename → still loads.
+        let fixtureURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let jsonData = try Data(contentsOf: fixtureURL)
+        let zipURL = try makeZip(entries: ["my_backup.json": jsonData])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        let content = try AppContentLoader.loadImportedContent(from: zipURL)
+        XCTAssertFalse(content.daySummaries.isEmpty, "Should load export regardless of filename")
+    }
+
+    func testZipWithOneValidAndOneInvalidJson_loadsTheValidOne() throws {
+        // One valid export + one invalid JSON → loads the valid one without error.
+        let fixtureURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let jsonData = try Data(contentsOf: fixtureURL)
+        let zipURL = try makeZip(entries: [
+            "export.json": jsonData,
+            "metadata.json": Data(#"{"version": "1.0"}"#.utf8)
+        ])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        let content = try AppContentLoader.loadImportedContent(from: zipURL)
+        XCTAssertFalse(content.daySummaries.isEmpty, "Should load the valid export")
+    }
+
+    func testZipWithMultipleValidExports_prefersAppExportJson() throws {
+        // Multiple valid exports: one named app_export.json → that one is preferred.
+        let fixtureURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let jsonData = try Data(contentsOf: fixtureURL)
+        let zipURL = try makeZip(entries: [
+            "app_export.json": jsonData,
+            "backup/app_export.json": jsonData
+        ])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        // Should not throw – the root-level app_export.json is preferred.
+        XCTAssertNoThrow(try AppContentLoader.loadImportedContent(from: zipURL))
+    }
+
+    func testZipWithMultipleValidExports_noPreferredName_throwsMultipleExportsInZip() throws {
+        // Multiple valid exports, none named app_export.json → multipleExportsInZip.
+        let fixtureURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let jsonData = try Data(contentsOf: fixtureURL)
+        let zipURL = try makeZip(entries: [
+            "export_a.json": jsonData,
+            "export_b.json": jsonData
+        ])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        XCTAssertThrowsError(try AppContentLoader.loadImportedContent(from: zipURL)) { error in
+            guard case AppContentLoaderError.multipleExportsInZip = error else {
+                XCTFail("Expected multipleExportsInZip but got: \(error)")
+                return
+            }
+        }
+    }
+
+    func testMultipleExportsInZipHasUserFacingTitle() {
+        let error = AppContentLoaderError.multipleExportsInZip("archive.zip")
+        XCTAssertEqual(error.userFacingTitle, "Multiple exports found in ZIP")
+    }
+
+    func testMultipleExportsInZipDescriptionMentionsSingleExport() {
+        let error = AppContentLoaderError.multipleExportsInZip("archive.zip")
+        let description = error.errorDescription ?? ""
+        XCTAssertTrue(
+            description.contains("one"),
+            "Error description should mention single export expectation. Got: \(description)"
+        )
+    }
+
+    func testZipIgnoresMacosxResourceForks() throws {
+        // __MACOSX/ entries must be ignored even if they have .json extension.
+        let fixtureURL = try TestSupport.contractFixtureURL(named: "golden_app_export_sample_small.json")
+        let jsonData = try Data(contentsOf: fixtureURL)
+        let zipURL = try makeZip(entries: [
+            "__MACOSX/._app_export.json": Data("noise".utf8),
+            "app_export.json": jsonData
+        ])
+        defer { try? FileManager.default.removeItem(at: zipURL) }
+
+        let content = try AppContentLoader.loadImportedContent(from: zipURL)
+        XCTAssertFalse(content.daySummaries.isEmpty, "Should load without being confused by __MACOSX entry")
     }
 
     // MARK: - Helpers
