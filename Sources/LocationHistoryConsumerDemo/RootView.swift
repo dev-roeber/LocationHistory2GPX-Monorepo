@@ -9,13 +9,14 @@ import UniformTypeIdentifiers
 struct RootView: View {
     @State private var session = AppSessionState(isLoading: true)
     @State private var isImportingFile = false
+    @StateObject private var liveLocation = LiveLocationFeatureModel()
 
     var body: some View {
         Group {
             if session.isLoading && !session.hasLoadedContent {
                 ProgressView("Loading demo app export...")
             } else if session.content != nil {
-                AppContentSplitView(session: $session)
+                AppContentSplitView(session: $session, liveLocation: liveLocation)
             } else {
                 DemoPlaceholderView(
                     title: session.message?.title ?? "No demo source loaded",

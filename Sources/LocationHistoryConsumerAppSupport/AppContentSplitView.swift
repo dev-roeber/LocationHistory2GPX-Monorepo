@@ -6,6 +6,7 @@ import LocationHistoryConsumer
 
 public struct AppContentSplitView: View {
     @Binding private var session: AppSessionState
+    @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var daysNavigationPath = NavigationPath()
     @State private var selectedTab = 0
@@ -18,11 +19,13 @@ public struct AppContentSplitView: View {
 
     public init(
         session: Binding<AppSessionState>,
+        liveLocation: LiveLocationFeatureModel,
         onOpen: @escaping () -> Void = {},
         onLoadDemo: @escaping () -> Void = {},
         onClear: @escaping () -> Void = {}
     ) {
         self._session = session
+        self._liveLocation = ObservedObject(wrappedValue: liveLocation)
         self.onOpen = onOpen
         self.onLoadDemo = onLoadDemo
         self.onClear = onClear
@@ -84,7 +87,8 @@ public struct AppContentSplitView: View {
                         ScrollView {
                             AppDayDetailView(
                                 detail: session.content?.detail(for: date),
-                                hasDays: true
+                                hasDays: true,
+                                liveLocation: liveLocation
                             )
                             .padding()
                         }
@@ -398,7 +402,8 @@ public struct AppContentSplitView: View {
                 AppDayDetailView(
                     detail: detail,
                     hasDays: true,
-                    onBackToOverview: { session.selectDay(nil) }
+                    onBackToOverview: { session.selectDay(nil) },
+                    liveLocation: liveLocation
                 )
                 .padding()
             }

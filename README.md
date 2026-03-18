@@ -8,7 +8,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - kein Parser fuer Google-Rohdaten
 - keine GPX-/GeoJSON-/CSV-Erzeugung
 - keine fertige Produkt-App in diesem Schritt
-- offline-first, ohne Netzwerkcode, Tracking oder Cloud-Sync
+- offline-first, ohne Netzwerkcode, Analytics-Tracking oder Cloud-Sync
 
 ## Contract-Herkunft
 
@@ -23,10 +23,13 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 ## Was dieses Repo aktuell kann
 
 - App-Export-JSON laden
+- Google-Timeline-`location-history.json` und `.zip` lokal direkt importieren
 - gegen Swift-Modelle decodieren
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
 - eine kleine produktnahe App-Shell-Struktur fuer lokalen `app_export.json`-Import bereitstellen
 - die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
+- foreground-only Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen
+- aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -36,9 +39,11 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 
 ## Was dieses Repo aktuell bewusst nicht kann
 
-- Import von Google-Rohdateien
 - Producer-Logik aus dem Python-Repo
 - `trips_index.json` konsumieren
+- fertiges Background-Location-Tracking
+- Auto-Resume eines laufenden Live-Tracks nach App-Neustart
+- Mergen aufgezeichneter Live-Tracks in importierte Originaldaten
 
 ## Struktur
 
@@ -50,6 +55,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - `Sources/LocationHistoryConsumerAppSupport/`
   - generische Session-/Loader-Typen
   - gemeinsame SwiftUI-Produkt-UI fuer App und Demo (NavigationSplitView, Dashboard, Day-Detail, Map)
+  - Live-Location-/Recording-Domain fuer foreground-only Tracking und getrennte Recorded-Track-Persistenz
 - `Sources/LocationHistoryConsumerDemoSupport/`
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
@@ -134,9 +140,9 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 - feste gebuendelte Fixture: `golden_app_export_sample_small.json`
 - optionaler lokaler Dateiimport fuer `app_export.json`
 - zeigt Overview, sortierte Day-Liste und Day-Detail
-- nutzt weiter nur Decoder + Query-Layer
+- nutzt weiter Decoder + Query-Layer; die neue Live-Recording-Domain bleibt davon getrennt
 - zeigt aktive Quelle, Reset auf Demo und klarere Fehler-/Leerzustaende
-- keine Persistenz, keine Maps, kein Google-Rohdatenimport
+- kein Auto-Resume, kein Background-Tracking, keine Recorded-Track-Exports
 - Fehler beim Fixture- oder Datei-Load werden schlicht als Fehlzustand angezeigt
 
 ## Produkt-UI
@@ -146,13 +152,16 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
+- Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
+- Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
 - Toolbar-Aktionen mit Icons: Import, Demo Data, Clear
 - startet mit lokalem `app_export.json`-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
-- Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
-- bleibt offline-only und fuehrt keine neue Business-Logik ein
+- Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
+- Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
+- bleibt offline-only; die neue Live-Recording-Logik bleibt lokal und klar vom Import-/Query-Layer getrennt
 
 ## Apple-/Xcode-Vorbereitung
 
@@ -175,6 +184,7 @@ Stand 2026-03-17 ist auf einer realen macOS-/Xcode-Maschine ehrlich verifiziert:
 
 Stand 2026-03-17 ist noch offen:
 - ein separat protokollierter foreground-Lauf exakt ueber `Product > Run` in Xcode, falls genau dieser IDE-spezifische Weg regressionskritisch wird
+- foreground-only Live-Location-/Permission-Flow in einer separat dokumentierten Apple-UI-Session (Simulator oder echtes iPhone)
 
 Zusatz fuer diese konkrete Maschine: mit aktivem `/Library/Developer/CommandLineTools` schlug ein nacktes `swift test` an `no such module 'XCTest'` fehl. Der gruene Testlauf wurde ehrlich mit `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test` erreicht.
 

@@ -9,12 +9,14 @@ import UniformTypeIdentifiers
 struct AppShellRootView: View {
     @State private var session = AppSessionState()
     @State private var isImportingFile = false
+    @StateObject private var liveLocation = LiveLocationFeatureModel()
 
     var body: some View {
         Group {
             if session.content != nil {
                 AppContentSplitView(
                     session: $session,
+                    liveLocation: liveLocation,
                     onOpen: { isImportingFile = true },
                     onLoadDemo: loadBundledDemo,
                     onClear: clearCurrentContent

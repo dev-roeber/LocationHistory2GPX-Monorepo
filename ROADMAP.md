@@ -6,10 +6,26 @@
 Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
 Lokale Produktweiterentwicklung: Phasen 19.10–19.27 abgeschlossen.
 Phase 20.1: Export-MVP (GPX, Tage-Selektion, fileExporter) abgeschlossen (2026-03-18).
+Phase 20.2: Foreground-only Live-Recording-MVP abgeschlossen (2026-03-18).
 
 ### Aktiver lokaler Fokus
+Live-Recording-Folgearbeiten: Background-Location, Draft-/Resume-Modell, Recorded-Track-Export und eine eigene Verlaufs-UI fuer aufgezeichnete Tracks sind bewusst offen.
 Export-Funktionalitaet (Phase 20.x): GPX-Export MVP fertig. Naechste moegliche Erweiterungen: weitere Formate (KML/CSV), per-Track-Selektion, Visits als Waypoints.
-Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
+
+### Phase 20.2 – Live Recording MVP: aktueller Standort, foreground-only Track, getrennte Persistenz
+
+**Datum:** 2026-03-18
+**Ziel:** Nutzer kann den eigenen Standort auf der Karte anzeigen, foreground-only live aufzeichnen und den Track getrennt von importierter History lokal speichern.
+
+- [x] `LiveLocationFeatureModel`: klar getrennte Recording-Domain ausserhalb von `AppSessionState`
+- [x] `SystemLiveLocationClient`: `CLLocationManager`-Adapter mit while-in-use-Fokus, ohne Background-Mode
+- [x] `LiveTrackRecorder`: Accuracy-/Duplikat-/Mindestdistanz-/Flood-Filter fuer Live-Punkte
+- [x] `RecordedTrackFileStore`: dedizierte JSON-Persistenz fuer abgeschlossene Live-Tracks (`RecordedTracks/recorded_live_tracks.json`)
+- [x] `AppLiveLocationSection`: Toggle, Permission-State, aktueller Standort, Live-Polyline, gespeicherte Live-Tracks
+- [x] Integration in `AppDayDetailView` / `AppContentSplitView` / Wrapper-App
+- [x] Wrapper-Info.plist: `NSLocationWhenInUseUsageDescription` fuer lokale While-In-Use-Funktion
+- [x] 13 neue Tests (Recorder, Store, FeatureModel); `swift test` jetzt 125/125 gruen
+- Bewusst nicht in diesem Schritt: Background-Tracking, Auto-Resume nach Neustart, Merge in importierte History, Export aufgezeichneter Live-Tracks
 
 ### Phase 20.1 – Export MVP: GPX-Export mit app-weiter Tages-Selektion
 
@@ -32,6 +48,7 @@ Persistenz technisch vorhanden, aktuell bewusst deaktiviert.
 Auto-Restore (ImportBookmarkStore) ist technisch implementiert und funktioniert korrekt (Phase 15).
 Aktuell bewusst deaktiviert (Phase 19.5): App startet immer manuell (Open / Demo). Kein automatisches Wiederherstellen der letzten Datei.
 Reaktivierung moeglich sobald iPhone-Flow gefestigt und Nutzerwert klar.
+Recorded Live-Tracks sind jetzt separat aktiv: save-on-stop in einem dedizierten Store, ohne Draft-Persistenz und ohne Auto-Resume.
 
 ### Phase 19.21b – Google Timeline JSON direkt importierbar
 

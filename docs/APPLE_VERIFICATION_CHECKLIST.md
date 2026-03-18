@@ -31,6 +31,7 @@ Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 ### Noch offen
 
 - [ ] foreground-Run explizit ueber `Product > Run` in Xcode selbst noch einmal separat bestaetigen, falls genau dieser IDE-spezifische Laufweg regressionskritisch wird
+- [ ] foreground-only Live-Location-/Permission-Flow in einer echten Apple-UI-Session verifizieren und separat protokollieren
 
 ## Reale Apple-UI-Session 2026-03-17
 

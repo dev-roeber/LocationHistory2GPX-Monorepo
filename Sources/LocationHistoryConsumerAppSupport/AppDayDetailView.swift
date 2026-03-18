@@ -11,17 +11,25 @@ public struct AppDayDetailView: View {
     let detail: DayDetailViewState?
     let hasDays: Bool
     let onBackToOverview: (() -> Void)?
+    let liveLocation: LiveLocationFeatureModel?
 
-    public init(detail: DayDetailViewState?, hasDays: Bool, onBackToOverview: (() -> Void)? = nil) {
+    public init(
+        detail: DayDetailViewState?,
+        hasDays: Bool,
+        onBackToOverview: (() -> Void)? = nil,
+        liveLocation: LiveLocationFeatureModel? = nil
+    ) {
         self.detail = detail
         self.hasDays = hasDays
         self.onBackToOverview = onBackToOverview
+        self.liveLocation = liveLocation
     }
 
     init(detail: DayDetailViewState) {
         self.detail = detail
         self.hasDays = true
         self.onBackToOverview = nil
+        self.liveLocation = nil
     }
 
     public var body: some View {
@@ -63,6 +71,9 @@ public struct AppDayDetailView: View {
             #if canImport(MapKit)
             if #available(iOS 17.0, macOS 14.0, *) {
                 AppDayMapView(mapData: DayMapDataExtractor.mapData(from: detail))
+                if let liveLocation {
+                    AppLiveLocationSection(liveLocation: liveLocation)
+                }
             } else {
                 Label("Map view requires iOS 17 or later.", systemImage: "map")
                     .font(.caption)
