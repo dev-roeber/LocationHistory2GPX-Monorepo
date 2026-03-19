@@ -41,12 +41,58 @@ enum AppDateDisplay {
 enum AppTimeDisplay {
     private static let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
         return f
     }()
 
+    private static let fractionalFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    static func date(_ iso8601: String) -> Date? {
+        fractionalFormatter.date(from: iso8601) ?? isoFormatter.date(from: iso8601)
+    }
+
     static func time(_ iso8601: String) -> String {
-        guard let date = isoFormatter.date(from: iso8601) else { return iso8601 }
+        guard let date = date(iso8601) else { return iso8601 }
         return date.formatted(date: .omitted, time: .shortened)
+    }
+
+    static func timeRange(start: String?, end: String?) -> String? {
+        guard let startDate = start.flatMap(date(_:)),
+              let endDate = end.flatMap(date(_:)),
+              endDate >= startDate else {
+            return nil
+        }
+
+        return "\(startDate.formatted(date: .omitted, time: .shortened)) - \(endDate.formatted(date: .omitted, time: .shortened))"
+    }
+
+    static func duration(start: String?, end: String?) -> String? {
+        guard let startDate = start.flatMap(date(_:)),
+              let endDate = end.flatMap(date(_:)),
+              endDate >= startDate else {
+            return nil
+        }
+
+        return duration(endDate.timeIntervalSince(startDate))
+    }
+
+    static func duration(_ interval: TimeInterval) -> String? {
+        guard interval.isFinite, interval >= 0 else {
+            return nil
+        }
+
+        let totalMinutes = Int((interval / 60).rounded())
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+            return "\(hours) h \(minutes) min"
+        }
+        return "\(minutes) min"
     }
 }
 
@@ -174,6 +220,22 @@ func iconForVisitType(_ type: String?) -> String {
     case "EVENT": return "star.fill"
     case "STAY": return "bed.double.fill"
     default: return "mappin"
+    }
+}
+
+func displayNameForVisitType(_ type: String?, default defaultName: String = "Unknown Place") -> String {
+    switch (type ?? "").uppercased() {
+    case "HOME": return "Home"
+    case "WORK": return "Work"
+    case "CAFE": return "Cafe"
+    case "PARK": return "Park"
+    case "LEISURE": return "Leisure"
+    case "EVENT": return "Event"
+    case "STAY": return "Stay"
+    case "UNKNOWN", "": return defaultName
+    default:
+        guard let type, !type.isEmpty else { return defaultName }
+        return type.capitalized
     }
 }
 

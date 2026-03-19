@@ -68,11 +68,12 @@ public struct AppDayDetailView: View {
             return false
         }()
         let hierarchy = DayDetailContentHierarchy(detail: detail, hasLiveLocationTools: canShowLocalRecording)
+        let summary = DayDetailPresentation.summary(detail: detail, unit: preferences.distanceUnit)
 
         VStack(alignment: .leading, spacing: 24) {
             headerSection(detail, hierarchy: hierarchy)
 
-            importedSummaryCard(detail, hierarchy: hierarchy)
+            summarySection(summary)
 
             #if canImport(MapKit)
             importedMapSection(detail)
@@ -80,17 +81,22 @@ public struct AppDayDetailView: View {
 
             if hierarchy.sections.contains(.importedTimeline) {
                 VStack(alignment: .leading, spacing: 10) {
-                    sectionHeader(
-                        "Imported Timeline",
+                    DayDetailSectionHeaderView(
+                        title: "Imported Timeline",
                         icon: "clock.arrow.2.circlepath",
-                        message: "Visits and activities stay ahead of local live-recording tools."
+                        subtitle: "Visits and activities stay ahead of local recording tools."
                     )
                     DayTimelineView(detail: detail)
                 }
             }
 
             if hierarchy.sections.contains(.visits) {
-                detailSection("Visits", icon: "mappin.and.ellipse", count: detail.visits.count) {
+                detailSection(
+                    "Visits",
+                    icon: "mappin.and.ellipse",
+                    count: detail.visits.count,
+                    subtitle: DayDetailPresentation.visitsSectionSubtitle(detail.visits)
+                ) {
                     ForEach(Array(detail.visits.enumerated()), id: \.offset) { _, visit in
                         visitCard(visit)
                     }
@@ -98,7 +104,12 @@ public struct AppDayDetailView: View {
             }
 
             if hierarchy.sections.contains(.activities) {
-                detailSection("Activities", icon: "figure.walk", count: detail.activities.count) {
+                detailSection(
+                    "Activities",
+                    icon: "figure.walk",
+                    count: detail.activities.count,
+                    subtitle: DayDetailPresentation.activitiesSectionSubtitle(detail.activities, unit: preferences.distanceUnit)
+                ) {
                     ForEach(Array(detail.activities.enumerated()), id: \.offset) { _, activity in
                         activityCard(activity)
                     }
@@ -106,7 +117,12 @@ public struct AppDayDetailView: View {
             }
 
             if hierarchy.sections.contains(.routes) {
-                detailSection("Routes", icon: "location.north.line", count: detail.paths.count) {
+                detailSection(
+                    "Routes",
+                    icon: "location.north.line",
+                    count: detail.paths.count,
+                    subtitle: DayDetailPresentation.routesSectionSubtitle(detail.paths, unit: preferences.distanceUnit)
+                ) {
                     ForEach(Array(detail.paths.enumerated()), id: \.offset) { _, path in
                         pathCard(path)
                     }
@@ -117,10 +133,10 @@ public struct AppDayDetailView: View {
                 #if canImport(MapKit)
                 if #available(iOS 17.0, macOS 14.0, *) {
                     VStack(alignment: .leading, spacing: 10) {
-                        sectionHeader(
-                            "Local Recording Tools",
+                        DayDetailSectionHeaderView(
+                            title: "Local Recording Tools",
                             icon: "record.circle",
-                            message: "These tools are local-only and stay separate from the imported day history above."
+                            subtitle: "These tools are local-only and stay separate from the imported day history above."
                         )
                         AppLiveLocationSection(liveLocation: liveLocation)
                     }
@@ -133,7 +149,7 @@ public struct AppDayDetailView: View {
 
     @ViewBuilder
     private func headerSection(_ detail: DayDetailViewState, hierarchy: DayDetailContentHierarchy) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(AppDateDisplay.weekday(detail.date))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -141,10 +157,10 @@ public struct AppDayDetailView: View {
                 .font(.title2.weight(.semibold))
             if let timeRange = hierarchy.timeRange {
                 Label(
-                    "\(timeRange.earliest.formatted(date: .omitted, time: .shortened)) – \(timeRange.latest.formatted(date: .omitted, time: .shortened))",
+                    "\(timeRange.earliest.formatted(date: .omitted, time: .shortened)) - \(timeRange.latest.formatted(date: .omitted, time: .shortened))",
                     systemImage: "clock"
                 )
-                .font(.caption)
+                .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
             } else {
                 Text("Imported day history")
@@ -155,25 +171,17 @@ public struct AppDayDetailView: View {
     }
 
     @ViewBuilder
-    private func importedSummaryCard(_ detail: DayDetailViewState, hierarchy: DayDetailContentHierarchy) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(
-                "Imported Day History",
-                icon: "tray.full",
-                message: "This section reflects the imported export only. Live recording and saved-track editing appear later as secondary tools."
+    private func summarySection(_ summary: DayDetailSummaryPresentation) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DayDetailSectionHeaderView(
+                title: "Day Summary",
+                icon: "sparkles",
+                subtitle: summary.footnote
             )
 
-            HStack(spacing: 12) {
-                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse", color: .blue)
-                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk", color: .green)
-                quickStat("\(detail.paths.count)", label: "Routes", icon: "location.north.line", color: .orange)
-                if hierarchy.totalDistanceM > 0 {
-                    quickStat(
-                        formatDistance(hierarchy.totalDistanceM, unit: preferences.distanceUnit),
-                        label: "Distance",
-                        icon: "road.lanes",
-                        color: .purple
-                    )
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
+                ForEach(summary.items) { item in
+                    DayDetailSummaryMetricView(item: item)
                 }
             }
         }
@@ -182,10 +190,10 @@ public struct AppDayDetailView: View {
     @ViewBuilder
     private func importedMapSection(_ detail: DayDetailViewState) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionHeader(
-                "Map Context",
+            DayDetailSectionHeaderView(
+                title: "Map Context",
                 icon: "map",
-                message: "Imported visits and recorded routes for this day."
+                subtitle: "Imported visits and recorded routes for this day."
             )
             if #available(iOS 17.0, macOS 14.0, *) {
                 AppDayMapView(mapData: DayMapDataExtractor.mapData(from: detail))
@@ -199,122 +207,49 @@ public struct AppDayDetailView: View {
     }
 
     @ViewBuilder
-    private func sectionHeader(_ title: String, icon: String, message: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label(title, systemImage: icon)
-                .font(.headline)
-            Text(message)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
     private func detailSection<Content: View>(
         _ title: String,
         icon: String,
         count: Int,
+        subtitle: String?,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(title, systemImage: icon)
-                    .font(.headline)
-                Spacer()
-                Text("\(count)")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.12))
-                    .clipShape(Capsule())
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(count) \(title)")
+            DayDetailSectionHeaderView(
+                title: title,
+                icon: icon,
+                count: count,
+                subtitle: subtitle
+            )
             content()
         }
     }
 
     @ViewBuilder
     private func visitCard(_ visit: DayDetailViewState.VisitItem) -> some View {
-        coloredCard(color: CardAccent.visit) {
-            HStack(spacing: 6) {
-                Image(systemName: iconForVisitType(visit.semanticType))
-                    .foregroundColor(CardAccent.visit)
-                    .font(.subheadline)
-                Text(visit.semanticType?.capitalized ?? "Visit")
-                    .font(.subheadline.weight(.medium))
-            }
-            if let start = visit.startTime, let end = visit.endTime {
-                Label("\(AppTimeDisplay.time(start)) – \(AppTimeDisplay.time(end))", systemImage: "clock")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
+        DayDetailCardView(
+            accent: CardAccent.visit,
+            icon: iconForVisitType(visit.semanticType),
+            presentation: DayDetailPresentation.visitCard(for: visit)
+        )
     }
 
     @ViewBuilder
     private func activityCard(_ activity: DayDetailViewState.ActivityItem) -> some View {
-        coloredCard(color: CardAccent.activity) {
-            HStack(spacing: 6) {
-                Image(systemName: iconForActivityType(activity.activityType))
-                    .foregroundColor(CardAccent.activity)
-                    .font(.subheadline)
-                Text(displayNameForActivityType(activity.activityType))
-                    .font(.subheadline.weight(.medium))
-            }
-            HStack(spacing: 12) {
-                if let start = activity.startTime, let end = activity.endTime {
-                    Label("\(AppTimeDisplay.time(start)) – \(AppTimeDisplay.time(end))", systemImage: "clock")
-                }
-                if let dist = activity.distanceM {
-                    Label(formatDistance(dist, unit: preferences.distanceUnit), systemImage: "ruler")
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
+        DayDetailCardView(
+            accent: CardAccent.activity,
+            icon: iconForActivityType(activity.activityType),
+            presentation: DayDetailPresentation.activityCard(for: activity, unit: preferences.distanceUnit)
+        )
     }
 
     @ViewBuilder
     private func pathCard(_ path: DayDetailViewState.PathItem) -> some View {
-        coloredCard(color: CardAccent.path) {
-            HStack(spacing: 6) {
-                Image(systemName: iconForActivityType(path.activityType))
-                    .foregroundColor(CardAccent.path)
-                    .font(.subheadline)
-                Text(displayNameForActivityType(path.activityType, default: "Route"))
-                    .font(.subheadline.weight(.medium))
-            }
-            HStack(spacing: 12) {
-                Label("\(path.pointCount) points", systemImage: "location.north.line")
-                if let dist = path.distanceM {
-                    Label(formatDistance(dist, unit: preferences.distanceUnit), systemImage: "ruler")
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private func quickStat(_ value: String, label: String, icon: String, color: Color) -> some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(color)
-            Text(value)
-                .font(.headline.monospacedDigit())
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(value) \(label)")
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(color.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        DayDetailCardView(
+            accent: CardAccent.path,
+            icon: iconForActivityType(path.activityType),
+            presentation: DayDetailPresentation.routeCard(for: path, unit: preferences.distanceUnit)
+        )
     }
 
     @ViewBuilder
@@ -339,6 +274,205 @@ public struct AppDayDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: 240)
+    }
+}
+
+private struct DayDetailSectionHeaderView: View {
+    let title: String
+    let icon: String
+    var count: Int? = nil
+    var subtitle: String? = nil
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Label(title, systemImage: icon)
+                    .font(.headline)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if let count {
+                Text("\(count)")
+                    .font(.subheadline.weight(.medium).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DayDetailSummaryMetricView: View {
+    let item: DayDetailSummaryPresentation.Item
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: item.icon)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(item.value)
+                .font(.headline.monospacedDigit())
+            Text(item.label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.secondary.opacity(0.06))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.secondary.opacity(0.08), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(item.value) \(item.label)")
+    }
+}
+
+private struct DayDetailCardView: View {
+    let accent: Color
+    let icon: String
+    let presentation: DayDetailCardPresentation
+
+    var body: some View {
+        DayDetailCardContainer(accent: accent) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: icon)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(accent)
+                        .frame(width: 18)
+                    Text(presentation.title)
+                        .font(.headline)
+                    Spacer(minLength: 8)
+                    if let durationText = presentation.durationText {
+                        Text(durationText)
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if presentation.timeRangeText != nil || presentation.durationText != nil {
+                    DayDetailTimeContextRow(
+                        timeRangeText: presentation.timeRangeText,
+                        durationText: presentation.durationText
+                    )
+                }
+
+                if !presentation.chips.isEmpty {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
+                        ForEach(presentation.chips) { chip in
+                            DayDetailMetricChipView(chip: chip, accent: accent)
+                        }
+                    }
+                }
+
+                if let note = presentation.note {
+                    Text(note)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let intensity = presentation.intensity {
+                    DayDetailIntensityBar(accent: accent, intensity: intensity)
+                }
+            }
+        }
+    }
+}
+
+private struct DayDetailCardContainer<Content: View>: View {
+    let accent: Color
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(spacing: 0) {
+            accent
+                .frame(width: 4)
+
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(accent.opacity(0.07))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(accent.opacity(0.14), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DayDetailTimeContextRow: View {
+    let timeRangeText: String?
+    let durationText: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let timeRangeText {
+                Label(timeRangeText, systemImage: "clock")
+                    .lineLimit(1)
+            }
+            if let durationText {
+                Label(durationText, systemImage: "hourglass")
+                    .lineLimit(1)
+            }
+        }
+        .font(.caption.monospacedDigit())
+        .foregroundStyle(.secondary)
+    }
+}
+
+private struct DayDetailMetricChipView: View {
+    let chip: DayDetailMetricChipPresentation
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: chip.icon)
+                .font(.caption2)
+                .foregroundStyle(accent)
+            Text(chip.text)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(accent.opacity(0.11))
+        .clipShape(Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(chip.accessibilityLabel)
+    }
+}
+
+private struct DayDetailIntensityBar: View {
+    let accent: Color
+    let intensity: Double
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(accent.opacity(0.12))
+                Capsule()
+                    .fill(accent.opacity(0.55))
+                    .frame(width: max(12, geometry.size.width * min(max(intensity, 0), 1)))
+            }
+        }
+        .frame(height: 6)
+        .accessibilityHidden(true)
     }
 }
 
@@ -382,7 +516,7 @@ private struct DayTimelineView: View {
 
     private var accessibilitySummary: String {
         let from = bounds.map { $0.start.formatted(date: .omitted, time: .shortened) } ?? ""
-        let to   = bounds.map { $0.end.formatted(date: .omitted, time: .shortened) } ?? ""
+        let to = bounds.map { $0.end.formatted(date: .omitted, time: .shortened) } ?? ""
         var parts: [String] = []
         if !visitSlots.isEmpty {
             parts.append("\(visitSlots.count) visit\(visitSlots.count == 1 ? "" : "s")")
@@ -413,14 +547,12 @@ private struct DayTimelineView: View {
                     Spacer()
                     Text(b.end.formatted(date: .omitted, time: .shortened))
                 }
-                .font(.caption2)
+                .font(.caption2.monospacedDigit())
                 .foregroundStyle(.tertiary)
             }
             .padding(12)
             .background(Color.secondary.opacity(0.06))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            // Treat the whole Gantt chart as one accessibility element; the
-            // individual coloured shapes have no standalone meaning for VoiceOver.
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilitySummary)
         }
@@ -450,5 +582,263 @@ private struct DayTimelineView: View {
         }
     }
 }
+
+#if DEBUG
+private enum AppDayDetailPreviewSamples {
+    static let knownVisit = detail(date: "2024-05-01", dayJSON: """
+      {
+        "date":"2024-05-01",
+        "visits":[
+          {
+            "lat":52.5208,
+            "lon":13.4095,
+            "start_time":"2024-05-01T06:10:00Z",
+            "end_time":"2024-05-01T07:15:00Z",
+            "semantic_type":"HOME",
+            "place_id":"fixture-home-a",
+            "accuracy_m":18,
+            "source_type":"placeVisit"
+          }
+        ],
+        "activities":[],
+        "paths":[]
+      }
+    """)
+
+    static let unknownVisit = detail(date: "2024-05-02", dayJSON: """
+      {
+        "date":"2024-05-02",
+        "visits":[
+          {
+            "lat":52.519,
+            "lon":13.401,
+            "start_time":"2024-05-02T09:30:00Z",
+            "end_time":"2024-05-02T10:05:00Z",
+            "accuracy_m":9,
+            "source_type":"placeVisit"
+          }
+        ],
+        "activities":[],
+        "paths":[]
+      }
+    """)
+
+    static let shortActivity = detail(date: "2024-05-03", dayJSON: """
+      {
+        "date":"2024-05-03",
+        "visits":[],
+        "activities":[
+          {
+            "start_time":"2024-05-03T07:15:00Z",
+            "end_time":"2024-05-03T07:27:00Z",
+            "activity_type":"WALKING",
+            "distance_m":780,
+            "split_from_midnight":false,
+            "source_type":"activity"
+          }
+        ],
+        "paths":[]
+      }
+    """)
+
+    static let longActivity = detail(date: "2024-05-04", dayJSON: """
+      {
+        "date":"2024-05-04",
+        "visits":[],
+        "activities":[
+          {
+            "start_time":"2024-05-04T07:15:00Z",
+            "end_time":"2024-05-04T07:47:00Z",
+            "activity_type":"IN PASSENGER VEHICLE",
+            "distance_m":29500,
+            "split_from_midnight":false,
+            "source_type":"activity"
+          }
+        ],
+        "paths":[]
+      }
+    """)
+
+    static let routeFewPoints = detail(date: "2024-05-05", dayJSON: """
+      {
+        "date":"2024-05-05",
+        "visits":[],
+        "activities":[],
+        "paths":[
+          {
+            "start_time":"2024-05-05T08:00:00Z",
+            "end_time":"2024-05-05T08:20:00Z",
+            "activity_type":"WALKING",
+            "distance_m":1400,
+            "source_type":"timelinePath",
+            "points":[
+              {"lat":52.52,"lon":13.405,"time":"2024-05-05T08:00:00Z","accuracy_m":5},
+              {"lat":52.523,"lon":13.407,"time":"2024-05-05T08:10:00Z","accuracy_m":6},
+              {"lat":52.526,"lon":13.41,"time":"2024-05-05T08:20:00Z","accuracy_m":5}
+            ]
+          }
+        ]
+      }
+    """)
+
+    static let routeManyPoints = detail(date: "2024-05-06", dayJSON: """
+      {
+        "date":"2024-05-06",
+        "visits":[],
+        "activities":[],
+        "paths":[
+          {
+            "start_time":"2024-05-06T08:00:00Z",
+            "end_time":"2024-05-06T09:10:00Z",
+            "activity_type":"CYCLING",
+            "distance_m":18200,
+            "source_type":"timelinePath",
+            "points":[
+              {"lat":52.52,"lon":13.405,"time":"2024-05-06T08:00:00Z","accuracy_m":5},
+              {"lat":52.531,"lon":13.415,"time":"2024-05-06T08:35:00Z","accuracy_m":7},
+              {"lat":52.543,"lon":13.428,"time":"2024-05-06T09:10:00Z","accuracy_m":6},
+              {"lat":52.549,"lon":13.435,"time":"2024-05-06T09:18:00Z","accuracy_m":6}
+            ]
+          }
+        ]
+      }
+    """)
+
+    static let fullDay = detail(date: "2024-05-07", dayJSON: """
+      {
+        "date":"2024-05-07",
+        "visits":[
+          {
+            "lat":52.5208,
+            "lon":13.4095,
+            "start_time":"2024-05-07T06:10:00Z",
+            "end_time":"2024-05-07T07:15:00Z",
+            "semantic_type":"HOME",
+            "place_id":"fixture-home",
+            "accuracy_m":12,
+            "source_type":"placeVisit"
+          },
+          {
+            "lat":52.5164,
+            "lon":13.3777,
+            "start_time":"2024-05-07T07:47:00Z",
+            "end_time":"2024-05-07T09:26:00Z",
+            "accuracy_m":8,
+            "source_type":"placeVisit"
+          }
+        ],
+        "activities":[
+          {
+            "start_time":"2024-05-07T07:15:00Z",
+            "end_time":"2024-05-07T07:47:00Z",
+            "activity_type":"IN PASSENGER VEHICLE",
+            "distance_m":29500,
+            "split_from_midnight":false,
+            "source_type":"activity"
+          },
+          {
+            "start_time":"2024-05-07T17:10:00Z",
+            "end_time":"2024-05-07T17:34:00Z",
+            "activity_type":"WALKING",
+            "distance_m":1450,
+            "split_from_midnight":false,
+            "source_type":"activity"
+          }
+        ],
+        "paths":[
+          {
+            "start_time":"2024-05-07T07:15:00Z",
+            "end_time":"2024-05-07T07:47:00Z",
+            "activity_type":"IN PASSENGER VEHICLE",
+            "distance_m":30100,
+            "source_type":"timelinePath",
+            "points":[
+              {"lat":52.5208,"lon":13.4095,"time":"2024-05-07T07:15:00Z","accuracy_m":8},
+              {"lat":52.519,"lon":13.394,"time":"2024-05-07T07:30:00Z","accuracy_m":9},
+              {"lat":52.5164,"lon":13.3777,"time":"2024-05-07T07:47:00Z","accuracy_m":7}
+            ]
+          },
+          {
+            "start_time":"2024-05-07T17:10:00Z",
+            "end_time":"2024-05-07T17:34:00Z",
+            "activity_type":"WALKING",
+            "distance_m":1450,
+            "source_type":"timelinePath",
+            "points":[
+              {"lat":52.5164,"lon":13.3777,"time":"2024-05-07T17:10:00Z","accuracy_m":5},
+              {"lat":52.512,"lon":13.384,"time":"2024-05-07T17:22:00Z","accuracy_m":6},
+              {"lat":52.509,"lon":13.392,"time":"2024-05-07T17:34:00Z","accuracy_m":5}
+            ]
+          }
+        ]
+      }
+    """)
+
+    private static func detail(date: String, dayJSON: String) -> DayDetailViewState {
+        let json = """
+        {
+          "schema_version":"1.0",
+          "meta":{
+            "exported_at":"2024-01-01T00:00:00Z",
+            "tool_version":"1.0",
+            "source":{},
+            "output":{},
+            "config":{},
+            "filters":{}
+          },
+          "data":{
+            "days":[\(dayJSON)]
+          }
+        }
+        """
+
+        do {
+            let export = try AppExportDecoder.decode(data: Data(json.utf8))
+            if let detail = AppExportQueries.dayDetail(for: date, in: export) {
+                return detail
+            }
+        } catch {
+            assertionFailure("Failed to build preview detail: \(error)")
+        }
+
+        return AppExportQueries.dayDetail(
+            for: "2024-01-01",
+            in: try! AppExportDecoder.decode(
+                data: Data("""
+                {
+                  "schema_version":"1.0",
+                  "meta":{"exported_at":"2024-01-01T00:00:00Z","tool_version":"1.0","source":{},"output":{},"config":{},"filters":{}},
+                  "data":{"days":[{"date":"2024-01-01","visits":[],"activities":[],"paths":[]}]}
+                }
+                """.utf8)
+            )
+        )!
+    }
+}
+
+struct AppDayDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            preview(AppDayDetailPreviewSamples.knownVisit, name: "Known Visit")
+            preview(AppDayDetailPreviewSamples.unknownVisit, name: "Unknown Visit")
+            preview(AppDayDetailPreviewSamples.shortActivity, name: "Short Activity")
+            preview(AppDayDetailPreviewSamples.longActivity, name: "Long Activity")
+            preview(AppDayDetailPreviewSamples.routeFewPoints, name: "Route Few Points")
+            preview(AppDayDetailPreviewSamples.routeManyPoints, name: "Route Many Points")
+            preview(AppDayDetailPreviewSamples.fullDay, name: "Full Day")
+        }
+    }
+
+    @MainActor
+    private static func preview(_ detail: DayDetailViewState, name: String) -> some View {
+        ScrollView {
+            AppDayDetailView(detail: detail)
+                .padding()
+        }
+        .environmentObject(AppPreferences())
+        .previewDisplayName(name)
+    }
+}
+#endif
 
 #endif
