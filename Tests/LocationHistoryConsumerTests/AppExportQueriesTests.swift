@@ -97,6 +97,65 @@ final class AppExportQueriesTests: XCTestCase {
         XCTAssertEqual(insights.longestDistanceDay?.value, String(format: "%.1f km", longestDistanceSummary.totalPathDistanceM / 1000))
     }
 
+    func testMetadataAccuracyFilterShapesOverviewSummariesInsightsAndDetail() throws {
+        let export = makeAccuracyFilteredExport()
+
+        let overview = AppExportQueries.overview(from: export)
+        let summaries = AppExportQueries.daySummaries(from: export)
+        let insights = AppExportQueries.insights(from: export)
+        let detail = try XCTUnwrap(AppExportQueries.dayDetail(for: "2024-08-01", in: export))
+
+        XCTAssertEqual(overview.dayCount, 1)
+        XCTAssertEqual(overview.totalVisitCount, 1)
+        XCTAssertEqual(overview.totalActivityCount, 1)
+        XCTAssertEqual(overview.totalPathCount, 1)
+        XCTAssertEqual(overview.statsActivityTypes, ["WALKING"])
+
+        XCTAssertEqual(summaries.map(\.date), ["2024-08-01"])
+        XCTAssertEqual(summaries[0].visitCount, 1)
+        XCTAssertEqual(summaries[0].activityCount, 1)
+        XCTAssertEqual(summaries[0].pathCount, 1)
+        XCTAssertEqual(summaries[0].totalPathPointCount, 2)
+        XCTAssertEqual(summaries[0].exportablePathCount, 1)
+
+        XCTAssertEqual(insights.activityBreakdown.map(\.activityType), ["WALKING"])
+        XCTAssertEqual(insights.visitTypeBreakdown, [VisitTypeItem(semanticType: "HOME", count: 1)])
+        XCTAssertEqual(insights.periodBreakdown.count, 1)
+        XCTAssertEqual(insights.periodBreakdown[0].paths, 1)
+        XCTAssertEqual(insights.activeFilterDescriptions, ["Max accuracy: 10m"])
+
+        XCTAssertEqual(detail.visits.count, 1)
+        XCTAssertEqual(detail.activities.count, 1)
+        XCTAssertEqual(detail.paths.count, 1)
+        XCTAssertEqual(detail.paths[0].pointCount, 2)
+        XCTAssertEqual(detail.paths[0].points.compactMap(\.accuracyM), [5, 8])
+    }
+
+    func testCustomSpatialFilterCanProjectAreaScopedDays() {
+        let export = makeSpatialGroundworkExport()
+        let filter = AppExportQueryFilter(
+            spatialFilter: .bounds(
+                ExportCoordinateBounds(
+                    minLat: 52.50,
+                    maxLat: 52.53,
+                    minLon: 13.38,
+                    maxLon: 13.43
+                )
+            )
+        )
+
+        let summaries = AppExportQueries.daySummaries(from: export, applying: filter)
+        let insights = AppExportQueries.insights(from: export, applying: filter)
+        let detail = AppExportQueries.dayDetail(for: "2024-09-01", in: export, applying: filter)
+
+        XCTAssertEqual(summaries.map(\.date), ["2024-09-01"])
+        XCTAssertEqual(summaries[0].visitCount, 1)
+        XCTAssertEqual(summaries[0].pathCount, 1)
+        XCTAssertEqual(summaries[0].totalPathPointCount, 2)
+        XCTAssertEqual(insights.activeFilterDescriptions, ["Area: Bounding box"])
+        XCTAssertEqual(detail?.paths.first?.pointCount, 2)
+    }
+
     private func loadExport(named name: String) throws -> AppExport {
         try AppExportDecoder.decode(contentsOf: TestSupport.contractFixtureURL(named: name))
     }
@@ -114,5 +173,270 @@ final class AppExportQueriesTests: XCTestCase {
 
         let mutatedData = try JSONSerialization.data(withJSONObject: mutated, options: [.prettyPrinted, .sortedKeys])
         return try AppExportDecoder.decode(data: mutatedData)
+    }
+
+    private func makeAccuracyFilteredExport() -> AppExport {
+        AppExport(
+            schemaVersion: .v1_0,
+            meta: Meta(
+                exportedAt: "2024-08-10T12:00:00Z",
+                toolVersion: "1.9.0",
+                source: Source(zipBasename: nil, zipPath: nil, inputFormat: "records"),
+                output: Output(outDir: nil),
+                config: ExportConfig(
+                    mode: "all",
+                    splitMidnight: nil,
+                    splitMode: "daily",
+                    exportFormat: ["json"],
+                    inputFormat: "auto"
+                ),
+                filters: ExportFilters(
+                    fromDate: nil,
+                    toDate: nil,
+                    year: nil,
+                    month: nil,
+                    weekday: nil,
+                    limit: nil,
+                    days: nil,
+                    has: nil,
+                    maxAccuracyM: 10,
+                    activityTypes: nil,
+                    minGapMin: nil
+                )
+            ),
+            data: DataBlock(
+                days: [
+                    Day(
+                        date: "2024-08-01",
+                        visits: [
+                            Visit(
+                                lat: 52.52,
+                                lon: 13.405,
+                                startTime: "2024-08-01T07:00:00Z",
+                                endTime: "2024-08-01T08:00:00Z",
+                                semanticType: "HOME",
+                                placeID: "home",
+                                accuracyM: 5,
+                                sourceType: "placeVisit"
+                            ),
+                            Visit(
+                                lat: 52.521,
+                                lon: 13.406,
+                                startTime: "2024-08-01T09:00:00Z",
+                                endTime: "2024-08-01T10:00:00Z",
+                                semanticType: "WORK",
+                                placeID: "work",
+                                accuracyM: 32,
+                                sourceType: "placeVisit"
+                            )
+                        ],
+                        activities: [
+                            Activity(
+                                startTime: "2024-08-01T08:05:00Z",
+                                endTime: "2024-08-01T08:25:00Z",
+                                startLat: 52.52,
+                                startLon: 13.405,
+                                endLat: 52.525,
+                                endLon: 13.41,
+                                activityType: "WALKING",
+                                distanceM: 1200,
+                                splitFromMidnight: false,
+                                startAccuracyM: 4,
+                                endAccuracyM: 6,
+                                sourceType: "activity",
+                                flatCoordinates: nil
+                            ),
+                            Activity(
+                                startTime: "2024-08-01T18:00:00Z",
+                                endTime: "2024-08-01T18:30:00Z",
+                                startLat: 52.53,
+                                startLon: 13.42,
+                                endLat: 52.54,
+                                endLon: 13.43,
+                                activityType: "CYCLING",
+                                distanceM: 3200,
+                                splitFromMidnight: false,
+                                startAccuracyM: 24,
+                                endAccuracyM: 25,
+                                sourceType: "activity",
+                                flatCoordinates: nil
+                            )
+                        ],
+                        paths: [
+                            Path(
+                                startTime: "2024-08-01T08:05:00Z",
+                                endTime: "2024-08-01T08:25:00Z",
+                                activityType: "WALKING",
+                                distanceM: 1250,
+                                sourceType: "timelinePath",
+                                points: [
+                                    PathPoint(lat: 52.52, lon: 13.405, time: "2024-08-01T08:05:00Z", accuracyM: 5),
+                                    PathPoint(lat: 52.522, lon: 13.407, time: "2024-08-01T08:15:00Z", accuracyM: 15),
+                                    PathPoint(lat: 52.525, lon: 13.41, time: "2024-08-01T08:25:00Z", accuracyM: 8)
+                                ],
+                                flatCoordinates: nil
+                            ),
+                            Path(
+                                startTime: "2024-08-01T18:00:00Z",
+                                endTime: "2024-08-01T18:30:00Z",
+                                activityType: "CYCLING",
+                                distanceM: 3000,
+                                sourceType: "timelinePath",
+                                points: [
+                                    PathPoint(lat: 52.53, lon: 13.42, time: "2024-08-01T18:00:00Z", accuracyM: 22),
+                                    PathPoint(lat: 52.54, lon: 13.43, time: "2024-08-01T18:30:00Z", accuracyM: 24)
+                                ],
+                                flatCoordinates: nil
+                            )
+                        ]
+                    ),
+                    Day(
+                        date: "2024-08-02",
+                        visits: [
+                            Visit(
+                                lat: 52.5,
+                                lon: 13.37,
+                                startTime: "2024-08-02T10:00:00Z",
+                                endTime: "2024-08-02T10:30:00Z",
+                                semanticType: "LEISURE",
+                                placeID: "park",
+                                accuracyM: 40,
+                                sourceType: "placeVisit"
+                            )
+                        ],
+                        activities: [],
+                        paths: [
+                            Path(
+                                startTime: "2024-08-02T10:05:00Z",
+                                endTime: "2024-08-02T10:20:00Z",
+                                activityType: "WALKING",
+                                distanceM: 600,
+                                sourceType: "timelinePath",
+                                points: [
+                                    PathPoint(lat: 52.5, lon: 13.37, time: "2024-08-02T10:05:00Z", accuracyM: 30),
+                                    PathPoint(lat: 52.501, lon: 13.371, time: "2024-08-02T10:20:00Z", accuracyM: 34)
+                                ],
+                                flatCoordinates: nil
+                            )
+                        ]
+                    )
+                ]
+            ),
+            stats: Stats(
+                activities: [
+                    "WALKING": ActivityStats(
+                        count: 1,
+                        totalDistanceKM: 1.2,
+                        totalDurationH: 0.33,
+                        avgDistanceKM: 1.2,
+                        avgSpeedKMH: 3.6
+                    ),
+                    "CYCLING": ActivityStats(
+                        count: 1,
+                        totalDistanceKM: 3.2,
+                        totalDurationH: 0.5,
+                        avgDistanceKM: 3.2,
+                        avgSpeedKMH: 6.4
+                    )
+                ],
+                periods: [
+                    PeriodStats(
+                        label: "2024-08",
+                        year: 2024,
+                        month: 8,
+                        days: 2,
+                        visits: 3,
+                        activities: 2,
+                        paths: 3,
+                        distanceM: 4850
+                    )
+                ]
+            )
+        )
+    }
+
+    private func makeSpatialGroundworkExport() -> AppExport {
+        AppExport(
+            schemaVersion: .v1_0,
+            meta: Meta(
+                exportedAt: "2024-09-10T12:00:00Z",
+                toolVersion: "1.9.0",
+                source: Source(zipBasename: nil, zipPath: nil, inputFormat: "records"),
+                output: Output(outDir: nil),
+                config: ExportConfig(
+                    mode: "all",
+                    splitMidnight: nil,
+                    splitMode: "daily",
+                    exportFormat: ["json"],
+                    inputFormat: "auto"
+                ),
+                filters: ExportFilters(
+                    fromDate: nil,
+                    toDate: nil,
+                    year: nil,
+                    month: nil,
+                    weekday: nil,
+                    limit: nil,
+                    days: nil,
+                    has: nil,
+                    maxAccuracyM: nil,
+                    activityTypes: nil,
+                    minGapMin: nil
+                )
+            ),
+            data: DataBlock(
+                days: [
+                    Day(
+                        date: "2024-09-01",
+                        visits: [
+                            Visit(
+                                lat: 52.515,
+                                lon: 13.4,
+                                startTime: "2024-09-01T08:00:00Z",
+                                endTime: "2024-09-01T09:00:00Z",
+                                semanticType: "HOME",
+                                placeID: "berlin-home",
+                                accuracyM: 6,
+                                sourceType: "placeVisit"
+                            )
+                        ],
+                        activities: [],
+                        paths: [
+                            Path(
+                                startTime: "2024-09-01T09:00:00Z",
+                                endTime: "2024-09-01T09:20:00Z",
+                                activityType: "WALKING",
+                                distanceM: 1400,
+                                sourceType: "timelinePath",
+                                points: [
+                                    PathPoint(lat: 52.515, lon: 13.4, time: "2024-09-01T09:00:00Z", accuracyM: 6),
+                                    PathPoint(lat: 52.519, lon: 13.41, time: "2024-09-01T09:10:00Z", accuracyM: 6),
+                                    PathPoint(lat: 52.54, lon: 13.45, time: "2024-09-01T09:20:00Z", accuracyM: 6)
+                                ],
+                                flatCoordinates: nil
+                            )
+                        ]
+                    ),
+                    Day(
+                        date: "2024-09-02",
+                        visits: [
+                            Visit(
+                                lat: 48.8566,
+                                lon: 2.3522,
+                                startTime: "2024-09-02T08:00:00Z",
+                                endTime: "2024-09-02T09:00:00Z",
+                                semanticType: "WORK",
+                                placeID: "paris-office",
+                                accuracyM: 6,
+                                sourceType: "placeVisit"
+                            )
+                        ],
+                        activities: [],
+                        paths: []
+                    )
+                ]
+            ),
+            stats: nil
+        )
     }
 }
