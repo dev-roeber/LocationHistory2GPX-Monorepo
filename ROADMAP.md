@@ -26,21 +26,46 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 - Day-List-Zustaende, Suchzustand und Export-Selektion visuell konsistent machen
 - Such-, Leer- und Exportzustand in eine klarere visuelle Prioritaet bringen
 
-**Phase 19.35 – Day-Detail-Hierarchie**
-- importierte Tagesinformationen, Kartenkontext, Live-Recording und Track-Bearbeitung sauberer staffeln
-- den Day-Detail-Screen weniger wie einen Sammelcontainer wirken lassen
-
-**Phase 19.36 – Track-Library / Track-Editor-Zugang**
-- Zugang, Benennung und Iconographie fuer gespeicherte Live-Tracks klarer machen
-- die Trennung zwischen importierter History und lokal aufgezeichneten Tracks weiter schaerfen
-
-**Phase 19.37 – Visualisierung / Charts-Politur**
-- Diagramme, Achsen, Tap-Affordances und Low-Data-Verhalten gezielt verbessern
-- keine neue Datenfantasie, sondern bessere Nutzung der bereits vorhandenen Daten
-
 **Phase 19.38 – Export-UX-Politur**
 - Disabled-Zustaende, Auswahlfeedback und Dateinamenerwartung im Export-Flow verfeinern
 - keine Erweiterung auf neue Exportformate in diesem Schritt
+
+### Phase 19.35 – Day-Detail-Hierarchie
+
+**Datum:** 2026-03-19
+**Ziel:** Den Day-Detail-Screen klarer staffeln, sodass importierte Tagesdaten den primaeren Kontext bilden und lokale Live-/Track-Werkzeuge sichtbar getrennt bleiben.
+
+- [x] Header + Summary rahmen die importierte Tageshistorie explizit vor Karte, Timeline und Event-Sektionen
+- [x] Kartenkontext und Timeline tragen jetzt importbezogene Labels statt wie neutrale Zwischenbloecke zu wirken
+- [x] Live Recording und Saved-Track-Werkzeuge wandern als eigener sekundaerer Block ans Ende der Ansicht
+- [x] Begleittexte schaerfen die Trennung zwischen importierter History und lokalen Bearbeitungswerkzeugen
+- [x] testbare Hilfslogik fuer Day-Detail-Hierarchie und Time-Range deckt Reihenfolge und Zeitspannen ab
+- Bewusst nicht in diesem Schritt: neue Track-Library-IA, neue Editor-Funktionen oder Export-Ausbau
+
+### Phase 19.36 – Track-Library / Track-Editor-Zugang
+
+**Datum:** 2026-03-19
+**Ziel:** Den Zugang zu gespeicherten Live-Tracks sprachlich und visuell klaeren, sodass Bibliothek und eigentliche Bearbeitung nicht mehr ineinanderlaufen.
+
+- [x] Overview-Karte, Sheet-Titel, Empty States und Library-Header sprechen jetzt konsistent von `Saved Tracks`
+- [x] `Edit Track` bleibt auf den eigentlichen Bearbeitungsschritt beschraenkt statt die ganze Nebenfunktion zu benennen
+- [x] Library-Zugang nutzt eine route-/track-nahe Iconographie statt Editor-Slider als Primaersymbol
+- [x] Hinweise in Library, Live-Section und Editor schaerfen die Trennung zu importierter History
+- [x] zentrale `SavedTracksPresentation`-Texte machen Benennung und Statuskopie wiederverwendbar
+- Bewusst nicht in diesem Schritt: neue Track-Metadaten, neue Editor-Werkzeuge oder Export aufgezeichneter Live-Tracks
+
+### Phase 19.37 – Visualisierung / Charts-Politur
+
+**Datum:** 2026-03-19
+**Ziel:** Vorhandene Insights-Diagramme im Low-Data-Verhalten, bei Achsen und bei der Day-Navigation klarer machen, ohne neue Analysedaten zu erfinden.
+
+- [x] Distance-Chart zeigt auch bei fehlender Distanz ein erklaerendes No-Data-State statt still zu verschwinden
+- [x] Weekday-Chart erklaert jetzt, ob zu wenige Tage oder zu wenig Wochentagsstreuung vorliegen
+- [x] Distance-Chart-Achsen nutzen abgestufte Tages-/Wochen-/Monats-Marks statt harter X-Achsen-Ausblendung
+- [x] Day-Tap-Aufloesung im Distance-Chart mappt auf den naechsten vorhandenen Tag statt nur auf exakte String-Treffer
+- [x] Activity- und Visit-Charts zeigen wieder eine lesbare X-Achse; der Activity-Metric-Umschalter erscheint nur, wenn Distanzdaten vorhanden sind
+- [x] `InsightsChartSupport` macht Metrikverfuegbarkeit, Low-Data-Messages und Day-Tap-Verhalten testbar
+- Bewusst nicht in diesem Schritt: neue Diagrammtypen, neue Analysefelder oder chart-uebergreifende Crossfilter
 
 ### Phase 19.31 – Navigation / Dead-End Hardening
 

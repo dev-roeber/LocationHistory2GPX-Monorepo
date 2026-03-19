@@ -23,7 +23,7 @@ struct AppRecordedTrackEditorView: View {
             mapSection
             pointsSection
         }
-        .navigationTitle("Track Editor")
+        .navigationTitle(SavedTracksPresentation.editorTitle)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") {
@@ -69,6 +69,9 @@ struct AppRecordedTrackEditorView: View {
 
     private var summarySection: some View {
         Section("Summary") {
+            Text("This saved track is local-only and remains separate from imported history.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             LabeledContent("Date", value: AppDateDisplay.longDate(draft.dayKey))
             LabeledContent("Started", value: draft.startedAt.formatted(date: .abbreviated, time: .shortened))
             LabeledContent("Ended", value: draft.endedAt.formatted(date: .abbreviated, time: .shortened))

@@ -12,22 +12,30 @@ Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 3. **Phase 19.34 – Days List / Export-Koharenz**
    - Export-Selektion in der Day-Liste visuell klarer priorisieren
    - Such- und Leerzustaende nicht nur korrekt, sondern auch klar priorisiert darstellen
-4. **Phase 19.35 – Day-Detail-Hierarchie**
-   - Live Recording und Track-Bearbeitung sauberer von importierten Tagesdaten trennen
-   - Day-Detail-Screen in eine klarere primare/sekundaere Reihenfolge bringen
-5. **Phase 19.36 – Track-Library / Track-Editor-Zugang**
-   - Benennung, Iconographie und Zugang fuer gespeicherte Live-Tracks klarer machen
-   - die Trennung zu importierter History weiter schaerfen, ohne neue Scope-Bloecke aufzumachen
-6. **Phase 19.37 – Visualisierung / Charts-Politur**
-   - Low-Data-Verhalten, Achsen, Legenden und Tap-Affordances der vorhandenen Charts verbessern
-   - keine neuen Analyse-Daten erfinden, sondern die vorhandenen konsistenter darstellen
-7. **Phase 19.38 – Export-UX-Politur**
+4. **Phase 19.38 – Export-UX-Politur**
    - Disabled- und Fehlerzustaende des Export-Flows erklaerender machen
    - Dateinamenerwartung und Formatklarheit schaerfen, ohne neue Exportformate freizuschalten
-8. **Phase 20 / 21 – bewusst nicht jetzt**
+5. **Phase 20 / 21 – bewusst nicht jetzt**
    - keine weiteren `20.x`-Folgearbeiten fuer Background-Location, Resume oder Recorded-Track-Export aktivieren
    - keine Apple-/ASC-/TestFlight-/Release-Arbeit
-9. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+6. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.37 (2026-03-19):**
+- Distance- und Weekday-Charts zeigen jetzt chart-spezifische Low-Data-States statt still zu verschwinden
+- Distance-Chart erklaert Tap-Navigation und loest Taps robuster auf den naechsten vorhandenen Tag auf
+- Activity- und Visit-Charts zeigen wieder lesbare Achsen; Activity-Metric-Umschalter erscheint nur noch wenn Distanzdaten wirklich vorhanden sind
+- zentrale `InsightsChartSupport`-Logik deckt Low-Data-Messages, Metrikverfuegbarkeit und Day-Tap-Aufloesung testbar ab
+
+**Abgeschlossene Phase 19.36 (2026-03-19):**
+- Saved-Tracks-Zugang heisst jetzt in Overview, Library und Empty States konsistent `Saved Tracks`
+- `Edit Track` bleibt auf den eigentlichen Bearbeitungsschritt begrenzt statt schon den Bibliothekszugang zu benennen
+- Iconographie und Copy trennen Library-Zugang klarer von importierter History und vom Editor
+- zentrale `SavedTracksPresentation`-Texte machen die Benennung test- und wiederverwendbar
+
+**Abgeschlossene Phase 19.35 (2026-03-19):**
+- Day-Detail gliedert importierte Tageshistorie jetzt explizit in Summary, Kartenkontext, Timeline und Daten-Sektionen
+- Live Recording und Saved-Track-Werkzeuge erscheinen erst danach als klar sekundaerer lokaler Block
+- testbare Hierarchie-/Time-Range-Hilfslogik deckt Reihenfolge und Zeitspannen der Day-Detail-Inhalte ab
 
 **Abgeschlossene Phase 19.31 (2026-03-19):**
 - `DaySummary.hasContent` ergaenzt und Query-Layer auf repo-wahre no-content-Tage gehaertet

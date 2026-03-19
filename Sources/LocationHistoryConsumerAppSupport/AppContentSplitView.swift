@@ -537,14 +537,14 @@ public struct AppContentSplitView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label("Track Editor", systemImage: "slider.horizontal.3")
+                    Label(SavedTracksPresentation.libraryTitle, systemImage: SavedTracksPresentation.libraryIcon)
                         .font(.headline)
                     Text(liveTracksOverviewMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Open") {
+                Button(SavedTracksPresentation.libraryButtonTitle) {
                     isShowingTracksLibrary = true
                 }
                 .buttonStyle(.borderedProminent)
@@ -552,10 +552,13 @@ public struct AppContentSplitView: View {
 
             if let latestTrack = liveLocation.recordedTracks.first {
                 HStack(spacing: 12) {
-                    Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                    Image(systemName: SavedTracksPresentation.libraryIcon)
                         .font(.title3)
                         .foregroundStyle(.green)
                     VStack(alignment: .leading, spacing: 2) {
+                        Text(SavedTracksPresentation.latestTrackLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Text(savedTrackTitle(latestTrack))
                             .font(.subheadline.weight(.semibold))
                         Text("\(latestTrack.pointCount) points · \(formatDistance(latestTrack.distanceM, unit: preferences.distanceUnit))")
@@ -563,7 +566,7 @@ public struct AppContentSplitView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("\(liveLocation.recordedTracks.count) saved")
+                    Text("\(liveLocation.recordedTracks.count) total")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
@@ -581,19 +584,19 @@ public struct AppContentSplitView: View {
             AppRecordedTracksLibraryView(liveLocation: liveLocation)
         } else {
             VStack(spacing: 12) {
-                Image(systemName: "slider.horizontal.3")
+                Image(systemName: SavedTracksPresentation.libraryIcon)
                     .font(.largeTitle)
                     .foregroundStyle(.secondary)
-                Text("Track Library Unavailable")
+                Text(SavedTracksPresentation.unavailableTitle)
                     .font(.headline)
-                Text("Saved live tracks can be edited on platforms that support the track editor.")
+                Text(SavedTracksPresentation.unavailableMessage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(24)
-            .navigationTitle("Tracks")
+            .navigationTitle(SavedTracksPresentation.libraryTitle)
         }
     }
 
@@ -607,10 +610,7 @@ public struct AppContentSplitView: View {
     }
 
     private var liveTracksOverviewMessage: String {
-        if liveLocation.recordedTracks.isEmpty {
-            return "Saved live tracks and point editing live here. Record a short track on any day, then open it from this library."
-        }
-        return "Open your saved live tracks directly from Overview to edit points, insert midpoints or delete a track."
+        SavedTracksPresentation.overviewMessage(hasTracks: !liveLocation.recordedTracks.isEmpty)
     }
 
     private func savedTrackTitle(_ track: RecordedTrack) -> String {

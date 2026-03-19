@@ -5,13 +5,6 @@ import LocationHistoryConsumer
 import Charts
 #endif
 
-// MARK: - Insights Content View
-
-enum ActivityMetric: String, CaseIterable {
-    case count = "Count"
-    case distance = "Distance"
-}
-
 struct AppInsightsContentView: View {
     @EnvironmentObject private var preferences: AppPreferences
     let insights: ExportInsights
@@ -39,7 +32,7 @@ struct AppInsightsContentView: View {
     }
 
     private var weekdayStats: [WeekdayStat] {
-        guard daySummaries.count >= 3 else { return [] }
+        guard daySummaries.count >= InsightsChartSupport.minimumDaysForWeekdayChart else { return [] }
         var buckets: [Int: (total: Int, count: Int)] = [:]
         for summary in daySummaries {
             guard let date = Self.chartDateFormatter.date(from: summary.date) else { continue }
@@ -57,16 +50,31 @@ struct AppInsightsContentView: View {
         }
     }
 
+    private var availableActivityMetrics: [ActivityMetric] {
+        InsightsChartSupport.availableActivityMetrics(for: insights.activityBreakdown)
+    }
+
+    private var displayedActivityMetric: ActivityMetric {
+        availableActivityMetrics.contains(activityMetric) ? activityMetric : availableActivityMetrics.first ?? .count
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
 
             // Distance Over Time
             #if canImport(Charts)
-            let hasDistanceData = daySummaries.contains(where: { $0.totalPathDistanceM > 0 })
-            if !daySummaries.isEmpty && hasDistanceData {
+            if !daySummaries.isEmpty {
                 insightSection("Distance Over Time", icon: "chart.bar.fill") {
-                    distanceChart
-                    Text("Route distances only")
+                    if InsightsChartSupport.hasDistanceData(in: daySummaries) {
+                        distanceChart
+                    } else {
+                        chartEmptyState(
+                            title: "No Distance Data",
+                            message: InsightsChartSupport.distanceEmptyMessage(),
+                            systemImage: "road.lanes"
+                        )
+                    }
+                    Text(InsightsChartSupport.distanceSectionMessage(hasDays: !daySummaries.isEmpty, canNavigateToDay: onDayTap != nil))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
@@ -90,14 +98,21 @@ struct AppInsightsContentView: View {
             if !insights.activityBreakdown.isEmpty {
                 insightSection("Activity Types", icon: "figure.walk") {
                     #if canImport(Charts)
-                    Picker("", selection: $activityMetric) {
-                        ForEach(ActivityMetric.allCases, id: \.self) { m in
-                            Text(m.rawValue).tag(m)
+                    if availableActivityMetrics.count > 1 {
+                        Picker("", selection: $activityMetric) {
+                            ForEach(availableActivityMetrics, id: \.self) { m in
+                                Text(m.rawValue).tag(m)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                        .padding(.bottom, 4)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom, 4)
-                    activityTypeChart
+                    activityTypeChart(metric: displayedActivityMetric)
+                    if availableActivityMetrics.count == 1 {
+                        Text("Distance mode appears when exported activity totals include route distance.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                     #endif
                     ForEach(Array(insights.activityBreakdown.enumerated()), id: \.offset) { _, item in
                         activityBreakdownCard(item)
@@ -110,6 +125,9 @@ struct AppInsightsContentView: View {
                 insightSection("Visit Types", icon: "mappin.and.ellipse") {
                     #if canImport(Charts)
                     visitTypeChart
+                    Text("Counts by semantic visit type.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                     #endif
                     ForEach(Array(insights.visitTypeBreakdown.enumerated()), id: \.offset) { _, item in
                         visitTypeRow(item)
@@ -119,9 +137,20 @@ struct AppInsightsContentView: View {
 
             // By Day of Week
             #if canImport(Charts)
-            if !weekdayStats.isEmpty {
+            if !daySummaries.isEmpty {
                 insightSection("By Day of Week", icon: "chart.bar") {
-                    weekdayChart
+                    if let message = InsightsChartSupport.weekdaySectionMessage(dayCount: daySummaries.count, bucketCount: weekdayStats.count) {
+                        chartEmptyState(
+                            title: "Weekday Pattern Not Ready",
+                            message: message,
+                            systemImage: "calendar.badge.clock"
+                        )
+                    } else {
+                        weekdayChart
+                        Text("Average visits plus activities per weekday.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
             #endif
@@ -135,6 +164,21 @@ struct AppInsightsContentView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func chartEmptyState(title: String, message: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     @ViewBuilder
@@ -257,7 +301,6 @@ struct AppInsightsContentView: View {
     #if canImport(Charts)
     @ViewBuilder
     private var distanceChart: some View {
-        let showXAxis = daySummaries.count <= 10
         Chart {
             ForEach(daySummaries, id: \.date) { summary in
                 if let date = Self.chartDateFormatter.date(from: summary.date) {
@@ -270,7 +313,9 @@ struct AppInsightsContentView: View {
                 }
             }
         }
-        .chartXAxis(showXAxis ? .automatic : .hidden)
+        .chartXAxis {
+            distanceChartXAxis
+        }
         .chartYAxisLabel(distanceAxisLabel(unit: preferences.distanceUnit), alignment: .trailing)
         .chartOverlay { proxy in
             GeometryReader { geometry in
@@ -280,23 +325,44 @@ struct AppInsightsContentView: View {
                     .onTapGesture { location in
                         guard let onDayTap else { return }
                         let x = location.x - geometry.frame(in: .local).minX
-                        if let tappedDate: Date = proxy.value(atX: x) {
-                            let iso = Self.chartDateFormatter.string(from: tappedDate)
-                            if daySummaries.contains(where: { $0.date == iso }) {
-                                onDayTap(iso)
-                            }
+                        guard let tappedDate: Date = proxy.value(atX: x),
+                              let iso = InsightsChartSupport.nearestDayISODate(to: tappedDate, in: daySummaries.map(\.date)) else {
+                            return
                         }
+                        onDayTap(iso)
                     }
             }
         }
-        .frame(height: 150)
+        .frame(height: 170)
+    }
+
+    @AxisContentBuilder
+    private var distanceChartXAxis: some AxisContent {
+        if daySummaries.count <= 7 {
+            AxisMarks(values: .stride(by: .day)) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+            }
+        } else if daySummaries.count <= 31 {
+            AxisMarks(values: .stride(by: .weekOfMonth)) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+            }
+        } else {
+            AxisMarks(values: .stride(by: .month)) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel(format: .dateTime.month(.abbreviated))
+            }
+        }
     }
 
     @ViewBuilder
-    private var activityTypeChart: some View {
+    private func activityTypeChart(metric: ActivityMetric) -> some View {
         let items = insights.activityBreakdown
-        let hasDistance = items.contains(where: { $0.totalDistanceKM > 0 })
-        let showDistance = activityMetric == .distance && hasDistance
+        let showDistance = metric == .distance
         Chart {
             ForEach(items, id: \.activityType) { item in
                 let xVal = showDistance ? distanceValue(item.totalDistanceKM * 1000, unit: preferences.distanceUnit) : Double(item.count)
@@ -313,8 +379,11 @@ struct AppInsightsContentView: View {
                 }
             }
         }
-        .chartXAxis(.hidden)
-        .frame(height: CGFloat(max(items.count, 1)) * 40 + 8)
+        .chartXAxis {
+            AxisMarks(position: .bottom)
+        }
+        .chartXAxisLabel(showDistance ? distanceAxisLabel(unit: preferences.distanceUnit) : "count")
+        .frame(height: CGFloat(max(items.count, 1)) * 44 + 18)
     }
 
     @ViewBuilder
@@ -336,8 +405,11 @@ struct AppInsightsContentView: View {
                     }
                 }
             }
-            .chartXAxis(.hidden)
-            .frame(height: CGFloat(max(insights.visitTypeBreakdown.count, 1)) * 40 + 8)
+            .chartXAxis {
+                AxisMarks(position: .bottom)
+            }
+            .chartXAxisLabel("count")
+            .frame(height: CGFloat(max(insights.visitTypeBreakdown.count, 1)) * 44 + 18)
         }
     }
 
@@ -351,10 +423,15 @@ struct AppInsightsContentView: View {
                 )
                 .foregroundStyle(Color.indigo)
                 .cornerRadius(4)
+                .annotation(position: .top) {
+                    Text(String(format: "%.1f", stat.avgEvents))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .chartYAxisLabel("avg events", alignment: .trailing)
-        .frame(height: 110)
+        .frame(height: 130)
         .padding(.bottom, 2)
     }
     #endif

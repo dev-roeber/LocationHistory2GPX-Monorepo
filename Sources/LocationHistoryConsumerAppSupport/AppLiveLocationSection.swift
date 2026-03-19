@@ -20,7 +20,7 @@ public struct AppLiveLocationSection: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Live Recording")
                         .font(.headline)
-                    Text("Current position and recorded tracks stay separate from imported history.")
+                    Text(SavedTracksPresentation.liveSectionMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -137,7 +137,7 @@ public struct AppLiveLocationSection: View {
     private var savedTracksList: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Saved Live Tracks")
+                Label(SavedTracksPresentation.libraryTitle, systemImage: SavedTracksPresentation.libraryIcon)
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text("\(liveLocation.recordedTracks.count)")
@@ -149,7 +149,7 @@ public struct AppLiveLocationSection: View {
                     .clipShape(Capsule())
             }
 
-            Text("Tap a saved track to open the Track Editor.")
+            Text(SavedTracksPresentation.liveListMessage)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -158,7 +158,7 @@ public struct AppLiveLocationSection: View {
                     selectedRecordedTrack = track
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                        Image(systemName: SavedTracksPresentation.libraryIcon)
                             .foregroundColor(.green)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(savedTrackTitle(track))
@@ -183,9 +183,9 @@ public struct AppLiveLocationSection: View {
     private var savedTracksSection: some View {
         if liveLocation.recordedTracks.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
-                Label("Track Editor", systemImage: "slider.horizontal.3")
+                Label(SavedTracksPresentation.libraryTitle, systemImage: SavedTracksPresentation.libraryIcon)
                     .font(.subheadline.weight(.semibold))
-                Text("Record a short live track, switch Record off, then tap the saved track here to edit points, insert midpoints or delete the track.")
+                Text(SavedTracksPresentation.liveEmptyMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

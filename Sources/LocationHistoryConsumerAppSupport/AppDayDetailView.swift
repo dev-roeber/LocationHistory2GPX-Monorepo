@@ -59,43 +59,37 @@ public struct AppDayDetailView: View {
 
     @ViewBuilder
     private func contentView(_ detail: DayDetailViewState) -> some View {
-        VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(AppDateDisplay.weekday(detail.date))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text(AppDateDisplay.longDate(detail.date))
-                    .font(.title2.weight(.semibold))
-                dayTimeRange(detail)
-            }
-
+        let canShowLocalRecording = {
             #if canImport(MapKit)
             if #available(iOS 17.0, macOS 14.0, *) {
-                AppDayMapView(mapData: DayMapDataExtractor.mapData(from: detail))
-                if let liveLocation {
-                    AppLiveLocationSection(liveLocation: liveLocation)
-                }
-            } else {
-                Label("Map view requires iOS 17 or later.", systemImage: "map")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                return liveLocation != nil
             }
             #endif
+            return false
+        }()
+        let hierarchy = DayDetailContentHierarchy(detail: detail, hasLiveLocationTools: canShowLocalRecording)
 
-            DayTimelineView(detail: detail)
+        VStack(alignment: .leading, spacing: 24) {
+            headerSection(detail, hierarchy: hierarchy)
 
-            let dayDistance = detail.paths.reduce(0.0) { $0 + ($1.distanceM ?? 0) }
-            HStack(spacing: 12) {
-                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse", color: .blue)
-                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk", color: .green)
-                quickStat("\(detail.paths.count)", label: "Routes", icon: "location.north.line", color: .orange)
-                if dayDistance > 0 {
-                    quickStat(formatDistance(dayDistance, unit: preferences.distanceUnit), label: "Distance", icon: "road.lanes", color: .purple)
+            importedSummaryCard(detail, hierarchy: hierarchy)
+
+            #if canImport(MapKit)
+            importedMapSection(detail)
+            #endif
+
+            if hierarchy.sections.contains(.importedTimeline) {
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionHeader(
+                        "Imported Timeline",
+                        icon: "clock.arrow.2.circlepath",
+                        message: "Visits and activities stay ahead of local live-recording tools."
+                    )
+                    DayTimelineView(detail: detail)
                 }
             }
 
-            if !detail.visits.isEmpty {
+            if hierarchy.sections.contains(.visits) {
                 detailSection("Visits", icon: "mappin.and.ellipse", count: detail.visits.count) {
                     ForEach(Array(detail.visits.enumerated()), id: \.offset) { _, visit in
                         visitCard(visit)
@@ -103,7 +97,7 @@ public struct AppDayDetailView: View {
                 }
             }
 
-            if !detail.activities.isEmpty {
+            if hierarchy.sections.contains(.activities) {
                 detailSection("Activities", icon: "figure.walk", count: detail.activities.count) {
                     ForEach(Array(detail.activities.enumerated()), id: \.offset) { _, activity in
                         activityCard(activity)
@@ -111,15 +105,108 @@ public struct AppDayDetailView: View {
                 }
             }
 
-            if !detail.paths.isEmpty {
+            if hierarchy.sections.contains(.routes) {
                 detailSection("Routes", icon: "location.north.line", count: detail.paths.count) {
                     ForEach(Array(detail.paths.enumerated()), id: \.offset) { _, path in
                         pathCard(path)
                     }
                 }
             }
+
+            if hierarchy.sections.contains(.localRecording), let liveLocation {
+                #if canImport(MapKit)
+                if #available(iOS 17.0, macOS 14.0, *) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionHeader(
+                            "Local Recording Tools",
+                            icon: "record.circle",
+                            message: "These tools are local-only and stay separate from the imported day history above."
+                        )
+                        AppLiveLocationSection(liveLocation: liveLocation)
+                    }
+                }
+                #endif
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func headerSection(_ detail: DayDetailViewState, hierarchy: DayDetailContentHierarchy) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(AppDateDisplay.weekday(detail.date))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(AppDateDisplay.longDate(detail.date))
+                .font(.title2.weight(.semibold))
+            if let timeRange = hierarchy.timeRange {
+                Label(
+                    "\(timeRange.earliest.formatted(date: .omitted, time: .shortened)) – \(timeRange.latest.formatted(date: .omitted, time: .shortened))",
+                    systemImage: "clock"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else {
+                Text("Imported day history")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func importedSummaryCard(_ detail: DayDetailViewState, hierarchy: DayDetailContentHierarchy) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(
+                "Imported Day History",
+                icon: "tray.full",
+                message: "This section reflects the imported export only. Live recording and saved-track editing appear later as secondary tools."
+            )
+
+            HStack(spacing: 12) {
+                quickStat("\(detail.visits.count)", label: "Visits", icon: "mappin.and.ellipse", color: .blue)
+                quickStat("\(detail.activities.count)", label: "Activities", icon: "figure.walk", color: .green)
+                quickStat("\(detail.paths.count)", label: "Routes", icon: "location.north.line", color: .orange)
+                if hierarchy.totalDistanceM > 0 {
+                    quickStat(
+                        formatDistance(hierarchy.totalDistanceM, unit: preferences.distanceUnit),
+                        label: "Distance",
+                        icon: "road.lanes",
+                        color: .purple
+                    )
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func importedMapSection(_ detail: DayDetailViewState) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(
+                "Map Context",
+                icon: "map",
+                message: "Imported visits and recorded routes for this day."
+            )
+            if #available(iOS 17.0, macOS 14.0, *) {
+                AppDayMapView(mapData: DayMapDataExtractor.mapData(from: detail))
+            } else {
+                Label("Map view requires iOS 17 or later.", systemImage: "map")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ title: String, icon: String, message: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(title, systemImage: icon)
+                .font(.headline)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder
@@ -228,19 +315,6 @@ public struct AppDayDetailView: View {
         .padding(.vertical, 8)
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    @ViewBuilder
-    private func dayTimeRange(_ detail: DayDetailViewState) -> some View {
-        let allStarts = detail.visits.compactMap(\.startTime) + detail.activities.compactMap(\.startTime) + detail.paths.compactMap(\.startTime)
-        let allEnds = detail.visits.compactMap(\.endTime) + detail.activities.compactMap(\.endTime) + detail.paths.compactMap(\.endTime)
-        let earliest = allStarts.min()
-        let latest = allEnds.max()
-        if let earliest, let latest {
-            Label("\(AppTimeDisplay.time(earliest)) – \(AppTimeDisplay.time(latest))", systemImage: "clock")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
     }
 
     @ViewBuilder

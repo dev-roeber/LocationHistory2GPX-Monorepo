@@ -20,7 +20,7 @@ struct AppRecordedTracksLibraryView: View {
                 tracksSection
             }
         }
-        .navigationTitle("Tracks")
+        .navigationTitle(SavedTracksPresentation.libraryTitle)
         .navigationDestination(for: RecordedTrack.self) { track in
             AppRecordedTrackEditorView(track: track, liveLocation: liveLocation)
         }
@@ -29,9 +29,9 @@ struct AppRecordedTracksLibraryView: View {
     private var summarySection: some View {
         Section {
             VStack(alignment: .leading, spacing: 6) {
-                Label("Saved Live Tracks", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                Label(SavedTracksPresentation.libraryTitle, systemImage: SavedTracksPresentation.libraryIcon)
                     .font(.headline)
-                Text("This library is separate from imported history. Open any saved track to edit points, insert midpoints or remove it from local storage.")
+                Text(SavedTracksPresentation.librarySummaryMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -42,9 +42,9 @@ struct AppRecordedTracksLibraryView: View {
     private var emptyStateSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
-                Text("No saved live tracks yet.")
+                Text(SavedTracksPresentation.libraryEmptyTitle)
                     .font(.subheadline.weight(.semibold))
-                Text("Go to any day, open Live Recording, record a short track and switch Record off. The finished track will appear here.")
+                Text(SavedTracksPresentation.libraryEmptyMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -53,15 +53,19 @@ struct AppRecordedTracksLibraryView: View {
     }
 
     private var tracksSection: some View {
-        Section("Saved Tracks") {
+        Section(SavedTracksPresentation.libraryTitle) {
             ForEach(liveLocation.recordedTracks) { track in
                 NavigationLink(value: track) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(savedTrackTitle(track))
-                            .font(.subheadline.weight(.semibold))
-                        Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 10) {
+                        Image(systemName: SavedTracksPresentation.libraryIcon)
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(savedTrackTitle(track))
+                                .font(.subheadline.weight(.semibold))
+                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

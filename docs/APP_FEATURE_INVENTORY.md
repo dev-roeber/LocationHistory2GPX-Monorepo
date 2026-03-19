@@ -56,7 +56,7 @@ Present:
 - highlight cards for busiest day and longest-distance day
 - active-filter banner when export filters are present in metadata
 - source/status card with optional technical disclosure details
-- overview entry card for the recorded-tracks library / track editor
+- overview entry card for the saved-tracks library
 
 Not present:
 - dedicated onboarding dashboard state distinct from the import-first root
@@ -90,7 +90,7 @@ Present:
 - empty states for `Select a Day`, `No Day Entries` and `Nothing Recorded`
 - day timeline/Gantt visualization for visits and activities
 - day detail is only entered for contentful days; empty calendar days remain list-only
-- live recording section can appear inside day detail on supported platforms
+- live recording section can appear inside day detail on supported platforms, including direct access to saved tracks
 
 Not present:
 - inline editing of imported visits / activities / routes
@@ -117,11 +117,13 @@ Not present:
 
 Present:
 - distance-over-time chart when distance data exists
+- distance-over-time section keeps a dedicated no-distance explanation instead of disappearing
+- distance-over-time bars can navigate to the nearest matching day when day navigation is wired in
 - daily averages cards when at least two days exist
 - activity-type breakdown cards
-- activity-type chart with `Count` / `Distance` toggle
+- activity-type chart with `Count` / `Distance` toggle only when distance data exists
 - visit-type chart and list
-- weekday chart when enough day data exists
+- weekday chart with explicit low-data explanation when too few days or weekdays are present
 - period breakdown cards when period stats exist
 - insights are built from decoded stats with day-level fallbacks where implemented
 
