@@ -154,20 +154,17 @@ public struct AppLiveLocationSection: View {
                 .foregroundStyle(.secondary)
 
             ForEach(liveLocation.recordedTracks) { track in
+                let presentation = SavedTrackPresentation.row(
+                    for: track,
+                    unit: preferences.distanceUnit
+                )
                 Button {
                     selectedRecordedTrack = track
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: SavedTracksPresentation.libraryIcon)
                             .foregroundColor(.green)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(savedTrackTitle(track))
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        SavedTrackSummaryContentView(presentation: presentation)
                         Spacer()
                         Image(systemName: "slider.horizontal.3")
                             .foregroundStyle(.secondary)
@@ -175,6 +172,8 @@ public struct AppLiveLocationSection: View {
                     .padding(.vertical, 2)
                 }
                 .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(presentation.accessibilityLabel), opens point editor")
             }
         }
     }
@@ -224,14 +223,6 @@ public struct AppLiveLocationSection: View {
             ),
             span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
         ))
-    }
-
-    private func savedTrackTitle(_ track: RecordedTrack) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: track.startedAt)
     }
 }
 #endif

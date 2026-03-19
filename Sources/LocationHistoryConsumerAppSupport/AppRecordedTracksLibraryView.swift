@@ -55,29 +55,21 @@ struct AppRecordedTracksLibraryView: View {
     private var tracksSection: some View {
         Section(SavedTracksPresentation.libraryTitle) {
             ForEach(liveLocation.recordedTracks) { track in
+                let presentation = SavedTrackPresentation.row(
+                    for: track,
+                    unit: preferences.distanceUnit
+                )
                 NavigationLink(value: track) {
                     HStack(spacing: 10) {
                         Image(systemName: SavedTracksPresentation.libraryIcon)
                             .foregroundStyle(.green)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(savedTrackTitle(track))
-                                .font(.subheadline.weight(.semibold))
-                            Text("\(track.pointCount) points · \(formatDistance(track.distanceM, unit: preferences.distanceUnit))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        SavedTrackSummaryContentView(presentation: presentation)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(presentation.accessibilityLabel)
             }
         }
-    }
-
-    private func savedTrackTitle(_ track: RecordedTrack) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: track.startedAt)
     }
 }
 #endif

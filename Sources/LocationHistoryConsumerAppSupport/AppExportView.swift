@@ -217,29 +217,24 @@ public struct AppExportView: View {
 
     @ViewBuilder
     private func recordedTrackRow(track: RecordedTrack, isSelected: Bool) -> some View {
+        let presentation = SavedTrackPresentation.row(
+            for: track,
+            unit: preferences.distanceUnit
+        )
+
         HStack(spacing: 12) {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundColor(isSelected ? .accentColor : .secondary)
                 .animation(.easeInOut(duration: 0.15), value: isSelected)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(savedTrackTitle(track))
-                    .font(.subheadline.weight(.medium))
-                HStack(spacing: 10) {
-                    Label("\(track.pointCount) points", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                        .foregroundStyle(.secondary)
-                    Label(formatDistance(track.distanceM, unit: preferences.distanceUnit), systemImage: "ruler")
-                        .foregroundStyle(.secondary)
-                }
-                .font(.caption)
-            }
+            SavedTrackSummaryContentView(presentation: presentation)
 
             Spacer()
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(savedTrackTitle(track)), \(track.pointCount) points")
+        .accessibilityLabel(presentation.accessibilityLabel)
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
         .accessibilityAddTraits(.isButton)
     }
@@ -509,14 +504,6 @@ public struct AppExportView: View {
         let sourceParts = [dayPart, trackPart].compactMap { $0 }.joined(separator: " · ")
         let routePart = "\(routeCount) \(routeCount == 1 ? "route" : "routes")"
         return sourceParts.isEmpty ? routePart : "\(sourceParts) · \(routePart)"
-    }
-
-    private func savedTrackTitle(_ track: RecordedTrack) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: track.startedAt)
     }
 }
 

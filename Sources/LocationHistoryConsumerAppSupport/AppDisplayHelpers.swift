@@ -70,6 +70,16 @@ enum AppTimeDisplay {
         return "\(startDate.formatted(date: .omitted, time: .shortened)) - \(endDate.formatted(date: .omitted, time: .shortened))"
     }
 
+    static func timeRange(start: Date?, end: Date?) -> String? {
+        guard let start,
+              let end,
+              end >= start else {
+            return nil
+        }
+
+        return "\(start.formatted(date: .omitted, time: .shortened)) - \(end.formatted(date: .omitted, time: .shortened))"
+    }
+
     static func duration(start: String?, end: String?) -> String? {
         guard let startDate = start.flatMap(date(_:)),
               let endDate = end.flatMap(date(_:)),
@@ -78,6 +88,16 @@ enum AppTimeDisplay {
         }
 
         return duration(endDate.timeIntervalSince(startDate))
+    }
+
+    static func duration(start: Date?, end: Date?) -> String? {
+        guard let start,
+              let end,
+              end >= start else {
+            return nil
+        }
+
+        return duration(end.timeIntervalSince(start))
     }
 
     static func duration(_ interval: TimeInterval) -> String? {
