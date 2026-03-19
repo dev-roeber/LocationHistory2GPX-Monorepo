@@ -41,6 +41,10 @@ public struct AppContentSplitView: View {
         DayListPresentation.filteredSummaries(session.daySummaries, query: daySearchText)
     }
 
+    private var daySummaryLookup: [String: DaySummary] {
+        Dictionary(uniqueKeysWithValues: session.daySummaries.map { ($0.date, $0) })
+    }
+
     private func highlightIconsFor(_ date: String) -> [String] {
         var icons: [String] = []
         if session.insights?.busiestDay?.date == date { icons.append("flame.fill") }
@@ -373,62 +377,16 @@ public struct AppContentSplitView: View {
 
     @ViewBuilder
     private func overviewHighlights(_ insights: ExportInsights) -> some View {
-        let hasHighlights = insights.busiestDay != nil
-            || insights.mostVisitsDay != nil
-            || insights.mostRoutesDay != nil
-            || insights.longestDistanceDay != nil
-        if hasHighlights {
+        let items = overviewHighlightItems(insights)
+        if !items.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Highlights")
                     .font(.title3.weight(.semibold))
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
-                    if let busiest = insights.busiestDay {
-                        highlightCard(
-                            title: "Busiest Day",
-                            value: busiest.value,
-                            date: AppDateDisplay.mediumDate(busiest.date),
-                            icon: "flame.fill",
-                            color: .orange,
-                            onTap: {
-                                openDayFromInsights(busiest.date)
-                            }
-                        )
-                    }
-                    if let visits = insights.mostVisitsDay {
-                        highlightCard(
-                            title: "Most Visits",
-                            value: visits.value,
-                            date: AppDateDisplay.mediumDate(visits.date),
-                            icon: "mappin.circle.fill",
-                            color: .blue,
-                            onTap: {
-                                openDayFromInsights(visits.date)
-                            }
-                        )
-                    }
-                    if let routes = insights.mostRoutesDay {
-                        highlightCard(
-                            title: "Most Routes",
-                            value: routes.value,
-                            date: AppDateDisplay.mediumDate(routes.date),
-                            icon: "location.north.circle.fill",
-                            color: .green,
-                            onTap: {
-                                openDayFromInsights(routes.date)
-                            }
-                        )
-                    }
-                    if let longest = insights.longestDistanceDay {
-                        highlightCard(
-                            title: "Longest Distance",
-                            value: longestDistanceValue(for: longest),
-                            date: AppDateDisplay.mediumDate(longest.date),
-                            icon: "road.lanes",
-                            color: .purple,
-                            onTap: {
-                                openDayFromInsights(longest.date)
-                            }
-                        )
+                    ForEach(items) { item in
+                        highlightCard(item) {
+                            openDayFromInsights(item.date)
+                        }
                     }
                 }
             }
@@ -447,50 +405,69 @@ public struct AppContentSplitView: View {
         }
     }
 
-    @ViewBuilder
-    private func highlightCard(title: String, value: String, date: String, icon: String, color: Color, onTap: (() -> Void)? = nil) -> some View {
-        Group {
-            if let onTap {
-                Button(action: onTap) {
-                    highlightCardBody(title: title, value: value, date: date, icon: icon, color: color, isInteractive: true)
-                }
-                .buttonStyle(.plain)
-            } else {
-                highlightCardBody(title: title, value: value, date: date, icon: icon, color: color, isInteractive: false)
-            }
+    private func overviewHighlightItems(_ insights: ExportInsights) -> [InsightsHighlightItem] {
+        var items: [InsightsHighlightItem] = []
+        if let busiest = insights.busiestDay {
+            items.append(
+                InsightsCardPresentation.highlightItem(
+                    id: "busiest",
+                    title: "Busiest Day",
+                    icon: "flame.fill",
+                    color: .orange,
+                    highlight: busiest,
+                    summary: daySummaryLookup[busiest.date],
+                    unit: preferences.distanceUnit
+                )
+            )
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title): \(value), \(date)")
-        .accessibilityAddTraits(onTap != nil ? .isButton : [])
+        if let visits = insights.mostVisitsDay {
+            items.append(
+                InsightsCardPresentation.highlightItem(
+                    id: "visits",
+                    title: "Most Visits",
+                    icon: "mappin.circle.fill",
+                    color: .blue,
+                    highlight: visits,
+                    summary: daySummaryLookup[visits.date],
+                    unit: preferences.distanceUnit
+                )
+            )
+        }
+        if let routes = insights.mostRoutesDay {
+            items.append(
+                InsightsCardPresentation.highlightItem(
+                    id: "routes",
+                    title: "Most Routes",
+                    icon: "location.north.circle.fill",
+                    color: .green,
+                    highlight: routes,
+                    summary: daySummaryLookup[routes.date],
+                    unit: preferences.distanceUnit
+                )
+            )
+        }
+        if let longest = insights.longestDistanceDay {
+            items.append(
+                InsightsCardPresentation.highlightItem(
+                    id: "distance",
+                    title: "Longest Distance",
+                    icon: "road.lanes",
+                    color: .purple,
+                    highlight: longest,
+                    summary: daySummaryLookup[longest.date],
+                    unit: preferences.distanceUnit
+                )
+            )
+        }
+        return items
     }
 
     @ViewBuilder
-    private func highlightCardBody(title: String, value: String, date: String, icon: String, color: Color, isInteractive: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.caption)
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if isInteractive {
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundStyle(color.opacity(0.5))
-                }
-            }
-            Text(value)
-                .font(.headline.monospacedDigit())
-            Text(date)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+    private func highlightCard(_ item: InsightsHighlightItem, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            InsightsHighlightCardView(item: item, isInteractive: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(color.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -787,12 +764,6 @@ public struct AppContentSplitView: View {
         return formatter.string(from: track.startedAt)
     }
 
-    private func longestDistanceValue(for highlight: DayHighlight) -> String {
-        guard let summary = session.daySummaries.first(where: { $0.date == highlight.date }) else {
-            return highlight.value
-        }
-        return formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit)
-    }
 }
 
 #endif

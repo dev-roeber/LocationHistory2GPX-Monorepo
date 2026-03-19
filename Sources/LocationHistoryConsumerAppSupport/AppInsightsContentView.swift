@@ -32,15 +32,6 @@ struct AppInsightsContentView: View {
         let avgEvents: Double
     }
 
-    private struct HighlightDescriptor: Identifiable {
-        let id: String
-        let title: String
-        let value: String
-        let date: String
-        let icon: String
-        let color: Color
-    }
-
     private var weekdayStats: [WeekdayStat] {
         guard daySummaries.count >= InsightsChartSupport.minimumDaysForWeekdayChart else { return [] }
         var buckets: [Int: (total: Int, count: Int)] = [:]
@@ -94,53 +85,61 @@ struct AppInsightsContentView: View {
         )
     }
 
-    private var highlightItems: [HighlightDescriptor] {
-        var items: [HighlightDescriptor] = []
+    private var daySummaryLookup: [String: DaySummary] {
+        Dictionary(uniqueKeysWithValues: daySummaries.map { ($0.date, $0) })
+    }
+
+    private var highlightItems: [InsightsHighlightItem] {
+        var items: [InsightsHighlightItem] = []
         if let busiest = insights.busiestDay {
             items.append(
-                HighlightDescriptor(
+                InsightsCardPresentation.highlightItem(
                     id: "busiest",
                     title: "Busiest Day",
-                    value: busiest.value,
-                    date: busiest.date,
                     icon: "flame.fill",
-                    color: .orange
+                    color: .orange,
+                    highlight: busiest,
+                    summary: daySummaryLookup[busiest.date],
+                    unit: preferences.distanceUnit
                 )
             )
         }
         if let mostVisits = insights.mostVisitsDay {
             items.append(
-                HighlightDescriptor(
+                InsightsCardPresentation.highlightItem(
                     id: "visits",
                     title: "Most Visits",
-                    value: mostVisits.value,
-                    date: mostVisits.date,
                     icon: "mappin.circle.fill",
-                    color: .blue
+                    color: .blue,
+                    highlight: mostVisits,
+                    summary: daySummaryLookup[mostVisits.date],
+                    unit: preferences.distanceUnit
                 )
             )
         }
         if let mostRoutes = insights.mostRoutesDay {
             items.append(
-                HighlightDescriptor(
+                InsightsCardPresentation.highlightItem(
                     id: "routes",
                     title: "Most Routes",
-                    value: mostRoutes.value,
-                    date: mostRoutes.date,
                     icon: "location.north.circle.fill",
-                    color: .green
+                    color: .green,
+                    highlight: mostRoutes,
+                    summary: daySummaryLookup[mostRoutes.date],
+                    unit: preferences.distanceUnit
                 )
             )
         }
         if let longest = insights.longestDistanceDay {
             items.append(
-                HighlightDescriptor(
+                InsightsCardPresentation.highlightItem(
                     id: "distance",
                     title: "Longest Distance",
-                    value: longest.value,
-                    date: longest.date,
                     icon: "road.lanes",
-                    color: .purple
+                    color: .purple,
+                    highlight: longest,
+                    summary: daySummaryLookup[longest.date],
+                    unit: preferences.distanceUnit
                 )
             )
         }
@@ -379,50 +378,19 @@ struct AppInsightsContentView: View {
     }
 
     @ViewBuilder
-    private func highlightCard(_ item: HighlightDescriptor) -> some View {
+    private func highlightCard(_ item: InsightsHighlightItem) -> some View {
         Group {
             if let onDayTap {
                 Button {
                     onDayTap(item.date)
                 } label: {
-                    highlightCardBody(item, isInteractive: true)
+                    InsightsHighlightCardView(item: item, isInteractive: true)
                 }
                 .buttonStyle(.plain)
             } else {
-                highlightCardBody(item, isInteractive: false)
+                InsightsHighlightCardView(item: item, isInteractive: false)
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(item.title): \(item.value), \(AppDateDisplay.mediumDate(item.date))")
-    }
-
-    @ViewBuilder
-    private func highlightCardBody(_ item: HighlightDescriptor, isInteractive: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: item.icon)
-                    .foregroundStyle(item.color)
-                    .font(.caption)
-                Text(item.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if isInteractive {
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundStyle(item.color.opacity(0.5))
-                }
-            }
-            Text(item.value)
-                .font(.headline.monospacedDigit())
-            Text(AppDateDisplay.mediumDate(item.date))
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(item.color.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     @ViewBuilder
@@ -452,86 +420,33 @@ struct AppInsightsContentView: View {
 
     @ViewBuilder
     private func topDayRow(_ summary: DaySummary, rank: Int, metric: InsightsTopDayMetric) -> some View {
+        let presentation = InsightsCardPresentation.topDayRow(
+            summary: summary,
+            rank: rank,
+            metric: metric,
+            unit: preferences.distanceUnit
+        )
+
         Group {
             if let onDayTap {
                 Button {
                     onDayTap(summary.date)
                 } label: {
-                    topDayRowBody(summary, rank: rank, metric: metric, isInteractive: true)
+                    InsightsTopDayRowView(
+                        presentation: presentation,
+                        accent: topDayMetricColor(metric),
+                        isInteractive: true
+                    )
                 }
                 .buttonStyle(.plain)
             } else {
-                topDayRowBody(summary, rank: rank, metric: metric, isInteractive: false)
+                InsightsTopDayRowView(
+                    presentation: presentation,
+                    accent: topDayMetricColor(metric),
+                    isInteractive: false
+                )
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "Rank \(rank), \(AppDateDisplay.mediumDate(summary.date)), \(topDayPrimaryValue(for: summary, metric: metric)), \(topDaySecondaryValue(for: summary))"
-        )
-    }
-
-    @ViewBuilder
-    private func topDayRowBody(
-        _ summary: DaySummary,
-        rank: Int,
-        metric: InsightsTopDayMetric,
-        isInteractive: Bool
-    ) -> some View {
-        let accent = topDayMetricColor(metric)
-        HStack(alignment: .center, spacing: 12) {
-            Text("\(rank)")
-                .font(.headline.monospacedDigit())
-                .foregroundStyle(accent)
-                .frame(width: 28, height: 28)
-                .background(accent.opacity(0.12))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(AppDateDisplay.mediumDate(summary.date))
-                    .font(.subheadline.weight(.semibold))
-                Text(topDayPrimaryValue(for: summary, metric: metric))
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.primary)
-                Text(topDaySecondaryValue(for: summary))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 12)
-
-            if isInteractive {
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(accent.opacity(0.6))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(accent.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-
-    private func topDayPrimaryValue(for summary: DaySummary, metric: InsightsTopDayMetric) -> String {
-        switch metric {
-        case .events:
-            let total = summary.visitCount + summary.activityCount + summary.pathCount
-            return "\(total) event\(total == 1 ? "" : "s")"
-        case .visits:
-            return "\(summary.visitCount) visit\(summary.visitCount == 1 ? "" : "s")"
-        case .routes:
-            return "\(summary.pathCount) route\(summary.pathCount == 1 ? "" : "s")"
-        case .distance:
-            return formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit)
-        }
-    }
-
-    private func topDaySecondaryValue(for summary: DaySummary) -> String {
-        let counts = [
-            "\(summary.visitCount) visit\(summary.visitCount == 1 ? "" : "s")",
-            "\(summary.activityCount) activit\(summary.activityCount == 1 ? "y" : "ies")",
-            "\(summary.pathCount) route\(summary.pathCount == 1 ? "" : "s")",
-        ]
-        return "\(counts.joined(separator: " · ")) · \(formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit))"
     }
 
     private func topDayMetricColor(_ metric: InsightsTopDayMetric) -> Color {
