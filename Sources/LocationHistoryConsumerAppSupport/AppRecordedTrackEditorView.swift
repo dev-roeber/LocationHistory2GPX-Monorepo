@@ -69,15 +69,29 @@ struct AppRecordedTrackEditorView: View {
 
     private var summarySection: some View {
         Section("Summary") {
-            Text("This saved track is local-only and remains separate from imported history.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            LabeledContent("Date", value: AppDateDisplay.longDate(draft.dayKey))
-            LabeledContent("Started", value: draft.startedAt.formatted(date: .abbreviated, time: .shortened))
-            LabeledContent("Ended", value: draft.endedAt.formatted(date: .abbreviated, time: .shortened))
-            LabeledContent("Points", value: "\(draft.pointCount)")
-            LabeledContent("Distance", value: formatDistance(draft.distanceM, unit: preferences.distanceUnit))
-            if let message = draft.validationMessage {
+            let presentation = RecordedTrackEditorPresentation.summary(
+                draft: draft,
+                unit: preferences.distanceUnit
+            )
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text(presentation.note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(presentation.title)
+                    .font(.headline)
+
+                if let timeRangeText = presentation.timeRangeText {
+                    Label(timeRangeText, systemImage: "clock")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
+                RecordedTrackEditorMetricChipsView(metrics: presentation.metrics)
+            }
+
+            if let message = presentation.validationMessage {
                 Label(message, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                     .font(.caption)
@@ -125,37 +139,73 @@ struct AppRecordedTrackEditorView: View {
 
     private var pointsSection: some View {
         Section("Points") {
-            ForEach(Array(draft.points.enumerated()), id: \.offset) { index, point in
+            ForEach(Array(draft.points.enumerated()), id: \.offset) { index, _ in
+                let presentation = RecordedTrackEditorPresentation.point(
+                    at: index,
+                    in: draft,
+                    unit: preferences.distanceUnit
+                )
+
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Text("Point \(index + 1)")
-                            .font(.subheadline.weight(.semibold))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(presentation.title)
+                                .font(.subheadline.weight(.semibold))
+                            if let roleLabel = presentation.roleLabel {
+                                Text(roleLabel)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                         Spacer()
-                        Text(point.timestamp.formatted(date: .omitted, time: .shortened))
-                            .font(.caption)
+                        Text(presentation.timeText)
+                            .font(.caption.monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
 
-                    TextField(
-                        "Latitude",
-                        value: latitudeBinding(for: index),
-                        format: .number.precision(.fractionLength(0...6))
-                    )
-                    .textFieldStyle(.roundedBorder)
+                    Text(presentation.coordinateText)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
 
-                    TextField(
-                        "Longitude",
-                        value: longitudeBinding(for: index),
-                        format: .number.precision(.fractionLength(0...6))
-                    )
-                    .textFieldStyle(.roundedBorder)
+                    RecordedTrackEditorMetricChipsView(metrics: presentation.metrics)
 
-                    TextField(
-                        "Accuracy (m)",
-                        value: accuracyBinding(for: index),
-                        format: .number.precision(.fractionLength(0...1))
-                    )
-                    .textFieldStyle(.roundedBorder)
+                    Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 10) {
+                        GridRow {
+                            Text("Latitude")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField(
+                                "Latitude",
+                                value: latitudeBinding(for: index),
+                                format: .number.precision(.fractionLength(0...6))
+                            )
+                            .textFieldStyle(.roundedBorder)
+                        }
+
+                        GridRow {
+                            Text("Longitude")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField(
+                                "Longitude",
+                                value: longitudeBinding(for: index),
+                                format: .number.precision(.fractionLength(0...6))
+                            )
+                            .textFieldStyle(.roundedBorder)
+                        }
+
+                        GridRow {
+                            Text("Accuracy")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField(
+                                "Accuracy (m)",
+                                value: accuracyBinding(for: index),
+                                format: .number.precision(.fractionLength(0...1))
+                            )
+                            .textFieldStyle(.roundedBorder)
+                        }
+                    }
 
                     HStack {
                         if index < draft.points.count - 1 {
@@ -172,7 +222,7 @@ struct AppRecordedTrackEditorView: View {
                         Button(role: .destructive) {
                             draft.deletePoints(at: IndexSet(integer: index))
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label("Delete Point", systemImage: "trash")
                         }
                         .buttonStyle(.bordered)
                     }
