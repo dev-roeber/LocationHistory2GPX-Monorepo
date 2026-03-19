@@ -236,6 +236,21 @@ public struct AppContentSplitView: View {
     @ViewBuilder
     private var overviewPaneContent: some View {
         VStack(alignment: .leading, spacing: 24) {
+            AppSessionStatusView(
+                summary: session.sourceSummary,
+                message: session.message,
+                isLoading: session.isLoading,
+                hasDays: session.hasDays
+            )
+
+            if let insights = session.insights, !insights.activeFilterDescriptions.isEmpty {
+                activeFiltersSection(insights.activeFilterDescriptions)
+            }
+
+            if horizontalSizeClass == .compact, session.hasLoadedContent {
+                overviewPrimaryActionsSection
+            }
+
             if let range = session.insights?.dateRange {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar.circle.fill")
@@ -270,8 +285,6 @@ public struct AppContentSplitView: View {
                 overviewHighlights(insights)
             }
 
-            liveTracksOverviewSection
-
             if let overview = session.overview {
                 AppOverviewSection(
                     overview: overview,
@@ -280,16 +293,42 @@ public struct AppContentSplitView: View {
                 )
             }
 
-            if let insights = session.insights, !insights.activeFilterDescriptions.isEmpty {
-                activeFiltersSection(insights.activeFilterDescriptions)
-            }
+            localToolsSection
+        }
+    }
 
-            AppSessionStatusView(
-                summary: session.sourceSummary,
-                message: session.message,
-                isLoading: session.isLoading,
-                hasDays: session.hasDays
-            )
+    @ViewBuilder
+    private var overviewPrimaryActionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Go To")
+                .font(.title3.weight(.semibold))
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+                overviewActionCard(
+                    title: "Days",
+                    subtitle: "Browse imported history day by day.",
+                    icon: "calendar",
+                    color: .blue
+                ) {
+                    selectedTab = 1
+                }
+                overviewActionCard(
+                    title: "Insights",
+                    subtitle: "Open charts and aggregate breakdowns.",
+                    icon: "chart.xyaxis.line",
+                    color: .indigo
+                ) {
+                    selectedTab = 2
+                }
+                overviewActionCard(
+                    title: "Export",
+                    subtitle: "Review selection and create a GPX file.",
+                    icon: "square.and.arrow.up",
+                    color: .orange
+                ) {
+                    selectedTab = 3
+                }
+            }
         }
     }
 
@@ -376,6 +415,41 @@ public struct AppContentSplitView: View {
         .padding(12)
         .background(color.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func overviewActionCard(
+        title: String,
+        subtitle: String,
+        icon: String,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .font(.headline)
+                        .foregroundStyle(color)
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(color.opacity(0.5))
+                }
+
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(color.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -547,7 +621,7 @@ public struct AppContentSplitView: View {
                 Button(SavedTracksPresentation.libraryButtonTitle) {
                     isShowingTracksLibrary = true
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
             }
 
             if let latestTrack = liveLocation.recordedTracks.first {
@@ -574,8 +648,20 @@ public struct AppContentSplitView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(Color.green.opacity(0.08))
+        .background(Color.green.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var localToolsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Local Tools")
+                .font(.title3.weight(.semibold))
+            Text("Saved Tracks remain a separate local utility and do not change the imported history above.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            liveTracksOverviewSection
+        }
     }
 
     @ViewBuilder

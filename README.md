@@ -153,7 +153,8 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - adaptives Layout: iPhone nutzt `TabView` (`Overview`, `Days`, `Insights`, `Export`), regular width nutzt `NavigationSplitView` mit Day-Liste und Detail-Pane
 - no-content-Tage bleiben in `Days` sichtbar, werden aber nicht mehr wie normale Detailziele behandelt
-- Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
+- Overview-Dashboard fuehrt mit Import-Status, optionalen Export-Filtern und einem kompakten `Go To`-Block fuer `Days`, `Insights` und `Export`
+- Overview-Dashboard mit klar als `Imported History` gerahmtem Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Day-Detail priorisiert importierte Tageshistorie, Kartenkontext und Timeline; lokale Live-Recording-/Track-Werkzeuge bleiben als sekundaerer Block getrennt
 - Insights-Tab zeigt jetzt Top-Level- und Section-Empty-States fuer no-days-, sparse- und no-chart-Faelle statt leerer Flaechen
@@ -162,7 +163,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
 - Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
-- Saved-Tracks-Library mit getrenntem `Edit Track`-Zugang fuer gespeicherte Live-Tracks als separater lokaler Nebenfluss
+- Saved-Tracks-Library mit getrenntem `Edit Track`-Zugang fuer gespeicherte Live-Tracks als separater `Local Tools`-Nebenfluss
 - Optionen-Seite fuer lokale Darstellung/Steuerung: Distanz-Einheit, Start-Tab, Kartenstil, technische Importdetails
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten

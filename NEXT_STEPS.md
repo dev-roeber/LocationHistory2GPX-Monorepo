@@ -2,17 +2,19 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
-   - Overview wieder klarer auf importierte History, Status und Hauptnavigation ausrichten
-   - sekundaere Track-Utilities optisch und inhaltlich hinter die Kerninformation ruecken
-   - Actions-Menue, Labels und Status-Texte in ihrer Sichtbarkeit kritisch nachschaerfen
-2. **Phase 19.34 – Days List / Export-Koharenz**
+1. **Phase 19.34 – Days List / Export-Koharenz**
    - Export-Selektion in der Day-Liste visuell klarer priorisieren
    - Such- und Leerzustaende nicht nur korrekt, sondern auch klar priorisiert darstellen
-3. **Phase 20 / 21 – bewusst nicht jetzt**
+2. **Phase 20 / 21 – bewusst nicht jetzt**
    - keine weiteren `20.x`-Folgearbeiten fuer Background-Location, Resume oder Recorded-Track-Export aktivieren
    - keine Apple-/ASC-/TestFlight-/Release-Arbeit
-4. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+3. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.33 (2026-03-19):**
+- Overview fuehrt jetzt wieder mit Import-Status und aktiven Export-Filtern statt lokale Tools frueh zu vermischen
+- kompakter `Go To`-Block auf iPhone macht `Days`, `Insights` und `Export` als Primaerpfade direkt in der Overview sichtbar
+- Statistik-Sektion rahmt sich explizit als `Imported History` statt als generische Zahlenwand
+- `Saved Tracks` ist jetzt als eigener `Local Tools`-Block nach hinten gestellt und optisch weniger dominant
 
 **Abgeschlossene Phase 19.32 (2026-03-19):**
 - Insights-Tab zeigt jetzt einen echten Top-Level-Empty-State, wenn ein Export gar keine Tage enthaelt

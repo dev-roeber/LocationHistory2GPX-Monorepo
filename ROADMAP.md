@@ -12,15 +12,23 @@ UI-/UX-/Informationsarchitektur fuer iPhone wird erneut priorisiert. Weitere Pro
 Phase 20 bleibt wieder ausschliesslich fuer Apple-/ASC-/TestFlight-/externe Distribution geparkt. Export- und Live-Recording-Unterbau bleiben vorhanden, sind aber bewusst nicht der naechste Fokus.
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt unberuehrt.
 
-### Offene lokale Phasen 19.33–19.34
-
-**Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
-- Overview wieder staerker auf importierte History, Status und Hauptnavigation ausrichten
-- sekundaere Utilities wie Track-Library optisch und inhaltlich klar von Kerninformationen trennen
+### Offene lokale Phasen 19.34
 
 **Phase 19.34 – Days List / Export-Koharenz**
 - Day-List-Zustaende, Suchzustand und Export-Selektion visuell konsistent machen
 - Such-, Leer- und Exportzustand in eine klarere visuelle Prioritaet bringen
+
+### Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen
+
+**Datum:** 2026-03-19
+**Ziel:** Die Overview wieder klarer auf importierte History, Status und Hauptnavigation ausrichten, waehrend lokale Saved-Track-Werkzeuge erkennbar sekundaer bleiben.
+
+- [x] Import-Status (`AppSessionStatusView`) und aktive Export-Filter stehen jetzt vor Highlights und Zahlen
+- [x] neuer `Go To`-Block auf iPhone macht `Days`, `Insights` und `Export` als direkte Primaerpfade sichtbar
+- [x] Statistik-Sektion rahmt sich jetzt explizit als `Imported History`
+- [x] `Saved Tracks` wandert als eigener `Local Tools`-Block ans Ende der Overview und verliert den frueheren Primaerbutton-Look
+- [x] Labels und Begleittexte schaerfen die Trennung zwischen importierter History und lokalen Hilfswerkzeugen
+- Bewusst nicht in diesem Schritt: neue Track-Library-Funktionen, neue Import-Quellen oder ein Redesign des Actions-Menues
 
 ### Phase 19.32 – Insights Empty / No-Data Hardening
 

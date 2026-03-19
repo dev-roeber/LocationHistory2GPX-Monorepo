@@ -50,13 +50,14 @@ Not present:
 ## 3. Overview / Dashboard
 
 Present:
-- overview screen with statistics cards for days, visits, activities and routes
+- import-status card and active export filters lead the overview before highlights and totals
+- compact layout overview exposes a dedicated `Go To` block for `Days`, `Insights` and `Export`
+- overview screen with statistics cards for days, visits, activities and routes, framed explicitly as imported history
 - optional date-range header when days exist
 - optional total-distance summary card when distance data exists
 - highlight cards for busiest day and longest-distance day
-- active-filter banner when export filters are present in metadata
 - source/status card with optional technical disclosure details
-- overview entry card for the saved-tracks library
+- overview entry card for the saved-tracks library as a separate `Local Tools` block after imported-history content
 
 Not present:
 - dedicated onboarding dashboard state distinct from the import-first root

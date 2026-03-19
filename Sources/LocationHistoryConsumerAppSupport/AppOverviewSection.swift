@@ -21,8 +21,13 @@ public struct AppOverviewSection: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Statistics")
-                .font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Imported History")
+                    .font(.title3.weight(.semibold))
+                Text("Core totals from the currently loaded export.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             LazyVGrid(columns: columns, spacing: 12) {
                 statCard("\(overview.dayCount)", label: "Days", icon: "calendar", color: .blue, action: onDaysTap)
