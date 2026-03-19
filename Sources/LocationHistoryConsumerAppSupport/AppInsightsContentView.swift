@@ -54,18 +54,45 @@ struct AppInsightsContentView: View {
         InsightsChartSupport.availableActivityMetrics(for: insights.activityBreakdown)
     }
 
+    private var hasDistanceData: Bool {
+        InsightsChartSupport.hasDistanceData(in: daySummaries)
+    }
+
     private var displayedActivityMetric: ActivityMetric {
         availableActivityMetrics.contains(activityMetric) ? activityMetric : availableActivityMetrics.first ?? .count
     }
 
+    private var overviewState: InsightsOverviewState {
+        InsightsChartSupport.overviewState(
+            dayCount: daySummaries.count,
+            hasDistanceData: hasDistanceData,
+            hasActivityData: !insights.activityBreakdown.isEmpty,
+            hasVisitData: !insights.visitTypeBreakdown.isEmpty,
+            hasPeriodData: !insights.periodBreakdown.isEmpty
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+            switch overviewState {
+            case .noDays:
+                overviewEmptyState(overviewState)
+            case .sparseHistory:
+                overviewEmptyState(overviewState)
+                insightsSections
+            case .ready:
+                insightsSections
+            }
+        }
+    }
 
+    @ViewBuilder
+    private var insightsSections: some View {
             // Distance Over Time
             #if canImport(Charts)
             if !daySummaries.isEmpty {
                 insightSection("Distance Over Time", icon: "chart.bar.fill") {
-                    if InsightsChartSupport.hasDistanceData(in: daySummaries) {
+                    if hasDistanceData {
                         distanceChart
                     } else {
                         chartEmptyState(
@@ -82,8 +109,14 @@ struct AppInsightsContentView: View {
             #endif
 
             // Daily Averages (only meaningful with multiple days)
-            if daySummaries.count >= 2 {
-                insightSection("Daily Averages", icon: "chart.bar.fill") {
+            insightSection("Daily Averages", icon: "chart.bar.fill") {
+                if let message = InsightsChartSupport.dailyAveragesSectionMessage(dayCount: daySummaries.count) {
+                    chartEmptyState(
+                        title: "Daily Averages Not Ready",
+                        message: message,
+                        systemImage: "calendar.badge.clock"
+                    )
+                } else {
                     let avg = insights.averagesPerDay
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
                         avgCard(String(format: "%.1f", avg.avgVisitsPerDay), label: "Visits / Day", icon: "mappin.and.ellipse", color: .blue)
@@ -95,8 +128,14 @@ struct AppInsightsContentView: View {
             }
 
             // Activity Types
-            if !insights.activityBreakdown.isEmpty {
-                insightSection("Activity Types", icon: "figure.walk") {
+            insightSection("Activity Types", icon: "figure.walk") {
+                if insights.activityBreakdown.isEmpty {
+                    chartEmptyState(
+                        title: "No Activity Breakdown",
+                        message: InsightsChartSupport.activitySectionEmptyMessage(),
+                        systemImage: "figure.walk"
+                    )
+                } else {
                     #if canImport(Charts)
                     if availableActivityMetrics.count > 1 {
                         Picker("", selection: $activityMetric) {
@@ -121,8 +160,14 @@ struct AppInsightsContentView: View {
             }
 
             // Visit Types
-            if !insights.visitTypeBreakdown.isEmpty {
-                insightSection("Visit Types", icon: "mappin.and.ellipse") {
+            insightSection("Visit Types", icon: "mappin.and.ellipse") {
+                if insights.visitTypeBreakdown.isEmpty {
+                    chartEmptyState(
+                        title: "No Visit Breakdown",
+                        message: InsightsChartSupport.visitSectionEmptyMessage(),
+                        systemImage: "mappin.and.ellipse"
+                    )
+                } else {
                     #if canImport(Charts)
                     visitTypeChart
                     Text("Counts by semantic visit type.")
@@ -156,14 +201,19 @@ struct AppInsightsContentView: View {
             #endif
 
             // Period Breakdown
-            if !insights.periodBreakdown.isEmpty {
-                insightSection("Period Breakdown", icon: "calendar.badge.clock") {
+            insightSection("Period Breakdown", icon: "calendar.badge.clock") {
+                if insights.periodBreakdown.isEmpty {
+                    chartEmptyState(
+                        title: "No Period Breakdown",
+                        message: InsightsChartSupport.periodSectionEmptyMessage(),
+                        systemImage: "calendar.badge.clock"
+                    )
+                } else {
                     ForEach(Array(insights.periodBreakdown.enumerated()), id: \.offset) { _, item in
                         periodRow(item)
                     }
                 }
             }
-        }
     }
 
     @ViewBuilder
@@ -172,6 +222,21 @@ struct AppInsightsContentView: View {
             Label(title, systemImage: systemImage)
                 .font(.subheadline.weight(.semibold))
             Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func overviewEmptyState(_ state: InsightsOverviewState) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(state.title, systemImage: state.systemImage)
+                .font(.subheadline.weight(.semibold))
+            Text(state.message)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

@@ -12,11 +12,7 @@ UI-/UX-/Informationsarchitektur fuer iPhone wird erneut priorisiert. Weitere Pro
 Phase 20 bleibt wieder ausschliesslich fuer Apple-/ASC-/TestFlight-/externe Distribution geparkt. Export- und Live-Recording-Unterbau bleiben vorhanden, sind aber bewusst nicht der naechste Fokus.
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt unberuehrt.
 
-### Offene lokale Phasen 19.32–19.38
-
-**Phase 19.32 – Insights Empty / No-Data Hardening**
-- fuer no-days-, low-data- und no-chart-Faelle echte Empty States statt leerer Flaechen einfuehren
-- zwischen "keine Daten", "keine Tage" und "dieser Chart ist hier nicht sinnvoll" klar unterscheiden
+### Offene lokale Phasen 19.33–19.34
 
 **Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
 - Overview wieder staerker auf importierte History, Status und Hauptnavigation ausrichten
@@ -25,6 +21,18 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 **Phase 19.34 – Days List / Export-Koharenz**
 - Day-List-Zustaende, Suchzustand und Export-Selektion visuell konsistent machen
 - Such-, Leer- und Exportzustand in eine klarere visuelle Prioritaet bringen
+
+### Phase 19.32 – Insights Empty / No-Data Hardening
+
+**Datum:** 2026-03-19
+**Ziel:** Den Insights-Tab in no-days-, low-data- und no-chart-Faellen stabil erklaerend machen, damit vorhandene `ExportInsights` nicht mehr als leere Flaechen enden.
+
+- [x] echter Top-Level-Empty-State fuer Exporte ohne Tage statt leerem Insights-Screen
+- [x] sparse Exporte mit nur einem sehr duennen Tag erklaeren, warum vergleichende Insights noch begrenzt sind
+- [x] `Daily Averages`, `Activity Types`, `Visit Types` und `Period Breakdown` zeigen jetzt sektionseigene Empty States statt kommentarlos zu verschwinden
+- [x] bestehende Distanz-/Weekday-Hinweise bleiben erhalten und werden durch die neuen no-chart-Zustaende ergaenzt
+- [x] `InsightsChartSupport` macht Overview-State und Section-Messages testbar
+- Bewusst nicht in diesem Schritt: neue Insight-Metriken, neue Diagrammtypen oder Query-Layer-Erweiterungen
 
 ### Phase 19.35 – Day-Detail-Hierarchie
 

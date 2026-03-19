@@ -116,14 +116,19 @@ Not present:
 ## 7. Insights / Statistiken / Diagramme
 
 Present:
+- dedicated top-level empty state when an export has no day summaries
 - distance-over-time chart when distance data exists
 - distance-over-time section keeps a dedicated no-distance explanation instead of disappearing
 - distance-over-time bars can navigate to the nearest matching day when day navigation is wired in
-- daily averages cards when at least two days exist
+- sparse one-day exports explain that comparative insights are still limited
+- daily averages section shows a readiness explanation when fewer than two days exist
 - activity-type breakdown cards
+- activity-type section shows an explicit empty state when no aggregated activity totals exist
 - activity-type chart with `Count` / `Distance` toggle only when distance data exists
 - visit-type chart and list
+- visit-type section shows an explicit empty state when no semantic visit categories exist
 - weekday chart with explicit low-data explanation when too few days or weekdays are present
+- period breakdown section shows an explicit empty state when export stats contain no periods
 - period breakdown cards when period stats exist
 - insights are built from decoded stats with day-level fallbacks where implemented
 

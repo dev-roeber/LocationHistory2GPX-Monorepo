@@ -2,20 +2,23 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 
-1. **Phase 19.32 – Insights Empty / No-Data Hardening**
-   - Insights fuer no-days- und low-data-Faelle mit echten Empty States ausstatten
-   - blanke Flaechen vermeiden, wenn zwar `ExportInsights` existiert, aber keine sinnvolle Darstellung moeglich ist
-2. **Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
+1. **Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
    - Overview wieder klarer auf importierte History, Status und Hauptnavigation ausrichten
    - sekundaere Track-Utilities optisch und inhaltlich hinter die Kerninformation ruecken
    - Actions-Menue, Labels und Status-Texte in ihrer Sichtbarkeit kritisch nachschaerfen
-3. **Phase 19.34 – Days List / Export-Koharenz**
+2. **Phase 19.34 – Days List / Export-Koharenz**
    - Export-Selektion in der Day-Liste visuell klarer priorisieren
    - Such- und Leerzustaende nicht nur korrekt, sondern auch klar priorisiert darstellen
-4. **Phase 20 / 21 – bewusst nicht jetzt**
+3. **Phase 20 / 21 – bewusst nicht jetzt**
    - keine weiteren `20.x`-Folgearbeiten fuer Background-Location, Resume oder Recorded-Track-Export aktivieren
    - keine Apple-/ASC-/TestFlight-/Release-Arbeit
-5. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+4. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.32 (2026-03-19):**
+- Insights-Tab zeigt jetzt einen echten Top-Level-Empty-State, wenn ein Export gar keine Tage enthaelt
+- sparse Exporte mit nur einem sehr duennen Tag erklaeren jetzt, warum vergleichende Insights noch begrenzt sind
+- `Daily Averages`, `Activity Types`, `Visit Types` und `Period Breakdown` verschwinden bei fehlenden Daten nicht mehr still, sondern zeigen den konkreten Grund
+- `InsightsChartSupport` kapselt Overview- und Section-Empty-State-Copy testbar
 
 **Abgeschlossene Phase 19.38 (2026-03-19):**
 - Export-Screen zeigt jetzt einen expliziten Auswahl-/Readiness-Status statt nur eine nackte Day-Liste

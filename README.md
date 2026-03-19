@@ -156,7 +156,8 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Day-Detail priorisiert importierte Tageshistorie, Kartenkontext und Timeline; lokale Live-Recording-/Track-Werkzeuge bleiben als sekundaerer Block getrennt
-- Insights-Charts zeigen jetzt chart-spezifische Low-Data-Hinweise, robustere Day-Tap-Navigation und lesbarere Achsen
+- Insights-Tab zeigt jetzt Top-Level- und Section-Empty-States fuer no-days-, sparse- und no-chart-Faelle statt leerer Flaechen
+- Insights-Charts zeigen chart-spezifische Low-Data-Hinweise, robustere Day-Tap-Navigation und lesbarere Achsen
 - regular-width Detailansicht bietet einen expliziten Rueckweg zur `Overview`
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline

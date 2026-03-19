@@ -42,6 +42,59 @@ final class InsightsChartSupportTests: XCTestCase {
         XCTAssertNil(InsightsChartSupport.weekdaySectionMessage(dayCount: 5, bucketCount: 3))
     }
 
+    func testOverviewStateDistinguishesNoDaysAndSparseExports() {
+        XCTAssertEqual(
+            InsightsChartSupport.overviewState(
+                dayCount: 0,
+                hasDistanceData: false,
+                hasActivityData: false,
+                hasVisitData: false,
+                hasPeriodData: false
+            ),
+            .noDays
+        )
+        XCTAssertEqual(
+            InsightsChartSupport.overviewState(
+                dayCount: 1,
+                hasDistanceData: false,
+                hasActivityData: false,
+                hasVisitData: false,
+                hasPeriodData: false
+            ),
+            .sparseHistory(dayCount: 1)
+        )
+        XCTAssertEqual(
+            InsightsChartSupport.overviewState(
+                dayCount: 2,
+                hasDistanceData: false,
+                hasActivityData: false,
+                hasVisitData: false,
+                hasPeriodData: false
+            ),
+            .ready
+        )
+    }
+
+    func testSectionMessagesCoverMissingAggregates() {
+        XCTAssertEqual(
+            InsightsChartSupport.dailyAveragesSectionMessage(dayCount: 1),
+            "Need at least 2 days before per-day averages become useful."
+        )
+        XCTAssertNil(InsightsChartSupport.dailyAveragesSectionMessage(dayCount: 2))
+        XCTAssertEqual(
+            InsightsChartSupport.activitySectionEmptyMessage(),
+            "No activity totals are available for these days."
+        )
+        XCTAssertEqual(
+            InsightsChartSupport.visitSectionEmptyMessage(),
+            "No semantic visit categories are available for these days."
+        )
+        XCTAssertEqual(
+            InsightsChartSupport.periodSectionEmptyMessage(),
+            "This export does not include any period breakdown stats."
+        )
+    }
+
     func testNearestDayChoosesClosestISODate() {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
