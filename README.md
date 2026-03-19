@@ -77,6 +77,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
   - `app_export.schema.json`
   - `golden_app_export_*.json`
 - `docs/CONTRACT.md`
+- `docs/APP_FEATURE_INVENTORY.md`
 - `docs/XCODE_APP_PREPARATION.md`
 - `docs/XCODE_RUNBOOK.md`
 - `docs/APPLE_VERIFICATION_CHECKLIST.md`
@@ -150,16 +151,17 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 ## Produkt-UI
 
 Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
-- NavigationSplitView mit Day-Liste (formatierte Daten, Icons, Summary) und Detail-Pane
+- adaptives Layout: iPhone nutzt `TabView` (`Overview`, `Days`, `Insights`, `Export`), regular width nutzt `NavigationSplitView` mit Day-Liste und Detail-Pane
 - Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
 - Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
+- Track-Library / Track-Editor fuer gespeicherte Live-Tracks als separater lokaler Nebenfluss
 - Optionen-Seite fuer lokale Darstellung/Steuerung: Distanz-Einheit, Start-Tab, Kartenstil, technische Importdetails
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
-- Toolbar-Aktionen mit Icons: Import, Demo Data, Options, Clear
+- ein zentrales Actions-Menue in der Toolbar fuehrt Import, Demo, Optionen und Clear
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
@@ -202,3 +204,4 @@ Das separate Xcode-Wrapper-Projekt `LH2GPXWrapper` liegt unter `~/Desktop/Github
 ## Roadmap
 
 Die vollstaendige Delivery-Roadmap bis App v1.0 steht in `ROADMAP.md`. Die naechsten offenen Schritte stehen in `NEXT_STEPS.md`.
+Das repo-wahre Funktionsinventar steht in `docs/APP_FEATURE_INVENTORY.md`.

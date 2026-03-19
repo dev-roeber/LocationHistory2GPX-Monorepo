@@ -100,7 +100,7 @@ Erwartet:
 - Schema `1.0`
 - Day-Liste mit `2024-05-01` und `2024-05-02`
 - Day-Detail und Overview werden angezeigt
-- Toolbar zeigt danach `Open Another File`, `Reload Demo Data` und `Clear`
+- Actions-Menue bietet danach `Open Another File`, `Reload Demo` und `Clear`
 
 ## Lokalen Import pruefen
 
@@ -119,7 +119,7 @@ Schritte:
 Erwartet:
 
 - Statuskarte `Location history loaded` oder `Google Timeline loaded`
-- aktive Quelle `Imported file: <dateiname>.json`
+- aktive Quelle `Imported file: <dateiname>.json` oder `Imported file: <dateiname>.zip`
 - Overview wird angezeigt
 - Day-Liste und Day-Detail sind sichtbar
 - ein weiterer `Open Another File`-Lauf ersetzt den aktuellen Inhalt
@@ -159,7 +159,7 @@ Erwartet:
 Erwartet:
 
 - Overview bleibt sichtbar
-- Day-Liste zeigt `No Days Available`
+- Day-Liste zeigt `No Days`
 - Detailbereich meldet, dass keine Day-Entries vorhanden sind
 
 ## Reproduzierbarer CLI-Launch
