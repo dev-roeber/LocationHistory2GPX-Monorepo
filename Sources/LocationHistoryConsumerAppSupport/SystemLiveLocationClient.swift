@@ -1,6 +1,4 @@
-#if canImport(CoreLocation)
 import Foundation
-import CoreLocation
 
 @MainActor
 public protocol LiveLocationClient: AnyObject {
@@ -12,6 +10,9 @@ public protocol LiveLocationClient: AnyObject {
     func startUpdatingLocation()
     func stopUpdatingLocation()
 }
+
+#if canImport(CoreLocation)
+import CoreLocation
 
 @MainActor
 public final class SystemLiveLocationClient: NSObject, LiveLocationClient {
@@ -61,7 +62,7 @@ public final class SystemLiveLocationClient: NSObject, LiveLocationClient {
 }
 
 @MainActor
-extension SystemLiveLocationClient: @preconcurrency CLLocationManagerDelegate {
+extension SystemLiveLocationClient: CLLocationManagerDelegate {
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         onAuthorizationChange?(authorization)
     }

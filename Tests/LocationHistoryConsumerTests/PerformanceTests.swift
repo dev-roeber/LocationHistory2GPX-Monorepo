@@ -51,6 +51,7 @@ final class PerformanceTests: XCTestCase {
 
     // MARK: - Memory
 
+    #if !os(Linux)
     @available(macOS 13.0, iOS 16.0, *)
     func testLargeExportDecodingMemory() throws {
         let url = try TestSupport.contractFixtureURL(named: "perf_app_export_large.json")
@@ -58,4 +59,5 @@ final class PerformanceTests: XCTestCase {
             _ = try? AppExportDecoder.decode(contentsOf: url)
         }
     }
+    #endif
 }

@@ -58,7 +58,7 @@ public struct AppSessionContent {
         self.overview = AppExportQueries.overview(from: export)
         self.daySummaries = AppExportQueries.daySummaries(from: export)
         self.insights = AppExportQueries.insights(from: export)
-        self.selectedDate = self.daySummaries.first?.date
+        self.selectedDate = self.daySummaries.first(where: \.hasContent)?.date ?? self.daySummaries.first?.date
         self.source = source
     }
 
@@ -298,6 +298,23 @@ public struct AppSessionState {
         } else {
             selectedDate = daySummaries.first?.date
         }
+    }
+
+    /// UI-safe day selection: prefers contentful days and drops selections that
+    /// would only lead into an empty detail state.
+    public mutating func selectDayForDisplay(_ date: String?) {
+        guard let date else {
+            selectedDate = nil
+            return
+        }
+
+        if let summary = daySummaries.first(where: { $0.date == date }) {
+            selectedDate = summary.hasContent ? summary.date : nil
+            return
+        }
+
+        selectedDate = daySummaries.first(where: \.hasContent)?.date ?? daySummaries.first?.date
+        sanitizeSelectionIfContentEmpty()
     }
 
     public mutating func showFailure(title: String, message: String, preserveCurrentContent: Bool) {

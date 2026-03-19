@@ -26,6 +26,9 @@ final class AppExportQueriesTests: XCTestCase {
         let summaries = AppExportQueries.daySummaries(from: export)
 
         XCTAssertEqual(summaries.map(\.date), ["2024-06-10", "2024-06-11", "2024-06-12"])
+        XCTAssertTrue(summaries[0].hasContent)
+        XCTAssertTrue(summaries[1].hasContent)
+        XCTAssertFalse(summaries[2].hasContent)
         XCTAssertEqual(summaries[0].visitCount, 1)
         XCTAssertEqual(summaries[1].activityCount, 1)
         XCTAssertEqual(summaries[1].pathCount, 1)
@@ -63,6 +66,7 @@ final class AppExportQueriesTests: XCTestCase {
         XCTAssertEqual(overview.totalActivityCount, 0)
         XCTAssertEqual(overview.totalPathCount, 0)
         XCTAssertEqual(summaries.count, 1)
+        XCTAssertFalse(summaries[0].hasContent)
         XCTAssertEqual(summaries[0].totalPathPointCount, 0)
         XCTAssertEqual(summaries[0].totalPathDistanceM, 0)
     }

@@ -12,6 +12,7 @@ public enum ImportBookmarkStore {
     /// Returns the bookmark data on success, or nil if bookmark creation fails.
     @discardableResult
     public static func save(url: URL) -> Data? {
+        #if os(macOS) || os(iOS)
         let options: URL.BookmarkCreationOptions
         #if os(macOS)
         options = [.withSecurityScope]
@@ -24,6 +25,11 @@ public enum ImportBookmarkStore {
         }
         UserDefaults.standard.set(data, forKey: bookmarkKey)
         return data
+        #else
+        let data = Data(url.path.utf8)
+        UserDefaults.standard.set(data, forKey: bookmarkKey)
+        return data
+        #endif
     }
 
     /// Resolves the stored bookmark and returns the URL.
@@ -34,6 +40,7 @@ public enum ImportBookmarkStore {
             return nil
         }
 
+        #if os(macOS) || os(iOS)
         let resolutionOptions: URL.BookmarkResolutionOptions
         #if os(macOS)
         resolutionOptions = [.withSecurityScope]
@@ -61,6 +68,19 @@ public enum ImportBookmarkStore {
         }
 
         return url
+        #else
+        guard let path = String(data: data, encoding: .utf8), !path.isEmpty else {
+            clear()
+            return nil
+        }
+
+        let url = URL(fileURLWithPath: path)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            clear()
+            return nil
+        }
+        return url
+        #endif
     }
 
     /// Removes the stored bookmark.

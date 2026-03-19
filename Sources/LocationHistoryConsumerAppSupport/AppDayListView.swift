@@ -32,20 +32,28 @@ struct AppDayRow: View {
             }
             Text(AppDateDisplay.mediumDate(summary.date))
                 .font(.headline)
-            HStack(spacing: 12) {
-                Label("\(summary.visitCount)", systemImage: "mappin.and.ellipse")
-                Label("\(summary.activityCount)", systemImage: "figure.walk")
-                Label("\(summary.pathCount)", systemImage: "location.north.line")
-                if summary.totalPathDistanceM > 0 {
-                    Label(formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit), systemImage: "ruler")
+            if summary.hasContent {
+                HStack(spacing: 12) {
+                    Label("\(summary.visitCount)", systemImage: "mappin.and.ellipse")
+                    Label("\(summary.activityCount)", systemImage: "figure.walk")
+                    Label("\(summary.pathCount)", systemImage: "location.north.line")
+                    if summary.totalPathDistanceM > 0 {
+                        Label(formatDistance(summary.totalPathDistanceM, unit: preferences.distanceUnit), systemImage: "ruler")
+                    }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(summary.visitCount) Visits, \(summary.activityCount) Activities, \(summary.pathCount) Routes")
+            } else {
+                Label("No recorded entries", systemImage: "tray")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("No recorded entries for this day")
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(summary.visitCount) Visits, \(summary.activityCount) Activities, \(summary.pathCount) Routes")
         }
         .padding(.vertical, 4)
+        .opacity(summary.hasContent ? 1 : 0.72)
     }
 }
 
@@ -69,6 +77,7 @@ public struct AppDayListView: View {
                 List(summaries, id: \.date, selection: $selectedDate) { summary in
                     AppDayRow(summary: summary)
                         .tag(summary.date)
+                        .disabled(!summary.hasContent)
                 }
             } else {
                 List(selection: $selectedDate) {
@@ -77,6 +86,7 @@ public struct AppDayListView: View {
                             ForEach(group.summaries, id: \.date) { summary in
                                 AppDayRow(summary: summary)
                                     .tag(summary.date)
+                                    .disabled(!summary.hasContent)
                             }
                         }
                     }

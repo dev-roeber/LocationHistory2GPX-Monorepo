@@ -7,4 +7,5 @@ public struct DaySummary: Equatable {
     public let pathCount: Int
     public let totalPathPointCount: Int
     public let totalPathDistanceM: Double
+    public let hasContent: Bool
 }

@@ -44,6 +44,32 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertEqual(state.presentationState, .importedLoaded)
     }
 
+    func testSelectDayForDisplayClearsEmptyDaySelection() throws {
+        var state = AppSessionState()
+        state.show(content: makeContent(exportWith(days: """
+        {"date":"2024-05-01","visits":[],"activities":[],"paths":[]},
+        {"date":"2024-05-02","visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-02T08:00:00Z","end_time":"2024-05-02T09:00:00Z"}],"activities":[],"paths":[]}
+        """)))
+
+        XCTAssertEqual(state.selectedDate, "2024-05-02")
+
+        state.selectDayForDisplay("2024-05-01")
+
+        XCTAssertNil(state.selectedDate)
+    }
+
+    func testSelectDayForDisplayFallsBackToFirstContentfulDayForUnknownDate() throws {
+        var state = AppSessionState()
+        state.show(content: makeContent(exportWith(days: """
+        {"date":"2024-05-01","visits":[],"activities":[],"paths":[]},
+        {"date":"2024-05-02","visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-02T08:00:00Z","end_time":"2024-05-02T09:00:00Z"}],"activities":[],"paths":[]}
+        """)))
+
+        state.selectDayForDisplay("2099-01-01")
+
+        XCTAssertEqual(state.selectedDate, "2024-05-02")
+    }
+
     func testFailureCanPreserveCurrentContentForImportErrors() throws {
         var state = AppSessionState()
         let content = try loadDemoContent(
@@ -167,5 +193,24 @@ final class AppSessionStateTests: XCTestCase {
         let url = try TestSupport.contractFixtureURL(named: fixtureName)
         let export = try AppExportDecoder.decode(contentsOf: url)
         return AppSessionContent(export: export, source: source)
+    }
+
+    private func makeContent(_ export: AppExport) -> AppSessionContent {
+        AppSessionContent(export: export, source: .importedFile(filename: "test.json"))
+    }
+
+    private func exportWith(days jsonDays: String) -> AppExport {
+        let json = """
+        {
+          "schema_version": "1.0",
+          "meta": {
+            "exported_at": "2024-01-01T00:00:00Z",
+            "tool_version": "1.0",
+            "source": {}, "output": {}, "config": {}, "filters": {}
+          },
+          "data": { "days": [\(jsonDays)] }
+        }
+        """
+        return try! AppExportDecoder.decode(data: Data(json.utf8))
     }
 }

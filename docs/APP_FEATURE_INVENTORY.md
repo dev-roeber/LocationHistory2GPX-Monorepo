@@ -18,6 +18,7 @@ Present:
 - compact layout uses `TabView` with `Overview`, `Days`, `Insights` and `Export`
 - compact tabs each run inside their own `NavigationStack`
 - regular-width layout uses `NavigationSplitView` with a day list and a detail pane
+- regular-width day detail exposes an explicit `Overview` return action above the selected day
 - modal sheets exist for `Options`, `Export` (regular width) and the recorded-tracks library
 - a separate SwiftUI demo app exists beside the product shell
 
@@ -68,8 +69,10 @@ Present:
 - month grouping when multiple months are present
 - compact search by date string
 - day rows show weekday, formatted date, visit/activity/route counts and optional distance
+- no-content days stay visible in the list, but show a dedicated `No recorded entries` hint
+- no-content days are not treated as normal detail targets in compact or regular navigation
 - compact list can show highlight icons for busiest/longest day
-- day rows support export-selection badge state
+- day rows support export-selection badge state in grouped and ungrouped layouts
 - regular-width list supports selection-driven detail display
 
 Not present:
@@ -86,6 +89,7 @@ Present:
 - colored cards for visit/activity/route items
 - empty states for `Select a Day`, `No Day Entries` and `Nothing Recorded`
 - day timeline/Gantt visualization for visits and activities
+- day detail is only entered for contentful days; empty calendar days remain list-only
 - live recording section can appear inside day detail on supported platforms
 
 Not present:

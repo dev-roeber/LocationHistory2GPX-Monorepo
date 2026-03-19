@@ -1,125 +1,138 @@
 import XCTest
 @testable import LocationHistoryConsumerAppSupport
 
-@MainActor
 final class LiveLocationFeatureModelTests: XCTestCase {
     func testToggleOnRequestsPermissionWhenNotDetermined() {
-        let client = TestLiveLocationClient(authorization: .notDetermined)
-        let store = InMemoryRecordedTrackStore()
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .notDetermined)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.setRecordingEnabled(true)
+            model.setRecordingEnabled(true)
 
-        XCTAssertTrue(model.isAwaitingAuthorization)
-        XCTAssertFalse(model.isRecording)
-        XCTAssertEqual(client.requestWhenInUseAuthorizationCallCount, 1)
-        XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
+            XCTAssertTrue(model.isAwaitingAuthorization)
+            XCTAssertFalse(model.isRecording)
+            XCTAssertEqual(client.requestWhenInUseAuthorizationCallCount, 1)
+            XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
+        }
     }
 
     func testDeniedToggleDoesNotStartUpdates() {
-        let client = TestLiveLocationClient(authorization: .denied)
-        let store = InMemoryRecordedTrackStore()
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .denied)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.setRecordingEnabled(true)
+            model.setRecordingEnabled(true)
 
-        XCTAssertFalse(model.isRecording)
-        XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
-        XCTAssertEqual(model.permissionTitle, "Location Access Denied")
+            XCTAssertFalse(model.isRecording)
+            XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
+            XCTAssertEqual(model.permissionTitle, "Location Access Denied")
+        }
     }
 
     func testAuthorizedToggleStartsUpdatesAndAcceptsPoint() {
-        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
-        let store = InMemoryRecordedTrackStore()
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.setRecordingEnabled(true)
-        client.emit(samples: [
-            sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
-        ])
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+            ])
 
-        XCTAssertTrue(model.isRecording)
-        XCTAssertEqual(client.startUpdatingLocationCallCount, 1)
-        XCTAssertEqual(model.liveTrackPoints.count, 1)
-        XCTAssertEqual(model.currentLocation?.latitude, 52.52)
+            XCTAssertTrue(model.isRecording)
+            XCTAssertEqual(client.startUpdatingLocationCallCount, 1)
+            XCTAssertEqual(model.liveTrackPoints.count, 1)
+            XCTAssertEqual(model.currentLocation?.latitude, 52.52)
+        }
     }
 
     func testToggleOffStopsUpdatesAndPersistsCompletedTrack() {
-        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
-        let store = InMemoryRecordedTrackStore()
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.setRecordingEnabled(true)
-        client.emit(samples: [
-            sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
-            sample(offsetSeconds: 12, latitude: 52.5203, longitude: 13.4003, accuracy: 6),
-        ])
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+                sample(offsetSeconds: 12, latitude: 52.5203, longitude: 13.4003, accuracy: 6),
+            ])
 
-        model.setRecordingEnabled(false)
-        client.emit(samples: [
-            sample(offsetSeconds: 24, latitude: 52.5206, longitude: 13.4006, accuracy: 6),
-        ])
+            model.setRecordingEnabled(false)
+            client.emit(samples: [
+                sample(offsetSeconds: 24, latitude: 52.5206, longitude: 13.4006, accuracy: 6),
+            ])
 
-        XCTAssertFalse(model.isRecording)
-        XCTAssertEqual(client.stopUpdatingLocationCallCount, 1)
-        XCTAssertEqual(model.recordedTracks.count, 1)
-        XCTAssertEqual(store.savedTracks.count, 1)
-        XCTAssertTrue(model.liveTrackPoints.isEmpty)
-        XCTAssertNil(model.currentLocation)
+            XCTAssertFalse(model.isRecording)
+            XCTAssertEqual(client.stopUpdatingLocationCallCount, 1)
+            XCTAssertEqual(model.recordedTracks.count, 1)
+            XCTAssertEqual(store.savedTracks.count, 1)
+            XCTAssertTrue(model.liveTrackPoints.isEmpty)
+            XCTAssertNil(model.currentLocation)
+        }
     }
 
     func testCompletedTracksLoadWithoutResumingRecording() {
-        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
-        let existingTrack = makeTrack()
-        let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let existingTrack = makeTrack()
+            let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
 
-        let model = LiveLocationFeatureModel(client: client, store: store)
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        XCTAssertEqual(model.recordedTracks, [existingTrack])
-        XCTAssertFalse(model.isRecording)
-        XCTAssertTrue(model.liveTrackPoints.isEmpty)
-        XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
+            XCTAssertEqual(model.recordedTracks, [existingTrack])
+            XCTAssertFalse(model.isRecording)
+            XCTAssertTrue(model.liveTrackPoints.isEmpty)
+            XCTAssertEqual(client.startUpdatingLocationCallCount, 0)
+        }
     }
 
     func testUpdateRecordedTrackReplacesExistingTrackAndPersists() {
-        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
-        let existingTrack = makeTrack()
-        let updatedTrack = RecordedTrack(
-            id: existingTrack.id,
-            startedAt: existingTrack.startedAt,
-            endedAt: existingTrack.endedAt,
-            dayKey: existingTrack.dayKey,
-            distanceM: 125,
-            captureMode: existingTrack.captureMode,
-            points: existingTrack.points + [
-                RecordedTrackPoint(
-                    latitude: 52.5206,
-                    longitude: 13.4006,
-                    timestamp: existingTrack.endedAt.addingTimeInterval(10),
-                    horizontalAccuracyM: 6
-                ),
-            ]
-        )
-        let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let existingTrack = makeTrack()
+            let updatedTrack = RecordedTrack(
+                id: existingTrack.id,
+                startedAt: existingTrack.startedAt,
+                endedAt: existingTrack.endedAt,
+                dayKey: existingTrack.dayKey,
+                distanceM: 125,
+                captureMode: existingTrack.captureMode,
+                points: existingTrack.points + [
+                    RecordedTrackPoint(
+                        latitude: 52.5206,
+                        longitude: 13.4006,
+                        timestamp: existingTrack.endedAt.addingTimeInterval(10),
+                        horizontalAccuracyM: 6
+                    ),
+                ]
+            )
+            let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.updateRecordedTrack(updatedTrack)
+            model.updateRecordedTrack(updatedTrack)
 
-        XCTAssertEqual(model.recordedTracks, [updatedTrack])
-        XCTAssertEqual(store.savedTracks, [updatedTrack])
-        XCTAssertNil(model.persistenceErrorMessage)
+            XCTAssertEqual(model.recordedTracks, [updatedTrack])
+            XCTAssertEqual(store.savedTracks, [updatedTrack])
+            XCTAssertNil(model.persistenceErrorMessage)
+        }
     }
 
     func testDeleteRecordedTrackRemovesExistingTrackAndPersists() {
-        let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
-        let existingTrack = makeTrack()
-        let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
-        let model = LiveLocationFeatureModel(client: client, store: store)
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let existingTrack = makeTrack()
+            let store = InMemoryRecordedTrackStore(initialTracks: [existingTrack])
+            let model = LiveLocationFeatureModel(client: client, store: store)
 
-        model.deleteRecordedTrack(id: existingTrack.id)
+            model.deleteRecordedTrack(id: existingTrack.id)
 
-        XCTAssertTrue(model.recordedTracks.isEmpty)
-        XCTAssertTrue(store.savedTracks.isEmpty)
+            XCTAssertTrue(model.recordedTracks.isEmpty)
+            XCTAssertTrue(store.savedTracks.isEmpty)
+        }
     }
 
     private func sample(offsetSeconds: TimeInterval, latitude: Double, longitude: Double, accuracy: Double) -> LiveLocationSample {
@@ -148,7 +161,6 @@ final class LiveLocationFeatureModelTests: XCTestCase {
     }
 }
 
-@MainActor
 private final class TestLiveLocationClient: LiveLocationClient {
     var authorization: LiveLocationAuthorization
     var onAuthorizationChange: ((LiveLocationAuthorization) -> Void)?

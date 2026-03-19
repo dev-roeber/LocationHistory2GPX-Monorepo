@@ -152,8 +152,10 @@ Die Demo-Shell ist nur ein lokaler Harness fuer die Query-Schicht:
 
 Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - adaptives Layout: iPhone nutzt `TabView` (`Overview`, `Days`, `Insights`, `Export`), regular width nutzt `NavigationSplitView` mit Day-Liste und Detail-Pane
+- no-content-Tage bleiben in `Days` sichtbar, werden aber nicht mehr wie normale Detailziele behandelt
 - Overview-Dashboard mit Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
+- regular-width Detailansicht bietet einen expliziten Rueckweg zur `Overview`
 - Karten-MVP: MapKit-Ansicht im Day-Detail mit Pfad-Polylines und Visit-Markern (iOS 17+)
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
 - Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
@@ -199,7 +201,7 @@ Wichtig: Apple-/Xcode-Verifikation ist getrennt von `swift test` zu betrachten. 
 
 ## Wrapper-Repo
 
-Das separate Xcode-Wrapper-Projekt `LH2GPXWrapper` liegt unter `~/Desktop/Github-ios/LH2GPXWrapper/`. Es bindet dieses Repo als lokales Swift Package ein und liefert die iOS-App mit Bundle-Metadaten, Signing, App-Icon und Privacy-Manifest. Dieses Library-Repo bleibt die alleinige Quelle fuer Decoder, Queries, AppSupport und DemoSupport.
+Das separate Xcode-Wrapper-Projekt `LH2GPXWrapper` ist ein eigenstaendiges Repo ausserhalb dieses SwiftPM-Repos. Wenn es lokal vorhanden ist, bindet es dieses Repo als lokales Swift Package ein und liefert die iOS-App mit Bundle-Metadaten, Signing, App-Icon und Privacy-Manifest. Dieses Library-Repo bleibt die alleinige Quelle fuer Decoder, Queries, AppSupport und DemoSupport.
 
 ## Roadmap
 

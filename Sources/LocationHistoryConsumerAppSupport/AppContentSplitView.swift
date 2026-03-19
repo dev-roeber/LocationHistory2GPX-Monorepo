@@ -48,6 +48,10 @@ public struct AppContentSplitView: View {
         return icons
     }
 
+    private func normalizeDisplayedSelection() {
+        session.selectDayForDisplay(session.selectedDate)
+    }
+
     public var body: some View {
         if horizontalSizeClass == .compact {
             compactTabView
@@ -141,6 +145,7 @@ public struct AppContentSplitView: View {
             daysNavigationPath = NavigationPath()
             daySearchText = ""
             selectedTab = preferences.startTab.tabIndex
+            normalizeDisplayedSelection()
         }
         .onAppear {
             selectedTab = preferences.startTab.tabIndex
@@ -156,7 +161,11 @@ public struct AppContentSplitView: View {
         return List {
             if groups.count == 1 {
                 ForEach(groups[0].summaries, id: \.date) { summary in
-                    NavigationLink(value: summary.date) {
+                    if summary.hasContent {
+                        NavigationLink(value: summary.date) {
+                            AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date), isSelectedForExport: session.exportSelection.isSelected(summary.date))
+                        }
+                    } else {
                         AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date), isSelectedForExport: session.exportSelection.isSelected(summary.date))
                     }
                 }
@@ -164,8 +173,12 @@ public struct AppContentSplitView: View {
                 ForEach(groups) { group in
                     Section(group.title) {
                         ForEach(group.summaries, id: \.date) { summary in
-                            NavigationLink(value: summary.date) {
-                                AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date))
+                            if summary.hasContent {
+                                NavigationLink(value: summary.date) {
+                                    AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date), isSelectedForExport: session.exportSelection.isSelected(summary.date))
+                                }
+                            } else {
+                                AppDayRow(summary: summary, highlightIcons: highlightIconsFor(summary.date), isSelectedForExport: session.exportSelection.isSelected(summary.date))
                             }
                         }
                     }
@@ -202,7 +215,7 @@ public struct AppContentSplitView: View {
                 summaries: session.daySummaries,
                 selectedDate: Binding(
                     get: { session.selectedDate },
-                    set: { session.selectDay($0) }
+                    set: { session.selectDayForDisplay($0) }
                 )
             )
             .navigationTitle("Days")
@@ -411,12 +424,21 @@ public struct AppContentSplitView: View {
     private var detailPane: some View {
         if let detail = session.selectedDetail {
             ScrollView {
-                AppDayDetailView(
-                    detail: detail,
-                    hasDays: true,
-                    onBackToOverview: { session.selectDay(nil) },
-                    liveLocation: liveLocation
-                )
+                VStack(alignment: .leading, spacing: 16) {
+                    Button {
+                        session.selectDay(nil)
+                    } label: {
+                        Label("Overview", systemImage: "chevron.backward")
+                    }
+                    .buttonStyle(.bordered)
+
+                    AppDayDetailView(
+                        detail: detail,
+                        hasDays: true,
+                        onBackToOverview: { session.selectDay(nil) },
+                        liveLocation: liveLocation
+                    )
+                }
                 .padding()
             }
             .navigationTitle(AppDateDisplay.longDate(detail.date))

@@ -1,51 +1,60 @@
 # ROADMAP
 
-## Aktueller Stand (2026-03-18)
+## Aktueller Stand (2026-03-19)
 
 ### Abgeschlossen
-Phasen 2–19 vollstaendig abgeschlossen. Lokaler iPhone-Betrieb real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
-Lokale Produktweiterentwicklung: Phasen 19.10–19.28 abgeschlossen.
-Phase 20.1: Export-MVP (GPX, Tage-Selektion, fileExporter) abgeschlossen (2026-03-18).
-Phase 20.2: Foreground-only Live-Recording-MVP abgeschlossen (2026-03-18).
+Lokaler iPhone-Betrieb wurde zuletzt auf Apple-Hardware real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
+Lokale Produktweiterentwicklung: Phasen 19.10–19.31 abgeschlossen.
+Die frueher als `20.1` und `20.2` gefuehrten lokalen Produktschritte werden ab diesem Stand logisch als `19.29` und `19.30` gefuehrt.
 
 ### Aktiver lokaler Fokus
 UI-/UX-/Informationsarchitektur fuer iPhone wird erneut priorisiert. Weitere Produktarbeit wird wieder in feine 19.x-Schritte geschnitten.
-Trotz der historisch bereits abgeschlossenen lokalen Schritte `20.1` und `20.2` werden aktuell keine weiteren `20.x`-Folgearbeiten aktiviert. Export- und Live-Recording-Unterbau bleiben vorhanden, sind aber bewusst nicht der naechste Fokus.
+Phase 20 bleibt wieder ausschliesslich fuer Apple-/ASC-/TestFlight-/externe Distribution geparkt. Export- und Live-Recording-Unterbau bleiben vorhanden, sind aber bewusst nicht der naechste Fokus.
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt unberuehrt.
 
-### Vorgeschlagene offene Phasen 19.29–19.36
+### Offene lokale Phasen 19.32–19.38
 
-**Phase 19.29 – Navigation / Dead-End Hardening**
-- Empty-Day-Selektion und Rueckwege zwischen Overview, Days und Detail sauber haerten
-- keinen Day-Detail-Dead-End nach Import, Reload oder no-content-Tagen stehen lassen
-
-**Phase 19.30 – Insights Empty / No-Data Hardening**
+**Phase 19.32 – Insights Empty / No-Data Hardening**
 - fuer no-days-, low-data- und no-chart-Faelle echte Empty States statt leerer Flaechen einfuehren
 - zwischen "keine Daten", "keine Tage" und "dieser Chart ist hier nicht sinnvoll" klar unterscheiden
 
-**Phase 19.31 – Overview-Informationsarchitektur / Primaeraktionen**
+**Phase 19.33 – Overview-Informationsarchitektur / Primaeraktionen**
 - Overview wieder staerker auf importierte History, Status und Hauptnavigation ausrichten
 - sekundaere Utilities wie Track-Library optisch und inhaltlich klar von Kerninformationen trennen
 
-**Phase 19.32 – Days List / Export-Koharenz**
+**Phase 19.34 – Days List / Export-Koharenz**
 - Day-List-Zustaende, Suchzustand und Export-Selektion visuell konsistent machen
-- Inkonsistenzen zwischen gruppierter und ungruppierter Liste beseitigen
+- Such-, Leer- und Exportzustand in eine klarere visuelle Prioritaet bringen
 
-**Phase 19.33 – Day-Detail-Hierarchie**
+**Phase 19.35 – Day-Detail-Hierarchie**
 - importierte Tagesinformationen, Kartenkontext, Live-Recording und Track-Bearbeitung sauberer staffeln
 - den Day-Detail-Screen weniger wie einen Sammelcontainer wirken lassen
 
-**Phase 19.34 – Track-Library / Track-Editor-Zugang**
+**Phase 19.36 – Track-Library / Track-Editor-Zugang**
 - Zugang, Benennung und Iconographie fuer gespeicherte Live-Tracks klarer machen
 - die Trennung zwischen importierter History und lokal aufgezeichneten Tracks weiter schaerfen
 
-**Phase 19.35 – Visualisierung / Charts-Politur**
+**Phase 19.37 – Visualisierung / Charts-Politur**
 - Diagramme, Achsen, Tap-Affordances und Low-Data-Verhalten gezielt verbessern
 - keine neue Datenfantasie, sondern bessere Nutzung der bereits vorhandenen Daten
 
-**Phase 19.36 – Export-UX-Politur**
+**Phase 19.38 – Export-UX-Politur**
 - Disabled-Zustaende, Auswahlfeedback und Dateinamenerwartung im Export-Flow verfeinern
 - keine Erweiterung auf neue Exportformate in diesem Schritt
+
+### Phase 19.31 – Navigation / Dead-End Hardening
+
+**Datum:** 2026-03-19
+**Ziel:** Day-Navigation und Auswahlverhalten fuer iPhone/regular width so haerten, dass no-content-Tage und implizite Dead Ends nicht wie normale Detailziele behandelt werden.
+
+- [x] `DaySummary` fuehrt jetzt repo-wahr `hasContent`, abgeleitet aus Visits/Activities/Paths
+- [x] `AppSessionContent` waehlt nach Import/Demo bevorzugt den ersten inhaltshaltigen Tag statt blind den ersten Kalendertag
+- [x] `selectDayForDisplay(_:)` fuehrt UI-sichere Tagesauswahl ein und verwirft no-content-Ziele statt leere Detailnavigation zu erzwingen
+- [x] compact `Days`-Navigation oeffnet nur noch Tage mit echtem Inhalt; no-content-Tage bleiben sichtbar, aber nicht tappbar
+- [x] regular-width `Days`-Liste deaktiviert no-content-Tage als Detailziele und zeigt einen expliziten Rueckweg zur `Overview`
+- [x] Export-Badge in gruppierter und ungruppierter Day-Liste jetzt konsistent
+- [x] 2 neue Session-State-Tests und erweiterte Query-Assertions decken contentful-first Auswahl und no-content-Verhalten ab
+- Bewusst nicht in diesem Schritt: Insights-No-Data-States, Day-Detail-Umbau, neue Exportformate oder Background-Tracking
 
 ### Phase 19.28 – Lokale Optionen / Produktsteuerung
 
@@ -63,7 +72,7 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 - [x] 4 neue Tests fuer Default-Werte, Persistenz, Reset und Fallback-Handling; `swift test` jetzt 135/135 gruen
 - Bewusst nicht in diesem Schritt: Cloud-/Sync-/Server-Toggles, Background-Location-Optionen, Fake-Privacy-Controls
 
-### Phase 20.2 – Live Recording MVP: aktueller Standort, foreground-only Track, getrennte Persistenz
+### Phase 19.30 – Live Recording MVP: aktueller Standort, foreground-only Track, getrennte Persistenz
 
 **Datum:** 2026-03-18
 **Ziel:** Nutzer kann den eigenen Standort auf der Karte anzeigen, foreground-only live aufzeichnen und den Track getrennt von importierter History lokal speichern.
@@ -78,7 +87,7 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 - [x] 13 neue Tests (Recorder, Store, FeatureModel); `swift test` jetzt 125/125 gruen
 - Bewusst nicht in diesem Schritt: Background-Tracking, Auto-Resume nach Neustart, Merge in importierte History, Export aufgezeichneter Live-Tracks
 
-### Phase 20.1 – Export MVP: GPX-Export mit app-weiter Tages-Selektion
+### Phase 19.29 – Export MVP: GPX-Export mit app-weiter Tages-Selektion
 
 **Datum:** 2026-03-18
 **Ziel:** Nutzer kann Tage fuer GPX-Export markieren und Datei per System-Share-Sheet speichern/teilen.
