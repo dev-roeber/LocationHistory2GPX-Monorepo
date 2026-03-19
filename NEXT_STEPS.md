@@ -12,13 +12,17 @@ Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte.
 3. **Phase 19.34 – Days List / Export-Koharenz**
    - Export-Selektion in der Day-Liste visuell klarer priorisieren
    - Such- und Leerzustaende nicht nur korrekt, sondern auch klar priorisiert darstellen
-4. **Phase 19.38 – Export-UX-Politur**
-   - Disabled- und Fehlerzustaende des Export-Flows erklaerender machen
-   - Dateinamenerwartung und Formatklarheit schaerfen, ohne neue Exportformate freizuschalten
-5. **Phase 20 / 21 – bewusst nicht jetzt**
+4. **Phase 20 / 21 – bewusst nicht jetzt**
    - keine weiteren `20.x`-Folgearbeiten fuer Background-Location, Resume oder Recorded-Track-Export aktivieren
    - keine Apple-/ASC-/TestFlight-/Release-Arbeit
-6. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+5. Contract-Files weiter ausschliesslich vom Producer-Repo aus aktualisieren.
+
+**Abgeschlossene Phase 19.38 (2026-03-19):**
+- Export-Screen zeigt jetzt einen expliziten Auswahl-/Readiness-Status statt nur eine nackte Day-Liste
+- Disabled-Zustaende des Export-Buttons nennen den konkreten Grund: keine Auswahl oder keine Routen
+- Dateinamenerwartung wird vor dem Export als `Suggested filename` sichtbar gemacht
+- gemischte Selektionen erklaeren, wenn nur ein Teil der gewaehlten Tage wirklich GPX-Routen beisteuert
+- `ExportPresentation` kapselt Readiness-, Button- und Filename-Copy testbar
 
 **Abgeschlossene Phase 19.37 (2026-03-19):**
 - Distance- und Weekday-Charts zeigen jetzt chart-spezifische Low-Data-States statt still zu verschwinden

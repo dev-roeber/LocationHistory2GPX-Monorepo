@@ -168,6 +168,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - ein zentrales Actions-Menue in der Toolbar fuehrt Import, Demo, Optionen und Clear
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
+- Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen GPX-Dateinamen vor dem fileExporter-Dialog
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
 - bleibt offline-only; die neue Live-Recording-Logik bleibt lokal und klar vom Import-/Query-Layer getrennt

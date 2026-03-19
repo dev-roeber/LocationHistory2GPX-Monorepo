@@ -155,8 +155,10 @@ Present:
 - multi-day selection with `Select All` / `Deselect All`
 - system `fileExporter` flow
 - GPX generation from selected days
-- suggested export filename based on selected days
-- disabled export button when nothing is selected or no selected day has routes
+- suggested export filename preview based on selected days
+- explicit export-selection status card before the day list
+- disabled export button with reason-specific helper copy when nothing is selected or no selected day has routes
+- mixed selections explain when only part of the chosen days will contribute GPX routes
 
 Bewusst deaktiviert, aber vorhanden:
 - `ExportFormat` enum exists as an extension point for additional formats

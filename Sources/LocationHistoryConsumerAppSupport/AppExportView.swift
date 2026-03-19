@@ -58,6 +58,10 @@ public struct AppExportView: View {
     private func exportContent(summaries: [DaySummary]) -> some View {
         let selection = session.exportSelection
         VStack(spacing: 0) {
+            exportStatusCard(selection: selection, summaries: summaries)
+                .padding(.horizontal)
+                .padding(.top, 12)
+
             // Day list with selection checkboxes
             List {
                 Section {
@@ -188,6 +192,18 @@ public struct AppExportView: View {
                 }
 
                 exportButton(selection: selection, summaries: summaries)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(ExportPresentation.helperMessage(selection: selection, summaries: summaries, format: selectedFormat))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if !selection.isEmpty {
+                        Text(ExportPresentation.filenameMessage(selection: selection, format: selectedFormat))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal)
             .padding(.top, 12)
@@ -198,11 +214,15 @@ public struct AppExportView: View {
 
     @ViewBuilder
     private func exportButton(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
-        let hasRoutes = selectedDaysHaveRoutes(selection: selection, summaries: summaries)
-        let label: String = {
-            if selection.isEmpty { return "Select days to export" }
-            let n = selection.count
-            return "Export \(n) \(n == 1 ? "day" : "days") as \(selectedFormat.rawValue)"
+        let readiness = ExportPresentation.readiness(selection: selection, summaries: summaries)
+        let label = ExportPresentation.buttonTitle(selection: selection, summaries: summaries, format: selectedFormat)
+        let isDisabled: Bool = {
+            switch readiness {
+            case .nothingSelected, .noRoutesSelected:
+                return true
+            case .ready:
+                return false
+            }
         }()
 
         Button {
@@ -212,15 +232,7 @@ public struct AppExportView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
-        .disabled(selection.isEmpty || !hasRoutes)
-        .overlay {
-            if !selection.isEmpty && !hasRoutes {
-                Text("Selected days contain no routes with GPS points.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 44)
-            }
-        }
+        .disabled(isDisabled)
     }
 
     // MARK: - Empty State
@@ -244,18 +256,50 @@ public struct AppExportView: View {
 
     // MARK: - Helpers
 
-    private func selectedDaysHaveRoutes(selection: ExportSelectionState, summaries: [DaySummary]) -> Bool {
-        summaries
-            .filter { selection.isSelected($0.date) }
-            .contains { $0.pathCount > 0 }
+    @ViewBuilder
+    private func exportStatusCard(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
+        let readiness = ExportPresentation.readiness(selection: selection, summaries: summaries)
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Export Selection", systemImage: "square.and.arrow.up")
+                .font(.subheadline.weight(.semibold))
+            switch readiness {
+            case .nothingSelected:
+                Text("No days selected yet.")
+                    .font(.subheadline)
+                Text("Pick one or more days below. GPX export includes route tracks only.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .noRoutesSelected(selectedDayCount):
+                Text("\(selectedDayCount) \(selectedDayCount == 1 ? "day" : "days") selected, but no routes available.")
+                    .font(.subheadline)
+                Text("Choose a day that contains recorded routes with GPS points.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .ready(selectedDayCount, exportableDayCount, routeCount):
+                Text("\(selectedDayCount) \(selectedDayCount == 1 ? "day" : "days") selected.")
+                    .font(.subheadline)
+                Text("\(exportableDayCount) exportable \(exportableDayCount == 1 ? "day" : "days") · \(routeCount) \(routeCount == 1 ? "route" : "routes")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func prepareExport(selection: ExportSelectionState, summaries: [DaySummary]) {
         guard let export = session.content?.export else { return }
         let selectedDates = selection.selectedDates
         let days = AppExportQueries.days(in: export).filter { selectedDates.contains($0.date) }
-        let gpxString = GPXBuilder.build(from: days)
-        let filename = GPXBuilder.suggestedFilename(for: Array(selectedDates))
+        let exportableDays = days.filter { !$0.paths.isEmpty && $0.paths.contains(where: { !$0.points.isEmpty }) }
+        guard !exportableDays.isEmpty else {
+            exportError = "The current selection does not contain any routes with GPS points, so no GPX file can be created."
+            return
+        }
+        let gpxString = GPXBuilder.build(from: exportableDays)
+        let filename = ExportPresentation.suggestedFilename(selection: selection)
         exportDocument = GPXDocument(content: gpxString, suggestedFilename: filename)
         isExporting = true
     }

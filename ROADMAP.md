@@ -26,10 +26,6 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 - Day-List-Zustaende, Suchzustand und Export-Selektion visuell konsistent machen
 - Such-, Leer- und Exportzustand in eine klarere visuelle Prioritaet bringen
 
-**Phase 19.38 – Export-UX-Politur**
-- Disabled-Zustaende, Auswahlfeedback und Dateinamenerwartung im Export-Flow verfeinern
-- keine Erweiterung auf neue Exportformate in diesem Schritt
-
 ### Phase 19.35 – Day-Detail-Hierarchie
 
 **Datum:** 2026-03-19
@@ -66,6 +62,19 @@ Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. 
 - [x] Activity- und Visit-Charts zeigen wieder eine lesbare X-Achse; der Activity-Metric-Umschalter erscheint nur, wenn Distanzdaten vorhanden sind
 - [x] `InsightsChartSupport` macht Metrikverfuegbarkeit, Low-Data-Messages und Day-Tap-Verhalten testbar
 - Bewusst nicht in diesem Schritt: neue Diagrammtypen, neue Analysefelder oder chart-uebergreifende Crossfilter
+
+### Phase 19.38 – Export-UX-Politur
+
+**Datum:** 2026-03-19
+**Ziel:** Disabled-Zustaende, Auswahlfeedback und Dateinamenerwartung des bestehenden GPX-Exports erklaerender machen, ohne neue Exportformate oder neue Datenarten zu aktivieren.
+
+- [x] Export-Screen fuehrt jetzt mit einer kleinen Readiness-Zusammenfassung statt nur mit der Liste
+- [x] Export-Button-Titel und Hilfetext unterscheiden sauber zwischen leerer Auswahl und Auswahl ohne Routen
+- [x] gemischte Selektionen erklaeren, wenn nur ein Teil der gewaehlten Tage GPX-Routen beisteuert
+- [x] vorgeschlagener Dateiname wird vor dem Export sichtbar gemacht
+- [x] Export-Guard blockiert route-lose Selektionen auch im Prepare-Step und zeigt einen klaren Fehlertext
+- [x] `ExportPresentation` macht Readiness-, Filename- und Helper-Copy testbar
+- Bewusst nicht in diesem Schritt: neue Exportformate, neue Dateinamens-Schemata oder Visit-/Activity-Export
 
 ### Phase 19.31 – Navigation / Dead-End Hardening
 
