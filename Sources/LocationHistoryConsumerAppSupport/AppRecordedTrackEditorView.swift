@@ -70,8 +70,8 @@ struct AppRecordedTrackEditorView: View {
     private var summarySection: some View {
         Section("Summary") {
             LabeledContent("Date", value: AppDateDisplay.longDate(draft.dayKey))
-            LabeledContent("Started", value: draft.startedAt.formatted(date: .abbreviated, time: .shortened))
-            LabeledContent("Ended", value: draft.endedAt.formatted(date: .abbreviated, time: .shortened))
+            LabeledContent("Started", value: AppDateDisplay.abbreviatedDateTime(draft.startedAt))
+            LabeledContent("Ended", value: AppDateDisplay.abbreviatedDateTime(draft.endedAt))
             LabeledContent("Points", value: "\(draft.pointCount)")
             LabeledContent("Distance", value: formatDistance(draft.distanceM, unit: preferences.distanceUnit))
             if let message = draft.validationMessage {
@@ -128,7 +128,7 @@ struct AppRecordedTrackEditorView: View {
                         Text("Point \(index + 1)")
                             .font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text(point.timestamp.formatted(date: .omitted, time: .shortened))
+                        Text(AppTimeDisplay.time(point.timestamp))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

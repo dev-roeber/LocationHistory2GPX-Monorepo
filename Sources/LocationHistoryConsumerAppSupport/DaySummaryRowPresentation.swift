@@ -1,6 +1,7 @@
+import LocationHistoryConsumer
 #if canImport(SwiftUI)
 import SwiftUI
-import LocationHistoryConsumer
+#endif
 
 struct DaySummaryMetricPresentation: Identifiable, Equatable {
     let id: String
@@ -129,6 +130,7 @@ enum DaySummaryRowPresentationBuilder {
     }
 }
 
+#if canImport(SwiftUI)
 struct DaySummaryMetricChipsView: View {
     let metrics: [DaySummaryMetricPresentation]
 

@@ -1,6 +1,7 @@
+import LocationHistoryConsumer
 #if canImport(SwiftUI)
 import SwiftUI
-import LocationHistoryConsumer
+#endif
 
 struct MapMetricPresentation: Identifiable, Equatable {
     let id: String
@@ -22,6 +23,7 @@ struct MapSectionPresentation: Equatable {
     let note: String?
 }
 
+#if canImport(SwiftUI)
 enum MapPalette {
     static func visitColor(for semanticType: String?) -> Color {
         switch (semanticType ?? "").uppercased() {
@@ -50,6 +52,7 @@ enum MapPalette {
         }
     }
 }
+#endif
 
 enum MapPresentation {
     static func daySection(
@@ -310,6 +313,7 @@ enum MapPresentation {
     }
 }
 
+#if canImport(SwiftUI)
 struct MapSectionSupplementaryView: View {
     let presentation: MapSectionPresentation
 

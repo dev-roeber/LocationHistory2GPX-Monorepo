@@ -5,24 +5,6 @@ import LocationHistoryConsumer
 import UniformTypeIdentifiers
 #endif
 
-// MARK: - Export Format
-
-/// Supported export formats. Architecture is ready for additional cases.
-public enum ExportFormat: String, CaseIterable, Identifiable {
-    case gpx = "GPX"
-
-    public var id: String { rawValue }
-    public var fileExtension: String {
-        switch self { case .gpx: return "gpx" }
-    }
-    public var description: String {
-        switch self { case .gpx: return "GPS Exchange Format – compatible with most navigation and mapping apps." }
-    }
-    public var systemImage: String {
-        switch self { case .gpx: return "location.north.line.fill" }
-    }
-}
-
 // MARK: - Export View
 
 /// The Export tab / sheet content.

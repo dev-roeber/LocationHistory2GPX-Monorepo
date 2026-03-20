@@ -1,5 +1,7 @@
+import Foundation
 #if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 struct RecordedTrackEditorMetricPresentation: Identifiable, Equatable {
     let id: String
@@ -118,7 +120,7 @@ enum RecordedTrackEditorPresentation {
         return RecordedTrackPointPresentation(
             title: title,
             roleLabel: roleLabel,
-            timeText: point.timestamp.formatted(date: .omitted, time: .shortened),
+            timeText: AppTimeDisplay.time(point.timestamp),
             coordinateText: coordinateText(for: point),
             metrics: metrics
         )
@@ -162,6 +164,7 @@ enum RecordedTrackEditorPresentation {
     }
 }
 
+#if canImport(SwiftUI)
 struct RecordedTrackEditorMetricChipsView: View {
     let metrics: [RecordedTrackEditorMetricPresentation]
 

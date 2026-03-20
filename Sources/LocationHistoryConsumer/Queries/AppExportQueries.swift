@@ -622,7 +622,7 @@ public enum AppExportQueries {
             return nil
         }
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? TimeZone(identifier: "UTC") ?? .current
         return calendar.component(.weekday, from: parsedDate)
     }
 

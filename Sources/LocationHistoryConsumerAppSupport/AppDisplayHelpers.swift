@@ -1,6 +1,8 @@
+import Foundation
+import LocationHistoryConsumer
 #if canImport(SwiftUI)
 import SwiftUI
-import LocationHistoryConsumer
+#endif
 
 // MARK: - Date Formatting
 
@@ -15,24 +17,88 @@ enum AppDateDisplay {
         return f
     }()
 
+    private static let longDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    private static let mediumDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    private static let abbreviatedDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    private static let abbreviatedDateTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
+        return formatter
+    }()
+
+    private static let monthYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("LLLL yyyy")
+        return formatter
+    }()
+
     static func longDate(_ iso: String) -> String {
         guard let d = isoFormatter.date(from: iso) else { return iso }
-        return d.formatted(date: .long, time: .omitted)
+        return longDate(d)
     }
 
     static func mediumDate(_ iso: String) -> String {
         guard let d = isoFormatter.date(from: iso) else { return iso }
-        return d.formatted(date: .abbreviated, time: .omitted)
+        return mediumDate(d)
     }
 
     static func weekday(_ iso: String) -> String {
         guard let d = isoFormatter.date(from: iso) else { return iso }
-        return d.formatted(.dateTime.weekday(.wide))
+        return weekday(d)
     }
 
     static func monthYear(_ iso: String) -> String {
         guard let d = isoFormatter.date(from: iso) else { return String(iso.prefix(7)) }
-        return d.formatted(.dateTime.month(.wide).year())
+        return monthYear(d)
+    }
+
+    static func longDate(_ date: Date) -> String {
+        longDateFormatter.string(from: date)
+    }
+
+    static func mediumDate(_ date: Date) -> String {
+        mediumDateFormatter.string(from: date)
+    }
+
+    static func abbreviatedDate(_ date: Date) -> String {
+        abbreviatedDateFormatter.string(from: date)
+    }
+
+    static func abbreviatedDateTime(_ date: Date) -> String {
+        abbreviatedDateTimeFormatter.string(from: date)
+    }
+
+    static func weekday(_ date: Date) -> String {
+        weekdayFormatter.string(from: date)
+    }
+
+    static func monthYear(_ date: Date) -> String {
+        monthYearFormatter.string(from: date)
     }
 }
 
@@ -51,13 +117,24 @@ enum AppTimeDisplay {
         return f
     }()
 
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
     static func date(_ iso8601: String) -> Date? {
         fractionalFormatter.date(from: iso8601) ?? isoFormatter.date(from: iso8601)
     }
 
     static func time(_ iso8601: String) -> String {
         guard let date = date(iso8601) else { return iso8601 }
-        return date.formatted(date: .omitted, time: .shortened)
+        return time(date)
+    }
+
+    static func time(_ date: Date) -> String {
+        timeFormatter.string(from: date)
     }
 
     static func timeRange(start: String?, end: String?) -> String? {
@@ -67,7 +144,7 @@ enum AppTimeDisplay {
             return nil
         }
 
-        return "\(startDate.formatted(date: .omitted, time: .shortened)) - \(endDate.formatted(date: .omitted, time: .shortened))"
+        return "\(time(startDate)) - \(time(endDate))"
     }
 
     static func timeRange(start: Date?, end: Date?) -> String? {
@@ -77,7 +154,7 @@ enum AppTimeDisplay {
             return nil
         }
 
-        return "\(start.formatted(date: .omitted, time: .shortened)) - \(end.formatted(date: .omitted, time: .shortened))"
+        return "\(time(start)) - \(time(end))"
     }
 
     static func duration(start: String?, end: String?) -> String? {
@@ -114,14 +191,6 @@ enum AppTimeDisplay {
         }
         return "\(minutes) min"
     }
-}
-
-// MARK: - Card Accent Colors
-
-enum CardAccent {
-    static let visit = Color.blue
-    static let activity = Color.green
-    static let path = Color.orange
 }
 
 // MARK: - Distance Formatting
@@ -206,28 +275,6 @@ func groupByMonth(_ summaries: [DaySummary]) -> [MonthGroup] {
     }
 }
 
-// MARK: - Colored Card Helper
-
-@ViewBuilder
-func coloredCard<Content: View>(
-    color: Color,
-    @ViewBuilder content: () -> Content
-) -> some View {
-    HStack(spacing: 0) {
-        color
-            .frame(width: 4)
-        VStack(alignment: .leading, spacing: 4) {
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(color.opacity(0.06))
-    }
-    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    // Combine children so VoiceOver reads the whole card as one item.
-    .accessibilityElement(children: .combine)
-}
-
 // MARK: - Icon Helpers
 
 func iconForVisitType(_ type: String?) -> String {
@@ -273,20 +320,6 @@ func iconForActivityType(_ type: String?) -> String {
     }
 }
 
-func colorForActivityType(_ type: String?) -> Color {
-    switch (type ?? "").uppercased() {
-    case "WALKING":              return .green
-    case "RUNNING":              return .orange
-    case "CYCLING":              return .blue
-    case "FLYING":               return .purple
-    case "IN PASSENGER VEHICLE": return .red
-    case "IN BUS":               return .teal
-    case "IN TRAIN":             return .indigo
-    case "IN SUBWAY":            return .indigo
-    default:                     return .gray
-    }
-}
-
 func displayNameForActivityType(_ type: String?, default defaultName: String = "Activity") -> String {
     switch (type ?? "").uppercased() {
     case "WALKING":              return "Walking"
@@ -303,4 +336,47 @@ func displayNameForActivityType(_ type: String?, default defaultName: String = "
     }
 }
 
+#if canImport(SwiftUI)
+// MARK: - Card Accent Colors
+
+enum CardAccent {
+    static let visit = Color.blue
+    static let activity = Color.green
+    static let path = Color.orange
+}
+
+// MARK: - Colored Card Helper
+
+@ViewBuilder
+func coloredCard<Content: View>(
+    color: Color,
+    @ViewBuilder content: () -> Content
+) -> some View {
+    HStack(spacing: 0) {
+        color
+            .frame(width: 4)
+        VStack(alignment: .leading, spacing: 4) {
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(color.opacity(0.06))
+    }
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .accessibilityElement(children: .combine)
+}
+
+func colorForActivityType(_ type: String?) -> Color {
+    switch (type ?? "").uppercased() {
+    case "WALKING":              return .green
+    case "RUNNING":              return .orange
+    case "CYCLING":              return .blue
+    case "FLYING":               return .purple
+    case "IN PASSENGER VEHICLE": return .red
+    case "IN BUS":               return .teal
+    case "IN TRAIN":             return .indigo
+    case "IN SUBWAY":            return .indigo
+    default:                     return .gray
+    }
+}
 #endif

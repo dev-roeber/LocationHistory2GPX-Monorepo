@@ -1,4 +1,5 @@
 import XCTest
+#if canImport(SwiftUI)
 import SwiftUI
 import LocationHistoryConsumer
 @testable import LocationHistoryConsumerAppSupport
@@ -87,3 +88,4 @@ final class InsightsCardPresentationTests: XCTestCase {
         XCTAssertFalse(card.dateText.contains("2024-05-04"))
     }
 }
+#endif

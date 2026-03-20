@@ -328,8 +328,8 @@ private struct DayTimelineView: View {
     }
 
     private var accessibilitySummary: String {
-        let from = bounds.map { $0.start.formatted(date: .omitted, time: .shortened) } ?? ""
-        let to   = bounds.map { $0.end.formatted(date: .omitted, time: .shortened) } ?? ""
+        let from = bounds.map { AppTimeDisplay.time($0.start) } ?? ""
+        let to   = bounds.map { AppTimeDisplay.time($0.end) } ?? ""
         var parts: [String] = []
         if !visitSlots.isEmpty {
             parts.append("\(visitSlots.count) visit\(visitSlots.count == 1 ? "" : "s")")
@@ -356,9 +356,9 @@ private struct DayTimelineView: View {
                     }
                 }
                 HStack {
-                    Text(b.start.formatted(date: .omitted, time: .shortened))
+                    Text(AppTimeDisplay.time(b.start))
                     Spacer()
-                    Text(b.end.formatted(date: .omitted, time: .shortened))
+                    Text(AppTimeDisplay.time(b.end))
                 }
                 .font(.caption2)
                 .foregroundStyle(.tertiary)

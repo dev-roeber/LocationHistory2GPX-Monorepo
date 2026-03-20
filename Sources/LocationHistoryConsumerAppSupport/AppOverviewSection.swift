@@ -74,7 +74,7 @@ public struct AppOverviewSection: View {
         VStack(spacing: 6) {
             Image(systemName: stat.icon)
                 .font(.title3)
-                .foregroundColor(stat.color)
+                .foregroundColor(stat.color.swiftUIColor)
             Text(stat.value)
                 .font(.title2.weight(.bold).monospacedDigit())
             Text(stat.label)
@@ -91,13 +91,13 @@ public struct AppOverviewSection: View {
             if isInteractive {
                 Image(systemName: "chevron.right")
                     .font(.caption2)
-                    .foregroundStyle(stat.color.opacity(0.5))
+                    .foregroundStyle(stat.color.swiftUIColor.opacity(0.5))
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 10)
-        .background(stat.color.opacity(0.08))
+        .background(stat.color.swiftUIColor.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

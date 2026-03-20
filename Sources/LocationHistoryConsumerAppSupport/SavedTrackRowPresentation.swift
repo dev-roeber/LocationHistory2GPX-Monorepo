@@ -1,5 +1,7 @@
+import Foundation
 #if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 struct SavedTrackMetricPresentation: Identifiable, Equatable {
     let id: String
@@ -20,7 +22,7 @@ enum SavedTrackPresentation {
         for track: RecordedTrack,
         unit: AppDistanceUnitPreference
     ) -> SavedTrackRowPresentation {
-        let title = track.startedAt.formatted(date: .abbreviated, time: .omitted)
+        let title = AppDateDisplay.abbreviatedDate(track.startedAt)
         let timeRange = AppTimeDisplay.timeRange(start: track.startedAt, end: track.endedAt)
         let duration = AppTimeDisplay.duration(start: track.startedAt, end: track.endedAt)
 
@@ -73,6 +75,7 @@ enum SavedTrackPresentation {
     }
 }
 
+#if canImport(SwiftUI)
 struct SavedTrackSummaryContentView: View {
     let presentation: SavedTrackRowPresentation
 

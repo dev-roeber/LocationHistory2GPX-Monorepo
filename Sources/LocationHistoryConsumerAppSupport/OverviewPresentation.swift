@@ -1,13 +1,21 @@
+import LocationHistoryConsumer
 #if canImport(SwiftUI)
 import SwiftUI
-import LocationHistoryConsumer
+#endif
+
+enum OverviewStatAccent: Equatable {
+    case blue
+    case purple
+    case green
+    case orange
+}
 
 struct OverviewStatPresentation: Identifiable, Equatable {
     let id: String
     let value: String
     let label: String
     let icon: String
-    let color: Color
+    let color: OverviewStatAccent
     let note: String?
 }
 
@@ -102,4 +110,19 @@ enum OverviewPresentation {
     }
 }
 
+#if canImport(SwiftUI)
+extension OverviewStatAccent {
+    var swiftUIColor: Color {
+        switch self {
+        case .blue:
+            return .blue
+        case .purple:
+            return .purple
+        case .green:
+            return .green
+        case .orange:
+            return .orange
+        }
+    }
+}
 #endif
