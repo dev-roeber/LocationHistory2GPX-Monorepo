@@ -29,6 +29,7 @@ public struct AppHeatmapView: View {
                     MapCircle(center: cell.coordinate, radius: cell.radius)
                         .foregroundStyle(cell.color.opacity(cell.opacity))
                 }
+                .blendMode(.plusLighter)
             }
             .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
             .ignoresSafeArea(edges: .top)
@@ -125,8 +126,8 @@ final class AppHeatmapModel {
 
     // Pre-processed data
     private let export: AppExport
-    // The pre-computed dictionaries for each LOD. Key is the packed Int64.
-    private var lodGrids: [HeatmapLOD: [Int64: HeatCell]] = [:]
+    // The pre-computed dictionaries for each LOD.
+    private var lodGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
     
     private var lastRegion: MKCoordinateRegion?
     private var updateTask: Task<Void, Never>?
@@ -153,16 +154,30 @@ final class AppHeatmapModel {
                     for pt in p.points {
                         points.append(WeightedPoint(lat: pt.lat, lon: pt.lon, weight: 1))
                     }
+                    if let flats = p.flatCoordinates {
+                        for i in stride(from: 0, to: flats.count - 1, by: 2) {
+                            points.append(WeightedPoint(lat: flats[i], lon: flats[i+1], weight: 1))
+                        }
+                    }
                 }
                 for a in day.activities {
                     if let lat = a.startLat, let lon = a.startLon {
                         points.append(WeightedPoint(lat: lat, lon: lon, weight: 1))
                     }
+                    if let lat = a.endLat, let lon = a.endLon {
+                        points.append(WeightedPoint(lat: lat, lon: lon, weight: 1))
+                    }
+                    if let flats = a.flatCoordinates {
+                        // flatCoordinates are [lat, lon, lat, lon...]
+                        for i in stride(from: 0, to: flats.count - 1, by: 2) {
+                            points.append(WeightedPoint(lat: flats[i], lon: flats[i+1], weight: 1))
+                        }
+                    }
                 }
             }
             
             // 2. Pre-compute grids for all LODs
-            var generatedGrids: [HeatmapLOD: [Int64: HeatCell]] = [:]
+            var generatedGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
             for lod in HeatmapLOD.allCases {
                 generatedGrids[lod] = Self.computeGrid(for: points, lod: lod)
             }
@@ -180,7 +195,12 @@ final class AppHeatmapModel {
                 self.lodGrids = generatedGrids
                 self.initialCenter = centerCoord
                 self.isCalculating = false
-                if let region = self.lastRegion {
+                
+                let region = self.lastRegion ?? (centerCoord.map {
+                    MKCoordinateRegion(center: $0, span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5))
+                })
+                
+                if let region {
                     self.performCulling(region: region)
                 }
             }
@@ -232,26 +252,26 @@ final class AppHeatmapModel {
         self.visibleCells = culled
     }
 
-    nonisolated private static func computeGrid(for points: [WeightedPoint], lod: HeatmapLOD) -> [Int64: HeatCell] {
-        var grid: [Int64: Int] = [:]
+    nonisolated private static func computeGrid(for points: [WeightedPoint], lod: HeatmapLOD) -> [GridKey: HeatCell] {
+        var grid: [GridKey: Int] = [:]
         let step = lod.step
         
         for p in points {
             let latBin = Int32(floor(p.lat / step))
             let lonBin = Int32(floor(p.lon / step))
-            let key = (Int64(latBin) << 32) | (Int64(UInt32(bitPattern: lonBin)))
+            let key = GridKey(lat: latBin, lon: lonBin)
             grid[key, default: 0] += p.weight
         }
 
         guard !grid.isEmpty else { return [:] }
         let maxCount = Double(grid.values.max() ?? 1)
         
-        var result: [Int64: HeatCell] = [:]
+        var result: [GridKey: HeatCell] = [:]
         result.reserveCapacity(grid.count)
         
         for (key, count) in grid {
-            let latBin = Int32(key >> 32)
-            let lonBin = Int32(truncatingIfNeeded: key)
+            let latBin = key.lat
+            let lonBin = key.lon
             
             let normalized = Double(count) / maxCount
             
@@ -273,7 +293,7 @@ final class AppHeatmapModel {
             let radiusMultiplier = 1.2 + (normalized * 0.5)
             
             result[key] = HeatCell(
-                id: key,
+                gridKey: key,
                 coordinate: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
                 radius: lod.baseRadius * radiusMultiplier,
                 count: count,
@@ -288,6 +308,11 @@ final class AppHeatmapModel {
 
 // MARK: - Supporting Types
 
+struct GridKey: Hashable, Equatable {
+    let lat: Int32
+    let lon: Int32
+}
+
 struct WeightedPoint {
     let lat: Double
     let lon: Double
@@ -295,7 +320,8 @@ struct WeightedPoint {
 }
 
 struct HeatCell: Identifiable {
-    let id: Int64
+    var id: GridKey { gridKey }
+    let gridKey: GridKey
     let coordinate: CLLocationCoordinate2D
     let radius: Double
     let count: Int
