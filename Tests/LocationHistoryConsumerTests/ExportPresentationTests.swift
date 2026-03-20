@@ -5,26 +5,26 @@ import LocationHistoryConsumer
 final class ExportPresentationTests: XCTestCase {
     func testReadinessHandlesEmptySelection() {
         let readiness = ExportPresentation.readiness(
+            importedExport: nil,
             selection: ExportSelectionState(),
-            summaries: [],
-            recordedTracks: []
+            recordedTracks: [],
+            mode: .tracks
         )
         XCTAssertEqual(readiness, .nothingSelected)
         XCTAssertEqual(
             ExportPresentation.helperMessage(
+                importedExport: nil,
                 selection: ExportSelectionState(),
-                summaries: [],
                 recordedTracks: [],
-                format: .gpx
+                format: .gpx,
+                mode: .tracks
             ),
             "Choose at least one imported day or saved track with routes to prepare a GPX file."
         )
     }
 
-    func testReadinessDetectsSelectedDaysWithoutRoutes() {
-        var selection = ExportSelectionState()
-        selection.toggle("2024-05-01")
-        let summaries = makeSummaries(daysJSON: """
+    func testTrackReadinessDetectsSelectedDaysWithoutRoutes() {
+        let export = exportWith(days: """
         {
           "date":"2024-05-01",
           "visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-01T08:00:00Z","end_time":"2024-05-01T08:30:00Z"}],
@@ -32,27 +32,72 @@ final class ExportPresentationTests: XCTestCase {
           "paths":[]
         }
         """)
+        var selection = ExportSelectionState()
+        selection.toggle("2024-05-01")
 
         XCTAssertEqual(
-            ExportPresentation.readiness(selection: selection, summaries: summaries, recordedTracks: []),
-            .noRoutesSelected(selectedSourceCount: 1)
+            ExportPresentation.readiness(
+                importedExport: export,
+                selection: selection,
+                recordedTracks: [],
+                mode: .tracks
+            ),
+            .noExportableContent(selectedSourceCount: 1)
         )
         XCTAssertEqual(
             ExportPresentation.buttonTitle(
+                importedExport: export,
                 selection: selection,
-                summaries: summaries,
                 recordedTracks: [],
-                format: .gpx
+                format: .gpx,
+                mode: .tracks
             ),
             "Selected item has no routes"
         )
     }
 
-    func testReadinessSummarizesMixedSelection() {
+    func testWaypointReadinessTreatsVisitsAsExportableContent() {
+        let export = exportWith(days: """
+        {
+          "date":"2024-05-01",
+          "visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-01T08:00:00Z","end_time":"2024-05-01T08:30:00Z","semantic_type":"HOME"}],
+          "activities":[],
+          "paths":[]
+        }
+        """)
         var selection = ExportSelectionState()
         selection.toggle("2024-05-01")
-        selection.toggle("2024-05-02")
-        let summaries = makeSummaries(daysJSON: """
+
+        XCTAssertEqual(
+            ExportPresentation.readiness(
+                importedExport: export,
+                selection: selection,
+                recordedTracks: [],
+                mode: .waypoints
+            ),
+            .ready(
+                selectedSourceCount: 1,
+                exportableSourceCount: 1,
+                routeCount: 0,
+                waypointCount: 1,
+                selectedDayCount: 1,
+                selectedRecordedTrackCount: 0
+            )
+        )
+        XCTAssertEqual(
+            ExportPresentation.helperMessage(
+                importedExport: export,
+                selection: selection,
+                recordedTracks: [],
+                format: .geoJSON,
+                mode: .waypoints
+            ),
+            "1 waypoint will be written to the GeoJSON file."
+        )
+    }
+
+    func testMixedReadinessSummarizesRoutesAndWaypoints() {
+        let export = exportWith(days: """
         {
           "date":"2024-05-01",
           "visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-01T08:00:00Z","end_time":"2024-05-01T08:30:00Z"}],
@@ -69,70 +114,46 @@ final class ExportPresentationTests: XCTestCase {
           "paths":[]
         }
         """)
+        let summaries = AppExportQueries.daySummaries(from: export)
+        var selection = ExportSelectionState()
+        selection.toggle("2024-05-01")
+        selection.toggle("2024-05-02")
 
         XCTAssertEqual(
-            ExportPresentation.readiness(selection: selection, summaries: summaries, recordedTracks: []),
+            ExportPresentation.readiness(
+                importedExport: export,
+                selection: selection,
+                recordedTracks: [],
+                mode: .both
+            ),
             .ready(
                 selectedSourceCount: 2,
                 exportableSourceCount: 1,
                 routeCount: 2,
+                waypointCount: 1,
                 selectedDayCount: 2,
                 selectedRecordedTrackCount: 0
             )
         )
         XCTAssertTrue(
             ExportPresentation.helperMessage(
+                importedExport: export,
                 selection: selection,
-                summaries: summaries,
                 recordedTracks: [],
-                format: .gpx
+                format: .gpx,
+                mode: .both
             )
-            .contains("1 of 2 selected items contribute 2 routes")
+            .contains("1 of 2 selected items contribute 2 routes and 1 waypoint")
         )
         XCTAssertEqual(
             ExportPresentation.filenameMessage(
                 selection: selection,
                 summaries: summaries,
                 recordedTracks: [],
-                format: .gpx
+                format: .gpx,
+                mode: .both
             ),
-            "Suggested filename: lh2gpx-2024-05-01_to_2024-05-02.gpx (GPX)."
-        )
-    }
-
-    func testReadinessCountsOnlyRoutesWithUsablePoints() {
-        var selection = ExportSelectionState()
-        selection.toggle("2024-05-04")
-        let summaries = makeSummaries(daysJSON: """
-        {
-          "date":"2024-05-04",
-          "visits":[],
-          "activities":[],
-          "paths":[
-            {"activity_type":"WALKING","distance_m":700,"points":[{"lat":48.0,"lon":11.0},{"lat":48.001,"lon":11.001}]},
-            {"activity_type":"WALKING","distance_m":0,"points":[]}
-          ]
-        }
-        """)
-
-        XCTAssertEqual(
-            ExportPresentation.readiness(selection: selection, summaries: summaries, recordedTracks: []),
-            .ready(
-                selectedSourceCount: 1,
-                exportableSourceCount: 1,
-                routeCount: 1,
-                selectedDayCount: 1,
-                selectedRecordedTrackCount: 0
-            )
-        )
-        XCTAssertEqual(
-            ExportPresentation.helperMessage(
-                selection: selection,
-                summaries: summaries,
-                recordedTracks: [],
-                format: .gpx
-            ),
-            "1 route will be written to the GPX file."
+            "Suggested filename: lh2gpx-2024-05-01_to_2024-05-02-mixed.gpx (GPX)."
         )
     }
 
@@ -143,14 +164,16 @@ final class ExportPresentationTests: XCTestCase {
 
         XCTAssertEqual(
             ExportPresentation.readiness(
+                importedExport: nil,
                 selection: selection,
-                summaries: [],
-                recordedTracks: [recordedTrack]
+                recordedTracks: [recordedTrack],
+                mode: .tracks
             ),
             .ready(
                 selectedSourceCount: 1,
                 exportableSourceCount: 1,
                 routeCount: 1,
+                waypointCount: 0,
                 selectedDayCount: 0,
                 selectedRecordedTrackCount: 1
             )
@@ -160,38 +183,55 @@ final class ExportPresentationTests: XCTestCase {
                 selection: selection,
                 summaries: [],
                 recordedTracks: [recordedTrack],
-                format: .gpx
+                format: .gpx,
+                mode: .tracks
             ),
             "Suggested filename: lh2gpx-2024-05-03.gpx (GPX)."
         )
     }
 
-    func testFilenameMessageUsesSelectedExportFormatExtension() {
+    func testWaypointModeDoesNotTreatSavedTracksAsWaypointSources() {
         var selection = ExportSelectionState()
-        selection.toggle("2024-05-01")
-        let summaries = makeSummaries(daysJSON: """
+        let recordedTrack = makeRecordedTrack(dayKey: "2024-05-03")
+        selection.toggleRecordedTrack(recordedTrack.id)
+
+        XCTAssertEqual(
+            ExportPresentation.readiness(
+                importedExport: nil,
+                selection: selection,
+                recordedTracks: [recordedTrack],
+                mode: .waypoints
+            ),
+            .noExportableContent(selectedSourceCount: 1)
+        )
+    }
+
+    func testFilenameMessageUsesModeAndFormatExtension() {
+        let export = exportWith(days: """
         {
           "date":"2024-05-01",
-          "visits":[],
+          "visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-01T08:00:00Z","end_time":"2024-05-01T08:30:00Z"}],
           "activities":[],
-          "paths":[
-            {"activity_type":"WALKING","distance_m":700,"points":[{"lat":48.0,"lon":11.0},{"lat":48.001,"lon":11.001}]}
-          ]
+          "paths":[]
         }
         """)
+        let summaries = AppExportQueries.daySummaries(from: export)
+        var selection = ExportSelectionState()
+        selection.toggle("2024-05-01")
 
         XCTAssertEqual(
             ExportPresentation.filenameMessage(
                 selection: selection,
                 summaries: summaries,
                 recordedTracks: [],
-                format: .kml
+                format: .kml,
+                mode: .waypoints
             ),
-            "Suggested filename: lh2gpx-2024-05-01.kml (KML)."
+            "Suggested filename: lh2gpx-2024-05-01-waypoints.kml (KML)."
         )
     }
 
-    private func makeSummaries(daysJSON: String) -> [DaySummary] {
+    private func exportWith(days jsonDays: String) -> AppExport {
         let json = """
         {
           "schema_version":"1.0",
@@ -203,12 +243,10 @@ final class ExportPresentationTests: XCTestCase {
             "config":{},
             "filters":{}
           },
-          "data":{"days":[\(daysJSON)]}
+          "data":{"days":[\(jsonDays)]}
         }
         """
-
-        let export = try! AppExportDecoder.decode(data: Data(json.utf8))
-        return AppExportQueries.daySummaries(from: export)
+        return try! AppExportDecoder.decode(data: Data(json.utf8))
     }
 
     private func makeRecordedTrack(dayKey: String) -> RecordedTrack {

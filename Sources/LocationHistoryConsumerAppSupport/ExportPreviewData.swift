@@ -2,6 +2,7 @@ import Foundation
 import LocationHistoryConsumer
 
 struct ExportPreviewData: Equatable {
+    let waypointAnnotations: [DayMapVisitAnnotation]
     let pathOverlays: [DayMapPathOverlay]
     let fittedRegion: DayMapRegion?
     let hasMapContent: Bool
@@ -18,7 +19,8 @@ enum ExportPreviewDataBuilder {
         importedExport: AppExport?,
         selection: ExportSelectionState,
         recordedTracks: [RecordedTrack],
-        queryFilter: AppExportQueryFilter? = nil
+        queryFilter: AppExportQueryFilter? = nil,
+        mode: ExportMode
     ) -> ExportPreviewData {
         let exportDays = ExportSelectionContent.exportDays(
             importedExport: importedExport,
@@ -27,27 +29,40 @@ enum ExportPreviewDataBuilder {
             queryFilter: queryFilter
         )
 
-        let pathOverlays = exportDays.flatMap { day in
-            day.paths.compactMap { path -> DayMapPathOverlay? in
-                let coordinates = path.points.map { DayMapCoordinate(lat: $0.lat, lon: $0.lon) }
-                guard coordinates.count >= 2 else {
-                    return nil
-                }
-                return DayMapPathOverlay(
-                    coordinates: coordinates,
-                    activityType: path.activityType,
-                    distanceM: path.distanceM
+        let waypointAnnotations = mode.includesWaypoints
+            ? ExportWaypointExtractor.waypoints(from: exportDays).map {
+                DayMapVisitAnnotation(
+                    coordinate: DayMapCoordinate(lat: $0.latitude, lon: $0.longitude),
+                    semanticType: $0.detail ?? $0.category,
+                    startTime: $0.time,
+                    endTime: nil
                 )
             }
-        }
+            : []
+        let pathOverlays = mode.includesTracks
+            ? exportDays.flatMap { day in
+                day.paths.compactMap { path -> DayMapPathOverlay? in
+                    let coordinates = path.points.map { DayMapCoordinate(lat: $0.lat, lon: $0.lon) }
+                    guard coordinates.count >= 2 else {
+                        return nil
+                    }
+                    return DayMapPathOverlay(
+                        coordinates: coordinates,
+                        activityType: path.activityType,
+                        distanceM: path.distanceM
+                    )
+                }
+            }
+            : []
 
-        let allCoordinates = pathOverlays.flatMap(\.coordinates)
+        let allCoordinates = waypointAnnotations.map(\.coordinate) + pathOverlays.flatMap(\.coordinates)
         let fittedRegion = computeRegion(from: allCoordinates)
 
         return ExportPreviewData(
+            waypointAnnotations: waypointAnnotations,
             pathOverlays: pathOverlays,
             fittedRegion: fittedRegion,
-            hasMapContent: !pathOverlays.isEmpty,
+            hasMapContent: !waypointAnnotations.isEmpty || !pathOverlays.isEmpty,
             importedDayCount: selection.selectedDayCount,
             savedTrackCount: selection.selectedRecordedTrackCount
         )

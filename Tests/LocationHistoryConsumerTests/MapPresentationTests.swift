@@ -77,6 +77,7 @@ final class MapPresentationTests: XCTestCase {
 
     func testExportPreviewSummarizesSourcesDistanceAndDominantMode() {
         let preview = ExportPreviewData(
+            waypointAnnotations: [],
             pathOverlays: [
                 DayMapPathOverlay(
                     coordinates: [
@@ -102,21 +103,22 @@ final class MapPresentationTests: XCTestCase {
             savedTrackCount: 1
         )
 
-        let presentation = MapPresentation.exportPreview(preview, unit: .metric)
+        let presentation = MapPresentation.exportPreview(preview, unit: .metric, mode: .tracks)
 
         XCTAssertEqual(metricText("sources", in: presentation), "3 sources")
         XCTAssertEqual(metricText("routes", in: presentation), "2 routes")
         XCTAssertEqual(metricText("points", in: presentation), "5 pts")
         XCTAssertEqual(metricText("distance", in: presentation), "6.0 km")
-        XCTAssertEqual(presentation.legendItems.map(\.title), ["Cycling", "Walking"])
+        XCTAssertEqual(presentation.legendItems.map { $0.title }, ["Cycling", "Walking"])
         XCTAssertEqual(
             presentation.note,
-            "Preview uses only exportable route geometry from 2 imported days and 1 saved track. Cycling contributes the strongest visible route context."
+            "Preview uses exportable route geometry from 2 imported days and 1 saved track. Cycling contributes the strongest visible route context."
         )
     }
 
     func testLegendOverflowCollapsesAdditionalRouteModes() {
         let preview = ExportPreviewData(
+            waypointAnnotations: [],
             pathOverlays: [
                 overlay(type: "WALKING", distance: 3000),
                 overlay(type: "CYCLING", distance: 2000),
@@ -129,10 +131,43 @@ final class MapPresentationTests: XCTestCase {
             savedTrackCount: 0
         )
 
-        let presentation = MapPresentation.exportPreview(preview, unit: .metric)
+        let presentation = MapPresentation.exportPreview(preview, unit: .metric, mode: .tracks)
 
-        XCTAssertEqual(presentation.legendItems.map(\.title), ["Walking", "Cycling", "Bus", "+1 more"])
+        XCTAssertEqual(presentation.legendItems.map { $0.title }, ["Walking", "Cycling", "Bus", "+1 more"])
         XCTAssertEqual(presentation.legendItems.last?.isOverflow, true)
+    }
+
+    func testExportPreviewSummarizesWaypointMode() {
+        let preview = ExportPreviewData(
+            waypointAnnotations: [
+                DayMapVisitAnnotation(
+                    coordinate: DayMapCoordinate(lat: 48.0, lon: 11.0),
+                    semanticType: "HOME",
+                    startTime: nil,
+                    endTime: nil
+                ),
+                DayMapVisitAnnotation(
+                    coordinate: DayMapCoordinate(lat: 48.1, lon: 11.1),
+                    semanticType: "WORK",
+                    startTime: nil,
+                    endTime: nil
+                )
+            ],
+            pathOverlays: [],
+            fittedRegion: DayMapRegion(centerLat: 48.05, centerLon: 11.05, spanLat: 0.2, spanLon: 0.2),
+            hasMapContent: true,
+            importedDayCount: 1,
+            savedTrackCount: 0
+        )
+
+        let presentation = MapPresentation.exportPreview(preview, unit: .metric, mode: .waypoints)
+
+        XCTAssertEqual(metricText("sources", in: presentation), "1 source")
+        XCTAssertEqual(metricText("waypoints", in: presentation), "2 waypoints")
+        XCTAssertEqual(
+            presentation.note,
+            "Preview uses exportable waypoint locations from 1 imported day."
+        )
     }
 
     private func metricText(_ id: String, in presentation: MapSectionPresentation) -> String? {

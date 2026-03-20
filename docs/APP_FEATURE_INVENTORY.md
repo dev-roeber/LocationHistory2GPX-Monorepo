@@ -179,23 +179,23 @@ Present:
 - export sheet entry on regular width
 - multi-day selection with `Select All` / `Deselect All`
 - saved live tracks can be selected in the same export flow
-- local export filters for imported history by date window, maximum accuracy, required content and activity type
-- export preview map for the current selection with route metrics and legend summary
+- local export filters for imported history by date window, maximum accuracy, required content, activity type, bounding box and polygon
+- export mode picker for `Tracks`, `Waypoints` and `Both`
+- export preview map for the current selection with route and waypoint context
 - system `fileExporter` flow
-- GPX and KML generation from selected imported days and selected saved live tracks
+- GPX, KML and GeoJSON generation from selected imported days and selected saved live tracks
+- waypoint export from imported visits plus activity start/end coordinates
 - suggested export filename based on selected days, saved tracks and the active format
-- export summary card with selected-day count, route-day count, distance total and filename preview
-- disabled export button when nothing is selected or no selected day has routes
-- explicit disabled-reason messaging and clearer marking of days without GPX route data
+- export summary card with selected source count, route/waypoint count, distance total and filename preview
+- disabled export button when nothing is selected or the active mode has no exportable content
+- explicit disabled-reason messaging and clearer marking of days without exportable route data
 
 Bewusst deaktiviert, aber vorhanden:
-- export architecture can still grow beyond the active `GPX`/`KML` formats
+- export architecture can still grow beyond the active `GPX`/`KML`/`GeoJSON` formats
 
 Not present:
-- active CSV, GeoJSON or KMZ export in the app UI
-- local export UI for polygon/bounding-box filters
+- active CSV or KMZ export in the app UI
 - per-route selection inside a day
-- waypoint export for visits / activities
 - cloud sync, server upload or account-backed sharing
 
 ## 10. Fehlerzustände / Leerzustände / Status-UI

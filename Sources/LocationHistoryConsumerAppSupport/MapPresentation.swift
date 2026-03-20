@@ -153,9 +153,11 @@ enum MapPresentation {
 
     static func exportPreview(
         _ previewData: ExportPreviewData,
-        unit: AppDistanceUnitPreference
+        unit: AppDistanceUnitPreference,
+        mode: ExportMode
     ) -> MapSectionPresentation {
         let routeCount = previewData.pathOverlays.count
+        let waypointCount = previewData.waypointAnnotations.count
         let pointCount = previewData.pathOverlays.reduce(0) { partialResult, overlay in
             partialResult + overlay.coordinates.count
         }
@@ -182,6 +184,16 @@ enum MapPresentation {
                     icon: "location.north.line",
                     text: "\(routeCount) \(routeCount == 1 ? "route" : "routes")",
                     accessibilityLabel: "\(routeCount) preview \(routeCount == 1 ? "route" : "routes")"
+                )
+            )
+        }
+        if waypointCount > 0 {
+            metrics.append(
+                MapMetricPresentation(
+                    id: "waypoints",
+                    icon: "mappin.and.ellipse",
+                    text: "\(waypointCount) \(waypointCount == 1 ? "waypoint" : "waypoints")",
+                    accessibilityLabel: "\(waypointCount) preview \(waypointCount == 1 ? "waypoint" : "waypoints")"
                 )
             )
         }
@@ -221,7 +233,7 @@ enum MapPresentation {
 
         var note = sourceParts.isEmpty
             ? nil
-            : "Preview uses only exportable route geometry from \(sourceParts.joined(separator: " and "))."
+            : "Preview uses exportable \(mode == .waypoints ? "waypoint locations" : mode == .tracks ? "route geometry" : "route geometry and waypoint locations") from \(sourceParts.joined(separator: " and "))."
         if let dominantMode {
             let dominantSentence = "\(dominantMode) contributes the strongest visible route context."
             note = note.map { "\($0) \(dominantSentence)" } ?? dominantSentence

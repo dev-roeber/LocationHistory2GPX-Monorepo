@@ -37,9 +37,10 @@ public struct ExportCoordinateBounds: Equatable, Hashable {
     }
 }
 
-public enum ExportSpatialFilter: Equatable {
+public indirect enum ExportSpatialFilter: Equatable {
     case bounds(ExportCoordinateBounds)
     case polygon([ExportCoordinate])
+    case all([ExportSpatialFilter])
 
     public func contains(lat: Double, lon: Double) -> Bool {
         contains(ExportCoordinate(lat: lat, lon: lon))
@@ -51,6 +52,8 @@ public enum ExportSpatialFilter: Equatable {
             return bounds.contains(coordinate)
         case let .polygon(vertices):
             return Self.pointInPolygon(coordinate, vertices: vertices)
+        case let .all(filters):
+            return filters.allSatisfy { $0.contains(coordinate) }
         }
     }
 

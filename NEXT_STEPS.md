@@ -2,44 +2,7 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte, repo-wahr und nach aktuellem Code-Stand priorisiert.
 
-## 1. Phase 19.39 – Export-Filter vervollstaendigen
-
-Status: **teilweise umgesetzt**
-
-Bereits drin:
-- lokale Filter fuer importierte History nach `From`, `To` und `Max accuracy`
-- explizite `Has ...`- und `Activity type`-Filter als Nutzeroberflaeche
-- Filter wirken auf Export-Day-Liste, Preview und den eigentlichen Export
-- Saved Live Tracks bleiben bewusst ungefiltert
-
-Fehlt noch:
-- UI fuer Polygon-/Bounding-Box-Filter
-- klare Nutzererklaerung, welche Filter nur importierte History und welche auch Saved Live Tracks betreffen
-
-## 2. Phase 19.40 – Weitere Exportformate
-
-Status: **teilweise umgesetzt**
-
-Bereits drin:
-- `GPX` aktiv
-- `KML` aktiv
-- gemeinsamer Exportpfad fuer importierte Days + Saved Live Tracks
-
-Fehlt noch:
-- naechstes wirkliches Zusatzformat festziehen und aktivieren
-- sinnvolle Reihenfolge ist `CSV` oder `GeoJSON` vor `KMZ`
-- Dateityp-/Dokument-Handling fuer weitere Formate sauber in die bestehende Export-UI einhaengen
-
-## 3. Phase 19.41 – Exportmodi / Waypoints vs Tracks
-
-Status: **offen**
-
-Fehlt noch:
-- Benutzerentscheidung oder Produktvorgabe fuer `Tracks`, `Waypoints` oder Mischmodus
-- Erweiterung der Export-Builder ohne die aktuellen GPX/KML-Flows zu zerbrechen
-- klare UI, wann Visits/Activities als Wegpunkte exportiert werden und wann nicht
-
-## 4. Phase 19.42 – Server-Upload fuer Standortdaten
+## 1. Phase 19.42 – Server-Upload fuer Standortdaten
 
 Status: **offen**
 
@@ -50,7 +13,7 @@ Fehlt noch:
 - Fehler-/Retry-Strategie
 - klare Trennung zwischen lokalem Recording und externem Upload
 
-## 5. Phase 19.43 – Background-Recording auf echter Apple-Hardware haerten
+## 2. Phase 19.43 – Background-Recording auf echter Apple-Hardware haerten
 
 Status: **teilweise umgesetzt**
 
@@ -64,7 +27,7 @@ Fehlt noch:
 - separater dokumentierter Nachweis im Apple-/Wrapper-Runbook
 - Korrektur verbleibender Produkttexte, falls der reale Device-Flow noch Unterschiede zeigt
 
-## 6. Phase 19.44 – Live-Tracks-Oberflaeche final einordnen
+## 3. Phase 19.44 – Live-Tracks-Oberflaeche final einordnen
 
 Status: **teilweise umgesetzt**
 
@@ -77,14 +40,59 @@ Fehlt noch:
 - Produktentscheidung, ob `Saved Live Tracks` nur ein lokaler Nebenfluss bleibt oder einen eigenen primaeren App-Bereich bekommt
 - falls eigener Bereich gewuenscht: Einstieg, Navigation und Informationsarchitektur entsprechend anpassen
 
-## 7. Phase 20 – Apple / ASC / TestFlight / externe Distribution
+## 4. Phase 19.45 – Deduplizierung / Bereinigung
+
+Status: **teilweise umgesetzt**
+
+Bereits drin:
+- Live-Recorder dedupliziert und filtert nach Genauigkeit / Mindestbewegung
+- Export-Sanitizer entfernt doppelte aufeinanderfolgende Pfadpunkte
+
+Fehlt noch:
+- breitere Bereinigung fuer importierte History vor Export
+- klarere Produktentscheidung, wie aggressiv History-Daten bereinigt werden duerfen
+
+## 5. Phase 19.46 – Highlights / Insights / Zeitraumsauswahl
+
+Status: **geplant**
+
+Fehlt noch:
+- mehr Highlights in Overview und Insights
+- deutlich mehr Insight-Module
+- waehlbarer angezeigter Zeitraum fuer Overview/Insights statt nur passiver Date-Range-Anzeige
+
+## 6. Phase 19.47 – Sprache / Lokalisierung
+
+Status: **geplant**
+
+Fehlt noch:
+- deutsche Sprache als Auswahlmoeglichkeit neben Englisch in den Optionen
+- belastbare Lokalisierungsstrategie fuer Core + Wrapper
+
+## 7. Phase 19.48 – Heatmap
+
+Status: **geplant**
+
+Fehlt noch:
+- Produktentscheidung fuer Heatmap-Scope und Datenbasis
+- UI-/Map-Integration ohne bestehende Route-/Waypoint-Vorschau zu verwaessern
+
+## 8. Phase 19.49 – Weitere Exportformate nach GeoJSON
+
+Status: **geplant**
+
+Fehlt noch:
+- Priorisierung zwischen `CSV` und `KMZ`
+- saubere Einhaengung in den bestehenden Exportmodus statt eines unklaren Formatwachstums
+
+## 9. Phase 20 – Apple / ASC / TestFlight / externe Distribution
 
 Status: **bewusst geparkt**
 
 - bleibt ausserhalb des aktuellen Linux-Hosts
 - braucht Apple-Hardware, Signierungskontext und reale Distribution statt lokaler Repo-Arbeit
 
-## 8. Phase 21 – spaetere Folgearbeit
+## 10. Phase 21 – spaetere Folgearbeit
 
 Status: **bewusst unberuehrt**
 

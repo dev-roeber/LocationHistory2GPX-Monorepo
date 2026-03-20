@@ -6,7 +6,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 
 - Consumer only
 - keine allgemeine Producer-Pipeline oder Takeout-Aufbereitung fuer Google-Rohdaten
-- keine GeoJSON-/CSV-Erzeugung und keine allgemeine Producer-Exportpipeline
+- keine CSV-/KMZ-Erzeugung und keine allgemeine Producer-Exportpipeline
 - keine fertige Produkt-App in diesem Schritt
 - offline-first, ohne Netzwerkcode, Analytics-Tracking oder Cloud-Sync
 
@@ -31,6 +31,9 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen; optional auch im Background weiterfuehren, wenn der Nutzer das lokal aktiviert und `Always Allow` gewaehrt
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
 - lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab und technische Importdetails speichern
+- importierte History und gespeicherte Live-Tracks lokal als `GPX`, `KML` oder `GeoJSON` exportieren
+- zwischen `Tracks`, `Waypoints` und `Both` als Exportmodus wechseln
+- importierte History lokal nach Datum, Genauigkeit, Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon fuer den Export filtern
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -44,6 +47,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - `trips_index.json` konsumieren
 - Auto-Resume eines laufenden Live-Tracks nach App-Neustart
 - Mergen aufgezeichneter Live-Tracks in importierte Originaldaten
+- CSV-/KMZ-Export und Server-Upload
 
 ## Struktur
 
@@ -172,8 +176,9 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen Dateinamen passend zum aktiven Exportformat vor dem fileExporter-Dialog
-- Export-Flow zeigt jetzt eine sichtbare Vorschaukarte und schaltet `GPX` und `KML` als aktive Dateiformate frei
-- Export-Flow bietet jetzt lokale Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt und Aktivitaetstyp; gespeicherte Live-Tracks bleiben davon bewusst unberuehrt
+- Export-Flow zeigt jetzt eine sichtbare Vorschaukarte fuer Routen und Waypoints und schaltet `GPX`, `KML` und `GeoJSON` als aktive Dateiformate frei
+- Export-Flow bietet jetzt lokale Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon; gespeicherte Live-Tracks bleiben davon bewusst unberuehrt
+- Export-Flow bietet jetzt die Modi `Tracks`, `Waypoints` und `Both`; Waypoints werden aus importierten Visits sowie Activity-Start/-End-Koordinaten erzeugt
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
 - bleibt offline-only; die neue Live-Recording-Logik bleibt lokal und klar vom Import-/Query-Layer getrennt

@@ -6,8 +6,9 @@ import UniformTypeIdentifiers
 public enum ExportFormat: String, Identifiable, CaseIterable {
     case gpx = "GPX"
     case kml = "KML"
+    case geoJSON = "GeoJSON"
 
-    public static let allCases: [ExportFormat] = [.gpx, .kml]
+    public static let allCases: [ExportFormat] = [.gpx, .kml, .geoJSON]
 
     public var id: String { rawValue }
 
@@ -17,6 +18,8 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
             return "gpx"
         case .kml:
             return "kml"
+        case .geoJSON:
+            return "geojson"
         }
     }
 
@@ -26,6 +29,8 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
             return "GPS Exchange Format – compatible with most navigation and mapping apps."
         case .kml:
             return "Keyhole Markup Language – useful for Google Earth and other map viewers."
+        case .geoJSON:
+            return "GeoJSON FeatureCollection – useful for browsers, GIS tools, and developer workflows."
         }
     }
 
@@ -35,6 +40,8 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
             return "location.north.line.fill"
         case .kml:
             return "map.fill"
+        case .geoJSON:
+            return "curlybraces"
         }
     }
 
@@ -45,6 +52,8 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
             return .gpx
         case .kml:
             return .kml
+        case .geoJSON:
+            return .geoJSON
         }
     }
     #endif

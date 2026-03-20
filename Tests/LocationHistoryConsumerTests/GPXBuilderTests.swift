@@ -124,6 +124,87 @@ final class GPXBuilderTests: XCTestCase {
         XCTAssertTrue(gpx.contains("lat=\"48.00000000\""))
     }
 
+    func testBuildWaypointModeIncludesVisitsAndActivityEndpoints() {
+        let day = Day(
+            date: "2024-05-01",
+            visits: [
+                Visit(
+                    lat: 48.0,
+                    lon: 11.0,
+                    startTime: "2024-05-01T08:00:00Z",
+                    endTime: nil,
+                    semanticType: "HOME",
+                    placeID: nil,
+                    accuracyM: nil,
+                    sourceType: nil
+                )
+            ],
+            activities: [
+                Activity(
+                    startTime: "2024-05-01T09:00:00Z",
+                    endTime: "2024-05-01T10:00:00Z",
+                    startLat: 48.1,
+                    startLon: 11.1,
+                    endLat: 48.2,
+                    endLon: 11.2,
+                    activityType: "WALKING",
+                    distanceM: nil,
+                    splitFromMidnight: nil,
+                    startAccuracyM: nil,
+                    endAccuracyM: nil,
+                    sourceType: nil,
+                    flatCoordinates: nil
+                )
+            ],
+            paths: []
+        )
+
+        let gpx = GPXBuilder.build(from: [day], mode: .waypoints)
+
+        XCTAssertFalse(gpx.contains("<trk>"))
+        XCTAssertEqual(gpx.components(separatedBy: "<wpt ").count - 1, 3)
+        XCTAssertTrue(gpx.contains("<type>VISIT</type>"))
+        XCTAssertTrue(gpx.contains("<type>ACTIVITY_START</type>"))
+        XCTAssertTrue(gpx.contains("<type>ACTIVITY_END</type>"))
+    }
+
+    func testBuildBothModeIncludesTracksAndWaypoints() {
+        let path = Path(
+            startTime: nil,
+            endTime: nil,
+            activityType: "WALKING",
+            distanceM: 700,
+            sourceType: nil,
+            points: [
+                PathPoint(lat: 48.0, lon: 11.0, time: nil, accuracyM: nil),
+                PathPoint(lat: 48.001, lon: 11.001, time: nil, accuracyM: nil)
+            ],
+            flatCoordinates: nil
+        )
+        let day = Day(
+            date: "2024-05-01",
+            visits: [
+                Visit(
+                    lat: 48.0,
+                    lon: 11.0,
+                    startTime: "2024-05-01T08:00:00Z",
+                    endTime: nil,
+                    semanticType: "HOME",
+                    placeID: nil,
+                    accuracyM: nil,
+                    sourceType: nil
+                )
+            ],
+            activities: [],
+            paths: [path]
+        )
+
+        let gpx = GPXBuilder.build(from: [day], mode: .both)
+
+        XCTAssertTrue(gpx.contains("<trk>"))
+        XCTAssertTrue(gpx.contains("<wpt "))
+    }
+
     func testXMLEscapingInActivityType() {
         let pt = PathPoint(lat: 47.0, lon: 8.0, time: nil, accuracyM: nil)
         let path = Path(startTime: nil, endTime: nil, activityType: "Rock & Roll", distanceM: nil, sourceType: nil, points: [pt], flatCoordinates: nil)

@@ -32,12 +32,14 @@ final class ExportPreviewDataTests: XCTestCase {
         let preview = ExportPreviewDataBuilder.previewData(
             importedExport: export,
             selection: selection,
-            recordedTracks: [savedTrack]
+            recordedTracks: [savedTrack],
+            mode: .tracks
         )
 
         XCTAssertTrue(preview.hasMapContent)
         XCTAssertEqual(preview.importedDayCount, 1)
         XCTAssertEqual(preview.savedTrackCount, 1)
+        XCTAssertEqual(preview.waypointAnnotations.count, 0)
         XCTAssertEqual(preview.pathOverlays.count, 2)
         XCTAssertNotNil(preview.fittedRegion)
     }
@@ -58,7 +60,8 @@ final class ExportPreviewDataTests: XCTestCase {
         let preview = ExportPreviewDataBuilder.previewData(
             importedExport: export,
             selection: selection,
-            recordedTracks: []
+            recordedTracks: [],
+            mode: .tracks
         )
 
         XCTAssertFalse(preview.hasMapContent)
@@ -92,13 +95,40 @@ final class ExportPreviewDataTests: XCTestCase {
             importedExport: export,
             selection: selection,
             recordedTracks: [savedTrack],
-            queryFilter: AppExportQueryFilter(maxAccuracyM: 25)
+            queryFilter: AppExportQueryFilter(maxAccuracyM: 25),
+            mode: .tracks
         )
 
         XCTAssertTrue(preview.hasMapContent)
         XCTAssertEqual(preview.importedDayCount, 1)
         XCTAssertEqual(preview.savedTrackCount, 1)
         XCTAssertEqual(preview.pathOverlays.count, 1)
+    }
+
+    func testPreviewDataIncludesWaypointAnnotationsInWaypointMode() {
+        let export = exportWith(days: """
+        {
+          "date":"2024-05-01",
+          "visits":[{"lat":48.0,"lon":11.0,"start_time":"2024-05-01T08:00:00Z","semantic_type":"HOME"}],
+          "activities":[{"activity_type":"WALKING","start_lat":48.1,"start_lon":11.1,"end_lat":48.2,"end_lon":11.2}],
+          "paths":[]
+        }
+        """)
+
+        var selection = ExportSelectionState()
+        selection.toggle("2024-05-01")
+
+        let preview = ExportPreviewDataBuilder.previewData(
+            importedExport: export,
+            selection: selection,
+            recordedTracks: [],
+            mode: .waypoints
+        )
+
+        XCTAssertTrue(preview.hasMapContent)
+        XCTAssertEqual(preview.pathOverlays.count, 0)
+        XCTAssertEqual(preview.waypointAnnotations.count, 3)
+        XCTAssertNotNil(preview.fittedRegion)
     }
 
     private func exportWith(days jsonDays: String) -> AppExport {

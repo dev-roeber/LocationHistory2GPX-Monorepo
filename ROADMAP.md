@@ -5,7 +5,7 @@
 ### Repo-Truth-Zusammenfassung
 Lokaler iPhone-Betrieb wurde zuletzt auf Apple-Hardware real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
 Der fruehere 19.x-UI-/UX-Block ist abgeschlossen, aber die Produktarbeit ist lokal **nicht** komplett beendet.
-Seitdem sind zusaetzlich Live-Tracking-Einstellungen, optionales Background-Recording im Codepfad, aktive `KML`-Exports, eine sichtbare Export-Vorschaukarte und erste lokale Export-Filter umgesetzt worden.
+Seitdem sind zusaetzlich Live-Tracking-Einstellungen, optionales Background-Recording im Codepfad, aktive `KML`-/`GeoJSON`-Exports, eine sichtbare Export-Vorschaukarte, echte lokale Area-Filter und Exportmodi fuer `Tracks` / `Waypoints` / `Both` umgesetzt worden.
 Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wieder echte lokale Arbeit ab statt nur geparkte Apple-Themen.
 
 ### Fertige Punkte (repo-wahr abgeschlossen)
@@ -20,8 +20,11 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 - Live-Recording mit lokalen Einstellungen fuer Accuracy-Filter und Recording-Detail
 - GPX-Export fuer importierte History und gespeicherte Live-Tracks
 - KML-Export als aktives zweites Format
+- GeoJSON-Export als aktives drittes Format
+- Exportmodi fuer `Tracks`, `Waypoints` und `Both`
+- Waypoint-Export aus importierten Visits sowie Activity-Start/-End-Koordinaten
 - sichtbare Export-Vorschaukarte direkt auf der Export-Seite
-- lokale Export-Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt und Aktivitaetstyp
+- lokale Export-Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon
 - Day-List-/Overview-/Insights-/Export-Politur aus den Phasen 19.31–19.38
 
 ### Teilweise umgesetzt / bewusst noch nicht vollstaendig
@@ -30,8 +33,8 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
   Codepfad, Permissions-Upgrade und Wrapper-Deklaration sind vorhanden.
   Was noch fehlt: reale Apple-Hardware-Verifikation, Edge-Case-Pruefung fuer Suspend/Resume und saubere Dokumentation eines echten Device-Durchlaufs.
 - **Export-Funktionalitaet**
-  GPX + KML + Preview + Saved-Live-Tracks + Date/Accuracy/Content/Activity-Filter sind aktiv.
-  Was noch fehlt: CSV/GeoJSON/KMZ, Exportmodi, Waypoints, polygon-/bounding-box-Filter-UI, per-route Auswahl.
+  GPX + KML + GeoJSON + Preview + Saved-Live-Tracks + Date/Accuracy/Content/Activity/Area-Filter sind aktiv.
+  Was noch fehlt: CSV/KMZ, per-route Auswahl und ggf. weitere Exportzielvarianten.
 - **Live-Track-Oberflaeche**
   Library und Editor existieren als eigener lokaler Bereich.
   Was noch fehlt: Entscheidung, ob daraus ein eigener Haupt-Tab / primaerer App-Bereich werden soll.
@@ -54,21 +57,59 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 ### Geplante Punkte (noch nicht umgesetzt)
 
 - Standort an Server eigener Wahl senden (ein-/ausschaltbar)
-- Waypoint-vs-Track-Exportmodi
-- weitere Exportformate wie CSV, GeoJSON, KMZ
-- Polygon-/Bounding-Box-Filter als echte UI
+- weitere Exportformate wie CSV oder KMZ
 - tiefergehende Konkurrenz-/Feature-Recherche ausserhalb des Repos
+- Deutsche Sprache als Auswahlmoeglichkeit neben Englisch in den Optionen
+- weitere Highlights in Overview/Insights
+- deutlich mehr Insight-Module und Insight-Tiefe
+- waehlbarer angezeigter Zeitraum fuer Overview/Insights
+- Heatmap
 
 ### Aktiver lokaler Fokus
 
 Der sinnvolle lokale Fokus liegt jetzt nicht mehr auf allgemeiner 19.x-Politur, sondern auf klar abgegrenzten Ausbaupaketen:
 
-1. Export-Filter vervollstaendigen
-2. weitere Exportformate / Exportmodi
-3. Server-Upload als separater Networking-Block
-4. Background-Recording auf echter Apple-Hardware verifizieren und haerten
+1. Server-Upload als separater Networking-Block
+2. Background-Recording auf echter Apple-Hardware verifizieren und haerten
+3. Live-Track-Oberflaeche und Datenbereinigung weiter schaerfen
+4. spaetere Produktausbaustufen fuer Highlights, Insights, Zeitraum, Sprache und Heatmap sauber schneiden
 
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt fuer spaetere Folgearbeit reserviert.
+
+### Phase 19.41 – Exportmodi / Waypoints vs Tracks
+
+**Datum:** 2026-03-20
+**Ziel:** Export klar zwischen Route-, Waypoint- und Mischmodus unterscheiden, ohne bestehende GPX/KML-Flows zu zerbrechen.
+
+- [x] neuer `ExportMode` fuer `Tracks`, `Waypoints` und `Both`
+- [x] GPX-, KML- und GeoJSON-Builder respektieren jetzt den aktiven Modus
+- [x] Waypoint-Export basiert auf importierten Visits sowie Activity-Start/-End-Koordinaten
+- [x] Export-UI, Dateiname und Disabled-Reasons reagieren jetzt auf den aktiven Modus
+- [x] Saved Live Tracks bleiben bewusst track-only und werden in Waypoint-only-Modi nicht faelschlich als exportierbar dargestellt
+- Bewusst nicht in diesem Schritt: per-route Auswahl, Track-/Waypoint-Editierung importierter Daten
+
+### Phase 19.40 – Weitere Exportformate
+
+**Datum:** 2026-03-20
+**Ziel:** Nach GPX/KML ein drittes sinnvolles Exportziel aktivieren, ohne einen unklaren Formatfriedhof aufzubauen.
+
+- [x] `GeoJSON` als drittes aktives Exportformat freigeschaltet
+- [x] `ExportDocument` / `UTType` und Export-UI kennen jetzt `.geojson`
+- [x] GeoJSON exportiert Tracks als `LineString` und Waypoints als `Point`-Features
+- [x] Tests decken das neue Format fuer route-only und mixed content ab
+- Bewusst nicht in diesem Schritt: `CSV`, `KMZ`, serverseitige Zielsysteme
+
+### Phase 19.39 – Export-Filter vervollstaendigen
+
+**Datum:** 2026-03-20
+**Ziel:** Die bereits vorhandenen Query-Unterbauten fuer Flaechenfilter sichtbar und produktiv nutzbar machen.
+
+- [x] lokale Bounding-Box-UI fuer importierte History
+- [x] lokale Polygon-UI per Koordinatenliste fuer importierte History
+- [x] Upstream- und lokale Area-Filter werden konservativ kombiniert statt gegenseitig still zu ueberschreiben
+- [x] Vorschau und Export reagieren jetzt auf Bounding-Box/Punkt-in-Polygon-Filter
+- [x] Nutzerhinweise machen explizit, dass lokale Filter nur importierte History betreffen und Saved Live Tracks unberuehrt lassen
+- Bewusst nicht in diesem Schritt: interaktives Polygonzeichnen auf der Karte
 
 ### Phase 19.38 – Export-UX-Politur
 

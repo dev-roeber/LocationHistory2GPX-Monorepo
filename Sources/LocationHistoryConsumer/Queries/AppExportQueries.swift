@@ -574,6 +574,17 @@ public enum AppExportQueries {
                 descriptions.append("Area: Bounding box")
             case .polygon:
                 descriptions.append("Area: Polygon")
+            case let .all(filters):
+                for filter in filters {
+                    switch filter {
+                    case .bounds:
+                        descriptions.append("Area: Bounding box")
+                    case .polygon:
+                        descriptions.append("Area: Polygon")
+                    case .all:
+                        descriptions.append("Area: Combined filters")
+                    }
+                }
             }
         }
         return descriptions

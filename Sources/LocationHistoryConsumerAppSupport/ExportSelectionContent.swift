@@ -2,29 +2,18 @@ import Foundation
 import LocationHistoryConsumer
 
 struct ExportSelectionSnapshot: Equatable {
-    let selectedDaySummaries: [DaySummary]
-    let selectedRecordedTracks: [RecordedTrack]
-    let exportableDaySummaries: [DaySummary]
-    let exportableRecordedTracks: [RecordedTrack]
+    let selectedDayCount: Int
+    let selectedRecordedTrackCount: Int
+    let exportableSourceCount: Int
+    let routeCount: Int
+    let waypointCount: Int
 
     var selectedSourceCount: Int {
-        selectedDaySummaries.count + selectedRecordedTracks.count
+        selectedDayCount + selectedRecordedTrackCount
     }
 
-    var exportableSourceCount: Int {
-        exportableDaySummaries.count + exportableRecordedTracks.count
-    }
-
-    var selectedDayCount: Int {
-        selectedDaySummaries.count
-    }
-
-    var selectedRecordedTrackCount: Int {
-        selectedRecordedTracks.count
-    }
-
-    var routeCount: Int {
-        exportableDaySummaries.reduce(0) { $0 + $1.exportablePathCount } + exportableRecordedTracks.count
+    var contentCount: Int {
+        routeCount + waypointCount
     }
 }
 
@@ -36,20 +25,41 @@ enum ExportSelectionContent {
     }()
 
     static func snapshot(
+        importedExport: AppExport?,
         selection: ExportSelectionState,
-        summaries: [DaySummary],
-        recordedTracks: [RecordedTrack]
+        recordedTracks: [RecordedTrack],
+        queryFilter: AppExportQueryFilter? = nil,
+        mode: ExportMode
     ) -> ExportSelectionSnapshot {
-        let selectedDaySummaries = summaries.filter { selection.isSelected($0.date) }
+        let selectedImportedDays = selectedImportedDays(
+            in: importedExport,
+            selection: selection,
+            queryFilter: queryFilter
+        )
         let selectedRecordedTracks = recordedTracks
             .filter { selection.isSelected(recordedTrackID: $0.id) }
             .sorted { $0.startedAt < $1.startedAt }
+        let routeDays = mode.includesTracks
+            ? selectedImportedDays.compactMap(ExportRouteSanitizer.sanitizedDay)
+            : []
+        let waypointCounts = mode.includesWaypoints
+            ? selectedImportedDays.map(ExportWaypointExtractor.count(in:))
+            : Array(repeating: 0, count: selectedImportedDays.count)
+        let exportableImportedDayCount = zip(selectedImportedDays, waypointCounts).reduce(0) { partial, pair in
+            let dayHasRoutes = mode.includesTracks && ExportRouteSanitizer.sanitizedDay(pair.0) != nil
+            let dayHasWaypoints = mode.includesWaypoints && pair.1 > 0
+            return partial + ((dayHasRoutes || dayHasWaypoints) ? 1 : 0)
+        }
+        let exportableRecordedTrackCount = mode.includesTracks
+            ? selectedRecordedTracks.filter(isExportableRecordedTrack).count
+            : 0
 
         return ExportSelectionSnapshot(
-            selectedDaySummaries: selectedDaySummaries,
-            selectedRecordedTracks: selectedRecordedTracks,
-            exportableDaySummaries: selectedDaySummaries.filter { $0.exportablePathCount > 0 },
-            exportableRecordedTracks: selectedRecordedTracks.filter(isExportableRecordedTrack)
+            selectedDayCount: selectedImportedDays.count,
+            selectedRecordedTrackCount: selectedRecordedTracks.count,
+            exportableSourceCount: exportableImportedDayCount + exportableRecordedTrackCount,
+            routeCount: routeDays.reduce(0) { $0 + $1.paths.count } + exportableRecordedTrackCount,
+            waypointCount: waypointCounts.reduce(0, +)
         )
     }
 
@@ -79,13 +89,10 @@ enum ExportSelectionContent {
         summaries: [DaySummary],
         recordedTracks: [RecordedTrack]
     ) -> [String] {
-        let snapshot = snapshot(
-            selection: selection,
-            summaries: summaries,
-            recordedTracks: recordedTracks
-        )
-        let importedDates = snapshot.selectedDaySummaries.map(\.date)
-        let recordedDates = snapshot.selectedRecordedTracks.map(\.dayKey)
+        let importedDates = summaries.filter { selection.isSelected($0.date) }.map(\.date)
+        let recordedDates = recordedTracks
+            .filter { selection.isSelected(recordedTrackID: $0.id) }
+            .map(\.dayKey)
         return Array(Set(importedDates + recordedDates)).sorted()
     }
 
@@ -100,7 +107,6 @@ enum ExportSelectionContent {
 
         return AppExportQueries.days(in: export, applying: queryFilter)
             .filter { selection.isSelected($0.date) }
-            .compactMap(ExportRouteSanitizer.sanitizedDay)
     }
 
     private static func selectedRecordedTrackDays(

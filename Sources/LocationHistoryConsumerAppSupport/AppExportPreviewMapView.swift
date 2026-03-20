@@ -21,6 +21,13 @@ struct AppExportPreviewMapView: View {
                     longitudeDelta: region.spanLon
                 )
             ))) {
+                ForEach(Array(previewData.waypointAnnotations.enumerated()), id: \.offset) { _, annotation in
+                    Marker(annotation.semanticType ?? "Waypoint", coordinate: CLLocationCoordinate2D(
+                        latitude: annotation.coordinate.lat,
+                        longitude: annotation.coordinate.lon
+                    ))
+                    .tint(MapPalette.visitColor(for: annotation.semanticType))
+                }
                 ForEach(Array(previewData.pathOverlays.enumerated()), id: \.offset) { _, path in
                     MapPolyline(coordinates: path.coordinates.map {
                         CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon)
@@ -49,10 +56,11 @@ struct AppExportPreviewMapView: View {
 
     private var mapAccessibilityLabel: String {
         let routes = previewData.pathOverlays.count
+        let waypoints = previewData.waypointAnnotations.count
         let points = previewData.pathOverlays.reduce(0) { partialResult, overlay in
             partialResult + overlay.coordinates.count
         }
-        return "Preview map with \(routes) \(routes == 1 ? "route" : "routes") and \(points) plotted points"
+        return "Preview map with \(routes) \(routes == 1 ? "route" : "routes"), \(waypoints) \(waypoints == 1 ? "waypoint" : "waypoints"), and \(points) plotted route points"
     }
 }
 #endif

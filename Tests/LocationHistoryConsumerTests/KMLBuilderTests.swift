@@ -33,4 +33,31 @@ final class KMLBuilderTests: XCTestCase {
         XCTAssertTrue(kml.contains("11.00000000,48.00000000"))
         XCTAssertTrue(kml.contains("11.00100000,48.00100000"))
     }
+
+    func testBuildWaypointModeProducesPointPlacemark() {
+        let day = Day(
+            date: "2024-05-01",
+            visits: [
+                Visit(
+                    lat: 48.0,
+                    lon: 11.0,
+                    startTime: "2024-05-01T08:00:00Z",
+                    endTime: nil,
+                    semanticType: "HOME",
+                    placeID: nil,
+                    accuracyM: nil,
+                    sourceType: nil
+                )
+            ],
+            activities: [],
+            paths: []
+        )
+
+        let kml = KMLBuilder.build(from: [day], mode: .waypoints)
+
+        XCTAssertTrue(kml.contains("<Point>"))
+        XCTAssertTrue(kml.contains("<description>HOME</description>"))
+        XCTAssertTrue(kml.contains("11.00000000,48.00000000"))
+        XCTAssertFalse(kml.contains("<LineString>"))
+    }
 }

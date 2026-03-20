@@ -36,6 +36,12 @@
 - lokale Export-Filter fuer `From`, `To` und `Max accuracy` wirken jetzt sichtbar auf importierte History, Vorschau und den eigentlichen Export
 - lokale Export-Filter greifen bewusst nicht auf gespeicherte Live-Tracks durch und raeumen ausgeblendete Tagesselektionen aus dem Exportzustand
 - lokale Export-Filter bieten jetzt auch explizite `Has ...`- und `Activity type`-Auswahl fuer importierte History statt nur still vorhandenen Query-Unterbau
+- lokale Export-Filter haben jetzt auch eine echte Bounding-Box-/Polygon-UI fuer importierte History; Upstream- und lokale Flaechenfilter werden konservativ kombiniert
+- Export-Vorschaukarte zeigt jetzt auch Waypoint-only-Auswahlen statt nur Routen
+- `GeoJSON` ist jetzt als drittes aktives Exportformat freigeschaltet
+- Export kennt jetzt die Modi `Tracks`, `Waypoints` und `Both`
+- Waypoint-Export nutzt importierte Visits sowie Activity-Start/-End-Koordinaten
+- Dateiname, Disabled-Reasons und Hilfetexte reagieren jetzt auf den aktiven Exportmodus statt still route-only zu bleiben
 
 ### Overview / Days / Day Detail Polish
 - Overview startet jetzt mit Status und einer `Primary Actions`-Sektion fuer Open, Days, Insights und Export

@@ -24,11 +24,34 @@ public struct GPXTrack: Equatable {
     }
 }
 
+public struct GPXWaypoint: Equatable {
+    public let name: String
+    public let type: String?
+    public let description: String?
+    public let latitude: Double
+    public let longitude: Double
+    public let time: String?
+
+    public init(
+        name: String,
+        type: String? = nil,
+        description: String? = nil,
+        latitude: Double,
+        longitude: Double,
+        time: String? = nil
+    ) {
+        self.name = name
+        self.type = type
+        self.description = description
+        self.latitude = latitude
+        self.longitude = longitude
+        self.time = time
+    }
+}
+
 /// Builds GPX 1.1 documents from `Day` arrays.
 ///
 /// Only `Path` entries that carry at least one `PathPoint` are exported as GPX tracks.
-/// Activities (start/end coords only) and Visits are omitted in this version;
-/// they can be added as `<wpt>` elements in a future iteration.
 public enum GPXBuilder {
 
     // MARK: - Public API
@@ -38,11 +61,15 @@ public enum GPXBuilder {
     /// - Parameter days: One or more `Day` values from the app export.
     ///   Days are output in the order supplied; sort before calling if needed.
     /// - Returns: A well-formed GPX 1.1 XML string (UTF-8).
-    public static func build(from days: [Day]) -> String {
-        build(from: days, additionalTracks: [])
+    public static func build(from days: [Day], mode: ExportMode = .tracks) -> String {
+        build(from: days, additionalTracks: [], mode: mode)
     }
 
-    public static func build(from days: [Day], additionalTracks: [GPXTrack]) -> String {
+    public static func build(
+        from days: [Day],
+        additionalTracks: [GPXTrack],
+        mode: ExportMode = .tracks
+    ) -> String {
         var lines: [String] = []
 
         lines.append(#"<?xml version="1.0" encoding="UTF-8"?>"#)
@@ -53,27 +80,45 @@ public enum GPXBuilder {
             xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
             """)
 
-        for day in days {
-            for (pathIndex, path) in day.paths.enumerated() {
-                let validPoints = path.points.filter { _ in true } // all points included
-                guard !validPoints.isEmpty else { continue }
-
-                let trackName = trackTitle(date: day.date, activityType: path.activityType, index: pathIndex)
-                appendTrack(
-                    GPXTrack(
-                        name: trackName,
-                        type: path.activityType,
-                        points: validPoints.map {
-                            GPXTrackPoint(latitude: $0.lat, longitude: $0.lon, time: $0.time)
-                        }
-                    ),
-                    to: &lines
+        if mode.includesWaypoints {
+            let waypoints = ExportWaypointExtractor.waypoints(from: days).map {
+                GPXWaypoint(
+                    name: $0.name,
+                    type: $0.category,
+                    description: $0.detail,
+                    latitude: $0.latitude,
+                    longitude: $0.longitude,
+                    time: $0.time
                 )
+            }
+            for waypoint in waypoints {
+                appendWaypoint(waypoint, to: &lines)
             }
         }
 
-        for track in additionalTracks where !track.points.isEmpty {
-            appendTrack(track, to: &lines)
+        if mode.includesTracks {
+            for day in days {
+                for (pathIndex, path) in day.paths.enumerated() {
+                    let validPoints = path.points.filter { _ in true }
+                    guard !validPoints.isEmpty else { continue }
+
+                    let trackName = trackTitle(date: day.date, activityType: path.activityType, index: pathIndex)
+                    appendTrack(
+                        GPXTrack(
+                            name: trackName,
+                            type: path.activityType,
+                            points: validPoints.map {
+                                GPXTrackPoint(latitude: $0.lat, longitude: $0.lon, time: $0.time)
+                            }
+                        ),
+                        to: &lines
+                    )
+                }
+            }
+
+            for track in additionalTracks where !track.points.isEmpty {
+                appendTrack(track, to: &lines)
+            }
         }
 
         lines.append("</gpx>")
@@ -104,6 +149,23 @@ public enum GPXBuilder {
         }
         lines.append("    </trkseg>")
         lines.append("  </trk>")
+    }
+
+    private static func appendWaypoint(_ waypoint: GPXWaypoint, to lines: inout [String]) {
+        let latStr = String(format: "%.8f", waypoint.latitude)
+        let lonStr = String(format: "%.8f", waypoint.longitude)
+        lines.append(#"  <wpt lat="\#(latStr)" lon="\#(lonStr)">"#)
+        lines.append("    <name>\(xmlEscape(waypoint.name))</name>")
+        if let type = waypoint.type, !type.isEmpty {
+            lines.append("    <type>\(xmlEscape(type))</type>")
+        }
+        if let description = waypoint.description, !description.isEmpty {
+            lines.append("    <desc>\(xmlEscape(description))</desc>")
+        }
+        if let time = waypoint.time, !time.isEmpty {
+            lines.append("    <time>\(xmlEscape(time))</time>")
+        }
+        lines.append("  </wpt>")
     }
 
     /// Suggests a GPX filename for the given set of export dates.
