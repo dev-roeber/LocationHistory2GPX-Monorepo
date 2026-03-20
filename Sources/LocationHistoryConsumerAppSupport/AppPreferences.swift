@@ -29,6 +29,7 @@ public enum AppStartTabPreference: String, CaseIterable, Identifiable {
     case days
     case insights
     case export
+    case live
 
     public var id: String { rawValue }
 
@@ -38,6 +39,7 @@ public enum AppStartTabPreference: String, CaseIterable, Identifiable {
         case .days: return "Days"
         case .insights: return "Insights"
         case .export: return "Export"
+        case .live: return "Live"
         }
     }
 
@@ -47,6 +49,7 @@ public enum AppStartTabPreference: String, CaseIterable, Identifiable {
         case .days: return 1
         case .insights: return 2
         case .export: return 3
+        case .live: return 4
         }
     }
 }
@@ -153,6 +156,42 @@ public enum AppLiveTrackingDetailPreference: String, CaseIterable, Identifiable 
     }
 }
 
+public enum AppLiveTrackingUploadBatchPreference: String, CaseIterable, Identifiable {
+    case immediate
+    case small
+    case medium
+    case large
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .immediate: return "Every Point"
+        case .small: return "Every 5 Points"
+        case .medium: return "Every 15 Points"
+        case .large: return "Every 30 Points"
+        }
+    }
+
+    public var detail: String {
+        switch self {
+        case .immediate: return "Upload each accepted point as it arrives."
+        case .small: return "Batch 5 points before uploading."
+        case .medium: return "Batch 15 points before uploading."
+        case .large: return "Batch 30 points before uploading."
+        }
+    }
+
+    public var minimumBatchSize: Int {
+        switch self {
+        case .immediate: return 1
+        case .small: return 5
+        case .medium: return 15
+        case .large: return 30
+        }
+    }
+}
+
 @MainActor
 public final class AppPreferences: ObservableObject {
     private enum Keys {
@@ -167,6 +206,7 @@ public final class AppPreferences: ObservableObject {
         static let liveTrackingServerUploadEnabled = "app.preferences.liveTrackingServerUploadEnabled"
         static let liveTrackingServerUploadURL = "app.preferences.liveTrackingServerUploadURL"
         static let liveTrackingServerUploadBearerToken = "app.preferences.liveTrackingServerUploadBearerToken"
+        static let liveTrackingUploadBatch = "app.preferences.liveTrackingUploadBatch"
     }
 
     private let userDefaults: UserDefaults
@@ -215,6 +255,10 @@ public final class AppPreferences: ObservableObject {
         didSet { userDefaults.set(liveLocationServerUploadBearerToken, forKey: Keys.liveTrackingServerUploadBearerToken) }
     }
 
+    @Published public var liveTrackingUploadBatch: AppLiveTrackingUploadBatchPreference {
+        didSet { userDefaults.set(liveTrackingUploadBatch.rawValue, forKey: Keys.liveTrackingUploadBatch) }
+    }
+
     public var liveTrackRecorderConfiguration: LiveTrackRecorderConfiguration {
         LiveTrackRecorderConfiguration(
             maximumAcceptedAccuracyM: liveTrackingAccuracy.maximumAcceptedAccuracyM,
@@ -229,7 +273,8 @@ public final class AppPreferences: ObservableObject {
         LiveLocationServerUploadConfiguration(
             isEnabled: sendsLiveLocationToServer,
             endpointURLString: liveLocationServerUploadURLString,
-            bearerToken: liveLocationServerUploadBearerToken
+            bearerToken: liveLocationServerUploadBearerToken,
+            minimumBatchSize: liveTrackingUploadBatch.minimumBatchSize
         )
     }
 
@@ -283,6 +328,11 @@ public final class AppPreferences: ObservableObject {
         self.liveLocationServerUploadURLString = userDefaults.string(forKey: Keys.liveTrackingServerUploadURL)
             ?? LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
         self.liveLocationServerUploadBearerToken = userDefaults.string(forKey: Keys.liveTrackingServerUploadBearerToken) ?? ""
+        self.liveTrackingUploadBatch = Self.loadEnum(
+            AppLiveTrackingUploadBatchPreference.self,
+            key: Keys.liveTrackingUploadBatch,
+            from: userDefaults
+        ) ?? .small
     }
 
     public func reset() {
@@ -297,6 +347,7 @@ public final class AppPreferences: ObservableObject {
         userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadEnabled)
         userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadURL)
         userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadBearerToken)
+        userDefaults.removeObject(forKey: Keys.liveTrackingUploadBatch)
 
         distanceUnit = .metric
         startTab = .overview
@@ -309,6 +360,7 @@ public final class AppPreferences: ObservableObject {
         sendsLiveLocationToServer = false
         liveLocationServerUploadURLString = LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
         liveLocationServerUploadBearerToken = ""
+        liveTrackingUploadBatch = .small
     }
 
     private static func loadEnum<T: RawRepresentable>(

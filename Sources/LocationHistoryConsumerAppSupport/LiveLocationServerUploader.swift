@@ -9,15 +9,18 @@ public struct LiveLocationServerUploadConfiguration: Equatable {
     public var isEnabled: Bool
     public var endpointURLString: String
     public var bearerToken: String
+    public var minimumBatchSize: Int
 
     public init(
         isEnabled: Bool = false,
         endpointURLString: String = LiveLocationServerUploadConfiguration.defaultTestEndpointURLString,
-        bearerToken: String = ""
+        bearerToken: String = "",
+        minimumBatchSize: Int = 5
     ) {
         self.isEnabled = isEnabled
         self.endpointURLString = endpointURLString
         self.bearerToken = bearerToken
+        self.minimumBatchSize = minimumBatchSize
     }
 
     public var endpointURL: URL? {

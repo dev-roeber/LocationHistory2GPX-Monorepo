@@ -40,6 +40,7 @@ public struct AppContentSplitView: View {
         case export
         case tracksLibrary
         case options
+        case heatmap
 
         var id: String { rawValue }
     }
@@ -77,6 +78,7 @@ public struct AppContentSplitView: View {
             .onChange(of: preferences.sendsLiveLocationToServer) { _ in syncLiveRecordingSettings() }
             .onChange(of: preferences.liveLocationServerUploadURLString) { _ in syncLiveRecordingSettings() }
             .onChange(of: preferences.liveLocationServerUploadBearerToken) { _ in syncLiveRecordingSettings() }
+            .onChange(of: preferences.liveTrackingUploadBatch) { _ in syncLiveRecordingSettings() }
     }
 
     private var liveTrackingObserversBase: some View {
@@ -174,6 +176,24 @@ public struct AppContentSplitView: View {
             }
             .tag(3)
             .badge(session.exportSelection.count > 0 ? session.exportSelection.count : 0)
+
+            if #available(iOS 17.0, *) {
+                NavigationStack {
+                    AppLiveTrackingView(
+                        liveLocation: liveLocation,
+                        onOpenSavedTracksLibrary: { presentSheet(.tracksLibrary) }
+                    )
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            actionsMenu
+                        }
+                    }
+                }
+                .tabItem {
+                    Label(t("Live"), systemImage: "record.circle")
+                }
+                .tag(4)
+            }
         }
         #if canImport(UIKit) && os(iOS)
         .background(
@@ -416,6 +436,17 @@ public struct AppContentSplitView: View {
                     color: .mint
                 ) {
                     presentSheet(.tracksLibrary)
+                }
+
+                if session.hasDays {
+                    overviewActionButton(
+                        title: t("Heatmap"),
+                        subtitle: "Visualize your movement density on a map.",
+                        icon: "thermometer.medium",
+                        color: .red
+                    ) {
+                        presentSheet(.heatmap)
+                    }
                 }
 
                 if horizontalSizeClass != .compact, session.hasDays {
@@ -712,6 +743,19 @@ public struct AppContentSplitView: View {
                                 Button(t("Done")) { presentedSheet = nil }
                             }
                         }
+                case .heatmap:
+                    if let export = session.content?.export {
+                        if #available(iOS 17.0, macOS 14.0, *) {
+                            AppHeatmapView(export: export)
+                                .environmentObject(preferences)
+                                .navigationTitle("Heatmap")
+                                .toolbar {
+                                    ToolbarItem(placement: .confirmationAction) {
+                                        Button(t("Done")) { presentedSheet = nil }
+                                    }
+                                }
+                        }
+                    }
                 }
             }
         }

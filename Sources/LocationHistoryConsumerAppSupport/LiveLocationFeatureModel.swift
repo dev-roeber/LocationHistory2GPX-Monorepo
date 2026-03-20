@@ -15,6 +15,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
     @Published public private(set) var prefersBackgroundTracking = false
     @Published public private(set) var serverUploadStatusMessage: String?
     @Published public private(set) var isUploadingToServer = false
+    @Published public private(set) var pendingUploadPointCount: Int = 0
 
     private let client: LiveLocationClient?
     private let store: RecordedTrackStoring
@@ -201,6 +202,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
         if !configuration.isEnabled {
             pendingUploadPoints = []
+            pendingUploadPointCount = 0
             isUploadingToServer = false
             serverUploadStatusMessage = nil
             return
@@ -221,6 +223,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         persistenceErrorMessage = nil
         currentRecordingSessionID = UUID()
         pendingUploadPoints = []
+        pendingUploadPointCount = 0
         if serverUploadConfiguration.isEnabled, serverUploadConfiguration.endpointURL != nil {
             serverUploadStatusMessage = "Server upload ready for \(serverUploadConfiguration.endpointDisplayName)."
         }
@@ -256,6 +259,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         client?.stopUpdatingLocation()
         currentLocation = nil
         schedulePendingUploadIfNeeded()
+        pendingUploadPointCount = pendingUploadPoints.count
 
         let finishedTrack = recorder.stop()
         liveTrackPoints = []
@@ -356,6 +360,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
                 horizontalAccuracyM: $0.horizontalAccuracyM
             )
         })
+        pendingUploadPointCount = pendingUploadPoints.count
         schedulePendingUploadIfNeeded()
     }
 
@@ -371,6 +376,9 @@ public final class LiveLocationFeatureModel: ObservableObject {
             return
         }
         guard !pendingUploadPoints.isEmpty else {
+            return
+        }
+        guard pendingUploadPoints.count >= serverUploadConfiguration.minimumBatchSize || !isRecording else {
             return
         }
 
@@ -411,6 +419,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         } else {
             pendingUploadPoints.removeAll()
         }
+        pendingUploadPointCount = pendingUploadPoints.count
 
         isUploadingToServer = false
         serverUploadStatusMessage = "Last upload sent \(sentPointCount) point\(sentPointCount == 1 ? "" : "s") to \(endpointDisplayName)."

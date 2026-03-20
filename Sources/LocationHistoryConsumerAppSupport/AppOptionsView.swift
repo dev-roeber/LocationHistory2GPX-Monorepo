@@ -62,6 +62,12 @@ public struct AppOptionsView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
+                Picker(t("Upload Batch Size"), selection: $preferences.liveTrackingUploadBatch) {
+                    ForEach(AppLiveTrackingUploadBatchPreference.allCases) { batch in
+                        Text(t(batch.title)).tag(batch)
+                    }
+                }
+
                 LabeledContent(t("Test Endpoint"), value: LiveLocationServerUploadConfiguration.defaultTestEndpointURLString)
             } header: {
                 Text(t("Language and Upload"))
