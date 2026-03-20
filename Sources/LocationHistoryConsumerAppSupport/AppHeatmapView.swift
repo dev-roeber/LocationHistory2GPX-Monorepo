@@ -156,7 +156,7 @@ final class AppHeatmapModel {
         return 0.1                       // Bird's eye: ~10km grid
     }
 
-    private static func binPoints(_ points: [WeightedPoint], step: Double) -> [HeatCell] {
+    nonisolated private static func binPoints(_ points: [WeightedPoint], step: Double) -> [HeatCell] {
         var grid: [Int64: Int] = [:]
         
         // Use an Int64 bit-packed key for maximum dictionary performance
