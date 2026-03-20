@@ -130,10 +130,12 @@ public struct AppDayDetailView: View {
                     t("Local Recording"),
                     message: t("Live location and saved live tracks stay separate from the imported day data above.")
                 )
-                AppLiveLocationSection(
-                    liveLocation: liveLocation,
-                    onOpenSavedTracksLibrary: onOpenSavedTracks
-                )
+                if #available(iOS 17.0, *) {
+                    AppLiveLocationSection(
+                        liveLocation: liveLocation,
+                        onOpenSavedTracksLibrary: onOpenSavedTracks
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

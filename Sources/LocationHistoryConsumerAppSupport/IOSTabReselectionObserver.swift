@@ -57,7 +57,7 @@ final class ObserverViewController: UIViewController, UITabBarControllerDelegate
     }
 
     private var parentTabBarController: UITabBarController? {
-        sequence(first: parent, next: \.parent)
+        sequence(first: parent, next: { $0?.parent })
             .compactMap { $0 as? UITabBarController }
             .first
     }

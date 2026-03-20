@@ -68,6 +68,18 @@ public struct AppContentSplitView: View {
     }
 
     public var body: some View {
+        liveTrackingObservers
+            .environment(\.locale, preferences.appLocale)
+    }
+
+    private var liveTrackingObservers: some View {
+        liveTrackingObserversBase
+            .onChange(of: preferences.sendsLiveLocationToServer) { _ in syncLiveRecordingSettings() }
+            .onChange(of: preferences.liveLocationServerUploadURLString) { _ in syncLiveRecordingSettings() }
+            .onChange(of: preferences.liveLocationServerUploadBearerToken) { _ in syncLiveRecordingSettings() }
+    }
+
+    private var liveTrackingObserversBase: some View {
         Group {
             if horizontalSizeClass == .compact {
                 compactTabView
@@ -78,25 +90,9 @@ public struct AppContentSplitView: View {
         .onAppear {
             syncLiveRecordingSettings()
         }
-        .onChange(of: preferences.liveTrackingAccuracy) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .onChange(of: preferences.liveTrackingDetail) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .onChange(of: preferences.allowsBackgroundLiveTracking) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .onChange(of: preferences.sendsLiveLocationToServer) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .onChange(of: preferences.liveLocationServerUploadURLString) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .onChange(of: preferences.liveLocationServerUploadBearerToken) { _, _ in
-            syncLiveRecordingSettings()
-        }
-        .environment(\.locale, preferences.appLocale)
+        .onChange(of: preferences.liveTrackingAccuracy) { _ in syncLiveRecordingSettings() }
+        .onChange(of: preferences.liveTrackingDetail) { _ in syncLiveRecordingSettings() }
+        .onChange(of: preferences.allowsBackgroundLiveTracking) { _ in syncLiveRecordingSettings() }
     }
 
     // MARK: - Compact (iPhone) Tab View

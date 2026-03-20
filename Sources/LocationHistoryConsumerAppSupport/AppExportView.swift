@@ -83,97 +83,112 @@ public struct AppExportView: View {
     @ViewBuilder
     private func exportContent(summaries: [DaySummary]) -> some View {
         let selection = session.exportSelection
+        exportContentStack(selection: selection, summaries: summaries)
+    }
 
-        VStack(spacing: 0) {
-            List {
-                selectionSummarySection(selection: selection, summaries: summaries)
-
-                if hasImportedExport {
-                    filterSection
-                }
-
-                if !selection.isEmpty {
-                    previewSection(selection: selection, summaries: summaries)
-                }
-
-                if !summaries.isEmpty {
-                    daysSection(summaries: summaries, selection: selection)
-                }
-
-                if !liveLocation.recordedTracks.isEmpty {
-                    recordedTracksSection(selection: selection)
-                }
+    @ViewBuilder
+    private func exportContentStack(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
+        exportContentObservers(summaries: summaries) {
+            VStack(spacing: 0) {
+                exportList(selection: selection, summaries: summaries)
+                exportBar(selection: selection, summaries: summaries)
             }
-            #if os(iOS)
-            .listStyle(.insetGrouped)
-            #else
-            .listStyle(.inset)
-            #endif
+        }
+    }
 
-            exportBar(selection: selection, summaries: summaries)
-        }
-        #if canImport(UniformTypeIdentifiers)
-        .fileExporter(
-            isPresented: $isExporting,
-            document: exportDocument,
-            contentType: exportContentType,
-            defaultFilename: exportDocument?.suggestedFilename ?? "lh2gpx-export.\(selectedFormat.fileExtension)"
-        ) { result in
-            if case let .failure(error) = result {
-                exportError = error.localizedDescription
+    @ViewBuilder
+    private func exportList(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
+        List {
+            selectionSummarySection(selection: selection, summaries: summaries)
+
+            if hasImportedExport {
+                filterSection
             }
-            exportDocument = nil
+
+            if !selection.isEmpty {
+                previewSection(selection: selection, summaries: summaries)
+            }
+
+            if !summaries.isEmpty {
+                daysSection(summaries: summaries, selection: selection)
+            }
+
+            if !liveLocation.recordedTracks.isEmpty {
+                recordedTracksSection(selection: selection)
+            }
         }
+        #if os(iOS)
+        .listStyle(.insetGrouped)
+        #else
+        .listStyle(.inset)
         #endif
-        .alert(t("Export Failed"), isPresented: Binding(
-            get: { exportError != nil },
-            set: { if !$0 { exportError = nil } }
-        )) {
-            Button(t("OK"), role: .cancel) { exportError = nil }
-        } message: {
-            Text(exportError ?? "")
-        }
-        .onChange(of: liveLocation.recordedTracks) { _, tracks in
-            pruneInvalidRecordedTrackSelection(validTracks: tracks)
-        }
-        .onChange(of: selectedFromDate) { _, _ in
-            normalizeDateFilterBounds()
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: selectedToDate) { _, _ in
-            normalizeDateFilterBounds()
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: selectedAccuracyFilter) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: selectedContentRequirements) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: selectedActivityTypes) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: selectedAreaFilter) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: boundsMinLat) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: boundsMaxLat) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: boundsMinLon) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: boundsMaxLon) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: polygonCoordinatesText) { _, _ in
-            pruneInvalidImportedDaySelection(summaries: filteredSummaries)
-        }
-        .onChange(of: session.content?.sourceSummary) { _, _ in
-            resetLocalFilters()
-        }
+    }
+
+    @ViewBuilder
+    private func exportContentObservers<Content: View>(summaries: [DaySummary], @ViewBuilder content: () -> Content) -> some View {
+        content()
+            #if canImport(UniformTypeIdentifiers)
+            .fileExporter(
+                isPresented: $isExporting,
+                document: exportDocument,
+                contentType: exportContentType,
+                defaultFilename: exportDocument?.suggestedFilename ?? "lh2gpx-export.\(selectedFormat.fileExtension)"
+            ) { result in
+                if case let .failure(error) = result {
+                    exportError = error.localizedDescription
+                }
+                exportDocument = nil
+            }
+            #endif
+            .alert(t("Export Failed"), isPresented: Binding(
+                get: { exportError != nil },
+                set: { if !$0 { exportError = nil } }
+            )) {
+                Button(t("OK"), role: .cancel) { exportError = nil }
+            } message: {
+                Text(exportError ?? "")
+            }
+            .onChange(of: liveLocation.recordedTracks) { tracks in
+                pruneInvalidRecordedTrackSelection(validTracks: tracks)
+            }
+            .onChange(of: selectedFromDate) { _ in
+                normalizeDateFilterBounds()
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: selectedToDate) { _ in
+                normalizeDateFilterBounds()
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: selectedAccuracyFilter) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: selectedContentRequirements) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: selectedActivityTypes) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: selectedAreaFilter) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: boundsMinLat) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: boundsMaxLat) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: boundsMinLon) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: boundsMaxLon) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: polygonCoordinatesText) { _ in
+                pruneInvalidImportedDaySelection(summaries: filteredSummaries)
+            }
+            .onChange(of: session.sourceSummary) { _ in
+                resetLocalFilters()
+            }
     }
 
     @ViewBuilder

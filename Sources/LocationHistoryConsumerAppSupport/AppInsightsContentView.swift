@@ -7,11 +7,6 @@ import Charts
 
 // MARK: - Insights Content View
 
-enum ActivityMetric: String, CaseIterable {
-    case count = "Count"
-    case distance = "Distance"
-}
-
 struct AppInsightsContentView: View {
     @EnvironmentObject private var preferences: AppPreferences
     let insights: ExportInsights
