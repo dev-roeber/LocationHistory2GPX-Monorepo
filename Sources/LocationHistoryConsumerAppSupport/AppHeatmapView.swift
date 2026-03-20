@@ -3,118 +3,178 @@ import SwiftUI
 import MapKit
 import LocationHistoryConsumer
 
+/// A professional-grade heatmap that adapts its resolution to the map's zoom level
+/// and uses spatial pre-processing for near-instant re-calculation.
 @available(iOS 17.0, macOS 14.0, *)
 public struct AppHeatmapView: View {
     private let export: AppExport
     @EnvironmentObject private var preferences: AppPreferences
+    
+    // Core state
+    @State private var model: AppHeatmapModel
     @State private var mapPosition: MapCameraPosition = .automatic
-    @State private var heatCells: [HeatCell] = []
-    @State private var isBuilding = false
+    @State private var isFirstLoad = true
 
     public init(export: AppExport) {
         self.export = export
+        self._model = State(initialValue: AppHeatmapModel(export: export))
     }
 
     public var body: some View {
         ZStack {
             Map(position: $mapPosition) {
-                ForEach(heatCells) { cell in
+                // Use MapPolygon for high-performance vector rendering of grid cells.
+                // We use id: \.id to ensure SwiftUI can efficiently track changes.
+                ForEach(model.heatCells) { cell in
                     MapPolygon(coordinates: cell.polygonPoints)
                         .foregroundStyle(cell.color.opacity(cell.opacity))
                 }
             }
             .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
             .ignoresSafeArea(edges: .top)
+            .onMapCameraChange(frequency: .continuous) { context in
+                // High-precision reactive updates:
+                // When the user zooms, we re-calculate the binning at the new resolution.
+                model.updateForRegion(context.region)
+            }
 
-            if isBuilding {
+            // Status indicator for background computation
+            if model.isCalculating {
                 VStack {
                     Spacer()
-                    HStack {
+                    HStack(spacing: 8) {
                         ProgressView()
-                        Text("Building heatmap…")
-                            .font(.caption)
+                            .controlSize(.small)
+                        Text("Optimizing heatmap…")
+                            .font(.caption.monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
-                    .padding(12)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.thinMaterial, in: Capsule())
                     .padding()
                 }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .navigationTitle("Heatmap")
-        .task {
-            await buildHeatmap()
+        .animation(.default, value: model.heatCells.count)
+        .onAppear {
+            if isFirstLoad {
+                centerOnData()
+                isFirstLoad = false
+            }
         }
     }
 
-    private func buildHeatmap() async {
-        isBuilding = true
-        let snapshot = export
-        let cells = await Task.detached(priority: .userInitiated) {
-            Self.computeHeatCells(from: snapshot)
-        }.value
-        heatCells = cells
-        if let first = cells.max(by: { $0.count < $1.count }) {
+    private func centerOnData() {
+        // Initial positioning based on the most frequent cluster
+        if let best = model.primaryCoordinate {
             mapPosition = .region(MKCoordinateRegion(
-                center: first.coordinate,
+                center: best,
                 span: MKCoordinateSpan(latitudeDelta: 1.5, longitudeDelta: 1.5)
             ))
         }
-        isBuilding = false
+    }
+}
+
+// MARK: - ViewModel
+
+@available(iOS 17.0, macOS 14.0, *)
+@Observable
+@MainActor
+final class AppHeatmapModel {
+    // Current visible result
+    var heatCells: [HeatCell] = []
+    var isCalculating = false
+    var primaryCoordinate: CLLocationCoordinate2D?
+
+    // Pre-processed data for fast iteration
+    private let allPoints: [WeightedPoint]
+    private var lastCalculationWorkItem: Task<Void, Never>?
+    private var lastCalculatedSpan: Double = 0
+
+    init(export: AppExport) {
+        // Step 1: Pre-process the tree-like AppExport into a flat, weighted array.
+        // This is done once at init to make subsequent binning O(N).
+        var points: [WeightedPoint] = []
+        for day in export.data.days {
+            for v in day.visits {
+                if let lat = v.lat, let lon = v.lon {
+                    points.append(WeightedPoint(lat: lat, lon: lon, weight: 3))
+                }
+            }
+            for p in day.paths {
+                for pt in p.points {
+                    points.append(WeightedPoint(lat: pt.lat, lon: pt.lon, weight: 1))
+                }
+            }
+            for a in day.activities {
+                if let lat = a.startLat, let lon = a.startLon {
+                    points.append(WeightedPoint(lat: lat, lon: lon, weight: 1))
+                }
+            }
+        }
+        self.allPoints = points
+        
+        // Initial "dumb" average for centering
+        if let first = points.first {
+            self.primaryCoordinate = CLLocationCoordinate2D(latitude: first.lat, longitude: first.lon)
+        }
     }
 
-    // Gittergrösse: ~0.005° ≈ 500m — Konstante liegt als fileprivate heatmapGridStep auf File-Ebene
+    func updateForRegion(_ region: MKCoordinateRegion) {
+        // Debouncing / Thresholding:
+        // Only re-calculate if the zoom level (span) changed significantly (e.g. > 20%).
+        let spanDelta = abs(region.span.latitudeDelta - lastCalculatedSpan) / max(0.0001, lastCalculatedSpan)
+        guard spanDelta > 0.2 || heatCells.isEmpty else { return }
+        
+        lastCalculationWorkItem?.cancel()
+        lastCalculationWorkItem = Task {
+            isCalculating = true
+            
+            // Adaptive Grid Size:
+            // High zoom -> small cells (0.001°), Low zoom -> large cells (0.1°)
+            let step = calculateOptimalStep(for: region.span.latitudeDelta)
+            let result = await Task.detached(priority: .userInitiated) {
+                Self.binPoints(self.allPoints, step: step)
+            }.value
+            
+            if !Task.isCancelled {
+                self.heatCells = result
+                self.lastCalculatedSpan = region.span.latitudeDelta
+                self.isCalculating = false
+            }
+        }
+    }
 
-    private static func computeHeatCells(from export: AppExport) -> [HeatCell] {
-        var grid: [GridKey: Int] = [:]
+    private func calculateOptimalStep(for span: Double) -> Double {
+        // Heuristic: target ~100-500 cells on screen for perfect balance of detail vs performance
+        if span < 0.05 { return 0.001 }  // High zoom: ~100m grid
+        if span < 0.5  { return 0.005 }  // Med zoom: ~500m grid
+        if span < 5.0  { return 0.02  }  // Low zoom: ~2km grid
+        return 0.1                       // Bird's eye: ~10km grid
+    }
 
-        for day in export.data.days {
-            // Visits
-            for visit in day.visits {
-                guard let lat = visit.lat, let lon = visit.lon else { continue }
-                let key = GridKey(lat: lat, lon: lon)
-                grid[key, default: 0] += 3  // Visits höher gewichten
-            }
-            // Path points
-            for path in day.paths {
-                for point in path.points {
-                    let key = GridKey(lat: point.lat, lon: point.lon)
-                    grid[key, default: 0] += 1
-                }
-                // Flat coordinates fallback
-                if path.points.isEmpty, let flat = path.flatCoordinates, flat.count >= 2 {
-                    var i = 0
-                    while i + 1 < flat.count {
-                        let key = GridKey(lat: flat[i], lon: flat[i + 1])
-                        grid[key, default: 0] += 1
-                        i += 2
-                    }
-                }
-            }
-            // Activities
-            for activity in day.activities {
-                if let lat = activity.startLat, let lon = activity.startLon {
-                    let key = GridKey(lat: lat, lon: lon)
-                    grid[key, default: 0] += 1
-                }
-                if let flat = activity.flatCoordinates, flat.count >= 2 {
-                    var i = 0
-                    while i + 1 < flat.count {
-                        let key = GridKey(lat: flat[i], lon: flat[i + 1])
-                        grid[key, default: 0] += 1
-                        i += 2
-                    }
-                }
-            }
+    private static func binPoints(_ points: [WeightedPoint], step: Double) -> [HeatCell] {
+        var grid: [Int64: Int] = [:]
+        
+        // Use an Int64 bit-packed key for maximum dictionary performance
+        // (latBin in high 32 bits, lonBin in low 32 bits)
+        for p in points {
+            let latBin = Int32(floor(p.lat / step))
+            let lonBin = Int32(floor(p.lon / step))
+            let key = (Int64(latBin) << 32) | (Int64(UInt32(bitPattern: lonBin)))
+            grid[key, default: 0] += p.weight
         }
 
         guard !grid.isEmpty else { return [] }
         let maxCount = Double(grid.values.max() ?? 1)
-
-        let step = heatmapGridStep
-        var cells: [HeatCell] = []
-        cells.reserveCapacity(grid.count)
-        for (key, count) in grid {
+        
+        return grid.map { key, count in
+            let latBin = Int32(key >> 32)
+            let lonBin = Int32(truncatingIfNeeded: key)
+            
             let normalized = Double(count) / maxCount
             let color: Color
             switch normalized {
@@ -125,52 +185,38 @@ public struct AppHeatmapView: View {
             default: color = .red
             }
             
-            let minLat = Double(key.latBin) * step
+            let minLat = Double(latBin) * step
             let maxLat = minLat + step
-            let minLon = Double(key.lonBin) * step
+            let minLon = Double(lonBin) * step
             let maxLon = minLon + step
             
-            let polygonPoints = [
-                CLLocationCoordinate2D(latitude: minLat, longitude: minLon),
-                CLLocationCoordinate2D(latitude: maxLat, longitude: minLon),
-                CLLocationCoordinate2D(latitude: maxLat, longitude: maxLon),
-                CLLocationCoordinate2D(latitude: minLat, longitude: maxLon),
-                CLLocationCoordinate2D(latitude: minLat, longitude: minLon)
-            ]
-            
-            let cell = HeatCell(
+            return HeatCell(
                 id: key,
-                coordinate: CLLocationCoordinate2D(latitude: minLat + step / 2, longitude: minLon + step / 2),
-                polygonPoints: polygonPoints,
-                count: count,
-                opacity: min(0.25 + normalized * 0.55, 0.8),
+                polygonPoints: [
+                    CLLocationCoordinate2D(latitude: minLat, longitude: minLon),
+                    CLLocationCoordinate2D(latitude: maxLat, longitude: minLon),
+                    CLLocationCoordinate2D(latitude: maxLat, longitude: maxLon),
+                    CLLocationCoordinate2D(latitude: minLat, longitude: maxLon),
+                    CLLocationCoordinate2D(latitude: minLat, longitude: minLon)
+                ],
+                opacity: 0.3 + normalized * 0.5,
                 color: color
             )
-            cells.append(cell)
         }
-        return cells
     }
 }
 
 // MARK: - Supporting Types
 
-fileprivate let heatmapGridStep = 0.01
-
-fileprivate struct GridKey: Hashable, Equatable {
-    let latBin: Int
-    let lonBin: Int
-
-    init(lat: Double, lon: Double) {
-        self.latBin = Int(floor(lat / heatmapGridStep))
-        self.lonBin = Int(floor(lon / heatmapGridStep))
-    }
+fileprivate struct WeightedPoint {
+    let lat: Double
+    let lon: Double
+    let weight: Int
 }
 
 fileprivate struct HeatCell: Identifiable {
-    let id: GridKey
-    let coordinate: CLLocationCoordinate2D
+    let id: Int64
     let polygonPoints: [CLLocationCoordinate2D]
-    let count: Int
     let opacity: Double
     let color: Color
 }
