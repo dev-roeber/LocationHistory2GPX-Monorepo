@@ -8,7 +8,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - keine allgemeine Producer-Pipeline oder Takeout-Aufbereitung fuer Google-Rohdaten
 - keine CSV-/KMZ-Erzeugung und keine allgemeine Producer-Exportpipeline
 - keine fertige Produkt-App in diesem Schritt
-- offline-first, ohne Netzwerkcode, Analytics-Tracking oder Cloud-Sync
+- offline-first als Standardverhalten, ohne Analytics-Tracking oder Cloud-Sync; optionaler nutzergesteuerter Live-Punkt-Upload ist jetzt vorhanden
 
 ## Contract-Herkunft
 
@@ -30,10 +30,12 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
 - Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen; optional auch im Background weiterfuehren, wenn der Nutzer das lokal aktiviert und `Always Allow` gewaehrt
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
-- lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab und technische Importdetails speichern
+- lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab, Sprache, technische Importdetails und optionalen Server-Upload speichern
 - importierte History und gespeicherte Live-Tracks lokal als `GPX`, `KML` oder `GeoJSON` exportieren
 - zwischen `Tracks`, `Waypoints` und `Both` als Exportmodus wechseln
 - importierte History lokal nach Datum, Genauigkeit, Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon fuer den Export filtern
+- akzeptierte Live-Recording-Punkte optional an einen frei konfigurierbaren HTTP(S)-Endpunkt mit optionalem Bearer-Token senden
+- Shell-, Optionen-, Live-Recording- und zentrale Exportoberflaechen auf Deutsch oder Englisch anzeigen
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
 - in der Demo lokal `app_export.json` fuer denselben Consumer-Contract importieren
 - Demo-Quelle, Reset und Fehlerzustaende klar sichtbar fuehren
@@ -47,7 +49,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - `trips_index.json` konsumieren
 - Auto-Resume eines laufenden Live-Tracks nach App-Neustart
 - Mergen aufgezeichneter Live-Tracks in importierte Originaldaten
-- CSV-/KMZ-Export und Server-Upload
+- CSV-/KMZ-Export
 
 ## Struktur
 
@@ -59,13 +61,15 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - `Sources/LocationHistoryConsumerAppSupport/`
   - generische Session-/Loader-Typen
   - gemeinsame SwiftUI-Produkt-UI fuer App und Demo (NavigationSplitView, Dashboard, Day-Detail, Map)
-  - Live-Location-/Recording-Domain fuer lokales Tracking mit optionalem Background-Modus und getrennte Recorded-Track-Persistenz
+- Live-Location-/Recording-Domain fuer lokales Tracking mit optionalem Background-Modus und getrennte Recorded-Track-Persistenz
+- optionaler HTTP(S)-Upload akzeptierter Live-Recording-Punkte an einen nutzerkonfigurierten Server
 - `Sources/LocationHistoryConsumerDemoSupport/`
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
 - `Sources/LocationHistoryConsumerApp/`
 - Produkt-App-Einstieg fuer lokalen JSON-/ZIP-Import
 - lokale Optionen-Seite mit `UserDefaults`-basierten App-Preferences
+- partielle Sprachumschaltung Deutsch/Englisch mit englischem Fallback fuer noch nicht portierte Strings
 - `Sources/LocationHistoryConsumerDemo/`
   - Demo-/Harness-Einstieg fuer Fixture-zentrierte Verifikation
 - `Tests/LocationHistoryConsumerTests/`
@@ -169,7 +173,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Live-Recording-Sektion im Day-Detail: manueller Ein/Aus-Schalter, Permission-State, aktueller Standort, Live-Polyline
 - Recorded-Track-Persistenz getrennt von importierter History; Speicherung erst beim Stoppen der Aufnahme
 - Saved-Tracks-Library mit getrenntem `Edit Track`-Zugang fuer gespeicherte Live-Tracks als separater `Local Tools`-Nebenfluss
-- Optionen-Seite fuer lokale Darstellung/Steuerung: Distanz-Einheit, Start-Tab, Kartenstil, technische Importdetails
+- Optionen-Seite fuer lokale Darstellung/Steuerung: Distanz-Einheit, Start-Tab, Kartenstil, Sprache, technische Importdetails und optionaler Server-Upload
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
 - ein zentrales Actions-Menue in der Toolbar fuehrt Import, Demo, Optionen und Clear
@@ -181,7 +185,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - Export-Flow bietet jetzt die Modi `Tracks`, `Waypoints` und `Both`; Waypoints werden aus importierten Visits sowie Activity-Start/-End-Koordinaten erzeugt
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
-- bleibt offline-only; die neue Live-Recording-Logik bleibt lokal und klar vom Import-/Query-Layer getrennt
+- bleibt standardmaessig lokal/offline-first; optionaler Server-Upload betrifft nur akzeptierte Live-Recording-Punkte und bleibt klar vom Import-/Query-Layer getrennt
 
 ## Apple-/Xcode-Vorbereitung
 

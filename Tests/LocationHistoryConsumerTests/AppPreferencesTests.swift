@@ -27,9 +27,16 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .overview)
             XCTAssertEqual(preferences.preferredMapStyle, .standard)
             XCTAssertTrue(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.appLanguage, .english)
             XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
             XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
             XCTAssertFalse(preferences.allowsBackgroundLiveTracking)
+            XCTAssertFalse(preferences.sendsLiveLocationToServer)
+            XCTAssertEqual(
+                preferences.liveLocationServerUploadURLString,
+                LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
+            )
+            XCTAssertEqual(preferences.liveLocationServerUploadBearerToken, "")
             XCTAssertEqual(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM, 65)
             XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM, 15)
         }
@@ -40,9 +47,13 @@ final class AppPreferencesTests: XCTestCase {
         defaults.set(AppStartTabPreference.insights.rawValue, forKey: "app.preferences.startTab")
         defaults.set(AppMapStylePreference.hybrid.rawValue, forKey: "app.preferences.mapStyle")
         defaults.set(false, forKey: "app.preferences.showsTechnicalImportDetails")
+        defaults.set(AppLanguagePreference.german.rawValue, forKey: "app.preferences.appLanguage")
         defaults.set(AppLiveTrackingAccuracyPreference.strict.rawValue, forKey: "app.preferences.liveTrackingAccuracy")
         defaults.set(AppLiveTrackingDetailPreference.detailed.rawValue, forKey: "app.preferences.liveTrackingDetail")
         defaults.set(true, forKey: "app.preferences.liveTrackingBackground")
+        defaults.set(true, forKey: "app.preferences.liveTrackingServerUploadEnabled")
+        defaults.set("https://example.invalid/live", forKey: "app.preferences.liveTrackingServerUploadURL")
+        defaults.set("secret", forKey: "app.preferences.liveTrackingServerUploadBearerToken")
 
         MainActor.assumeIsolated {
             let preferences = AppPreferences(userDefaults: defaults)
@@ -51,9 +62,13 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .insights)
             XCTAssertEqual(preferences.preferredMapStyle, .hybrid)
             XCTAssertFalse(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.appLanguage, .german)
             XCTAssertEqual(preferences.liveTrackingAccuracy, .strict)
             XCTAssertEqual(preferences.liveTrackingDetail, .detailed)
             XCTAssertTrue(preferences.allowsBackgroundLiveTracking)
+            XCTAssertTrue(preferences.sendsLiveLocationToServer)
+            XCTAssertEqual(preferences.liveLocationServerUploadURLString, "https://example.invalid/live")
+            XCTAssertEqual(preferences.liveLocationServerUploadBearerToken, "secret")
             XCTAssertEqual(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM, 25)
             XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM, 8)
         }
@@ -66,9 +81,13 @@ final class AppPreferencesTests: XCTestCase {
             preferences.startTab = .export
             preferences.preferredMapStyle = .hybrid
             preferences.showsTechnicalImportDetails = false
+            preferences.appLanguage = .german
             preferences.liveTrackingAccuracy = .strict
             preferences.liveTrackingDetail = .batterySaver
             preferences.allowsBackgroundLiveTracking = true
+            preferences.sendsLiveLocationToServer = true
+            preferences.liveLocationServerUploadURLString = "https://example.invalid/custom"
+            preferences.liveLocationServerUploadBearerToken = "token"
 
             preferences.reset()
 
@@ -76,9 +95,16 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .overview)
             XCTAssertEqual(preferences.preferredMapStyle, .standard)
             XCTAssertTrue(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.appLanguage, .english)
             XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
             XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
             XCTAssertFalse(preferences.allowsBackgroundLiveTracking)
+            XCTAssertFalse(preferences.sendsLiveLocationToServer)
+            XCTAssertEqual(
+                preferences.liveLocationServerUploadURLString,
+                LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
+            )
+            XCTAssertEqual(preferences.liveLocationServerUploadBearerToken, "")
         }
     }
 
@@ -101,6 +127,16 @@ final class AppPreferencesTests: XCTestCase {
 
             XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
             XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
+        }
+    }
+
+    func testGermanLocalizationTranslatesKnownStrings() {
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+            preferences.appLanguage = .german
+
+            XCTAssertEqual(preferences.localized("Options"), "Optionen")
+            XCTAssertEqual(preferences.localized("Open location history file"), "Standortverlauf-Datei öffnen")
         }
     }
 }

@@ -2,18 +2,7 @@
 
 Abgeleitet aus der Roadmap. Nur die konkret naechsten offenen Schritte, repo-wahr und nach aktuellem Code-Stand priorisiert.
 
-## 1. Phase 19.42 – Server-Upload fuer Standortdaten
-
-Status: **offen**
-
-Fehlt noch:
-- ein-/ausschaltbare Server-Upload-Option
-- Zielserver-/Endpoint-Konfiguration
-- Payload-/Authentifizierungsmodell
-- Fehler-/Retry-Strategie
-- klare Trennung zwischen lokalem Recording und externem Upload
-
-## 2. Phase 19.43 – Background-Recording auf echter Apple-Hardware haerten
+## 1. Phase 19.43 – Background-Recording auf echter Apple-Hardware haerten
 
 Status: **teilweise umgesetzt**
 
@@ -27,7 +16,7 @@ Fehlt noch:
 - separater dokumentierter Nachweis im Apple-/Wrapper-Runbook
 - Korrektur verbleibender Produkttexte, falls der reale Device-Flow noch Unterschiede zeigt
 
-## 3. Phase 19.44 – Live-Tracks-Oberflaeche final einordnen
+## 2. Phase 19.44 – Live-Tracks-Oberflaeche final einordnen
 
 Status: **teilweise umgesetzt**
 
@@ -40,7 +29,7 @@ Fehlt noch:
 - Produktentscheidung, ob `Saved Live Tracks` nur ein lokaler Nebenfluss bleibt oder einen eigenen primaeren App-Bereich bekommt
 - falls eigener Bereich gewuenscht: Einstieg, Navigation und Informationsarchitektur entsprechend anpassen
 
-## 4. Phase 19.45 – Deduplizierung / Bereinigung
+## 3. Phase 19.45 – Deduplizierung / Bereinigung
 
 Status: **teilweise umgesetzt**
 
@@ -52,7 +41,7 @@ Fehlt noch:
 - breitere Bereinigung fuer importierte History vor Export
 - klarere Produktentscheidung, wie aggressiv History-Daten bereinigt werden duerfen
 
-## 5. Phase 19.46 – Highlights / Insights / Zeitraumsauswahl
+## 4. Phase 19.46 – Highlights / Insights / Zeitraumsauswahl
 
 Status: **geplant**
 
@@ -61,15 +50,21 @@ Fehlt noch:
 - deutlich mehr Insight-Module
 - waehlbarer angezeigter Zeitraum fuer Overview/Insights statt nur passiver Date-Range-Anzeige
 
-## 6. Phase 19.47 – Sprache / Lokalisierung
+## 5. Phase 19.47 – Sprache / Lokalisierung
 
-Status: **geplant**
+Status: **teilweise umgesetzt**
+
+Bereits drin:
+- Sprachwahl `English` / `Deutsch` in den Optionen
+- deutsche Abdeckung fuer Shell-, Optionen-, Import-Entry-, Live-Recording- und zentrale Exportflaechen
+- englischer Fallback fuer noch nicht portierte Strings
 
 Fehlt noch:
-- deutsche Sprache als Auswahlmoeglichkeit neben Englisch in den Optionen
+- breitere Lokalisierungsabdeckung der restlichen UI-Texte
 - belastbare Lokalisierungsstrategie fuer Core + Wrapper
+- frische Sichtpruefung auf Apple-Hardware, dass keine unportierten Kernflaechen uebersehen wurden
 
-## 7. Phase 19.48 – Heatmap
+## 6. Phase 19.48 – Heatmap
 
 Status: **geplant**
 
@@ -77,7 +72,7 @@ Fehlt noch:
 - Produktentscheidung fuer Heatmap-Scope und Datenbasis
 - UI-/Map-Integration ohne bestehende Route-/Waypoint-Vorschau zu verwaessern
 
-## 8. Phase 19.49 – Weitere Exportformate nach GeoJSON
+## 7. Phase 19.49 – Weitere Exportformate nach GeoJSON
 
 Status: **geplant**
 
@@ -85,14 +80,14 @@ Fehlt noch:
 - Priorisierung zwischen `CSV` und `KMZ`
 - saubere Einhaengung in den bestehenden Exportmodus statt eines unklaren Formatwachstums
 
-## 9. Phase 20 – Apple / ASC / TestFlight / externe Distribution
+## 8. Phase 20 – Apple / ASC / TestFlight / externe Distribution
 
 Status: **bewusst geparkt**
 
 - bleibt ausserhalb des aktuellen Linux-Hosts
 - braucht Apple-Hardware, Signierungskontext und reale Distribution statt lokaler Repo-Arbeit
 
-## 10. Phase 21 – spaetere Folgearbeit
+## 9. Phase 21 – spaetere Folgearbeit
 
 Status: **bewusst unberuehrt**
 

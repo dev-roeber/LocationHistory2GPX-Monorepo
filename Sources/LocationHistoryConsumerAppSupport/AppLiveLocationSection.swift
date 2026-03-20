@@ -18,20 +18,24 @@ public struct AppLiveLocationSection: View {
         self.onOpenSavedTracksLibrary = onOpenSavedTracksLibrary
     }
 
+    private func t(_ english: String) -> String {
+        preferences.localized(english)
+    }
+
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Local Recording")
+                    Text(t("Local Recording"))
                         .font(.headline)
-                    Text("Current position and saved live tracks stay separate from imported history.")
+                    Text(t("Current position and saved live tracks stay separate from imported history."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Toggle("Record", isOn: toggleBinding)
+                Toggle(t("Record"), isOn: toggleBinding)
                     .labelsHidden()
-                    .accessibilityLabel("Record live track")
+                    .accessibilityLabel(t("Record live track"))
             }
 
             statusCard
@@ -45,6 +49,21 @@ public struct AppLiveLocationSection: View {
             }
             .frame(height: 220)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+            if liveLocation.serverUploadConfigurationState.isEnabled,
+               let statusMessage = liveLocation.serverUploadStatusMessage {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(t("Upload status"), systemImage: liveLocation.isUploadingToServer ? "arrow.triangle.2.circlepath.circle.fill" : "network")
+                        .font(.caption.weight(.semibold))
+                    Text(statusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(Color.secondary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
 
             savedTracksSection
 
@@ -74,7 +93,7 @@ public struct AppLiveLocationSection: View {
         VStack(alignment: .leading, spacing: 4) {
             Label(liveLocation.permissionTitle, systemImage: statusSymbolName)
                 .font(.subheadline.weight(.medium))
-            Text(liveLocation.permissionMessage)
+            Text(t(liveLocation.permissionMessage))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -113,7 +132,7 @@ public struct AppLiveLocationSection: View {
                     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .padding(8)
-            .accessibilityLabel("Center on current location")
+            .accessibilityLabel(t("Center on current location"))
         }
     }
 
@@ -123,9 +142,9 @@ public struct AppLiveLocationSection: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
-            Text("Live location is off")
+            Text(t("Live location is off"))
                 .font(.headline)
-            Text("Turn recording on to request foreground-only location access and draw a live track.")
+            Text(t("Turn recording on to request foreground-only location access and draw a live track."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -139,7 +158,7 @@ public struct AppLiveLocationSection: View {
     private var savedTracksSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Saved Live Tracks", systemImage: "slider.horizontal.3")
+                Label(t("Saved Live Tracks"), systemImage: "slider.horizontal.3")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text("\(liveLocation.recordedTracks.count)")

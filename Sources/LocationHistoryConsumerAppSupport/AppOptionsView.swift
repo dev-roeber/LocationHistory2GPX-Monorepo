@@ -11,81 +11,121 @@ public struct AppOptionsView: View {
     public var body: some View {
         Form {
             Section {
-                Picker("Distance Units", selection: $preferences.distanceUnit) {
+                Picker(t("Distance Units"), selection: $preferences.distanceUnit) {
                     ForEach(AppDistanceUnitPreference.allCases) { unit in
-                        Text(unit.title).tag(unit)
+                        Text(t(unit.title)).tag(unit)
                     }
                 }
 
-                Picker("Start Tab", selection: $preferences.startTab) {
+                Picker(t("Start Tab"), selection: $preferences.startTab) {
                     ForEach(AppStartTabPreference.allCases) { tab in
-                        Text(tab.title).tag(tab)
+                        Text(t(tab.title)).tag(tab)
                     }
                 }
 
-                Toggle("Show Technical Import Details", isOn: $preferences.showsTechnicalImportDetails)
+                Toggle(t("Show Technical Import Details"), isOn: $preferences.showsTechnicalImportDetails)
             } header: {
-                Text("Display")
+                Text(t("Display"))
             } footer: {
-                Text("Controls how much metadata the app shows around imports and source information.")
+                Text(t("Controls how much metadata the app shows around imports and source information."))
             }
 
             Section {
-                Picker("Default Map Style", selection: $preferences.preferredMapStyle) {
+                Picker(t("Default Map Style"), selection: $preferences.preferredMapStyle) {
                     ForEach(AppMapStylePreference.allCases) { style in
-                        Text(style.title).tag(style)
+                        Text(t(style.title)).tag(style)
                     }
                 }
             } header: {
-                Text("Maps")
+                Text(t("Maps"))
             } footer: {
-                Text("Applies to the day-detail map and live-location map.")
+                Text(t("Applies to the day-detail map and live-location map."))
             }
 
             Section {
-                Picker("Accuracy Filter", selection: $preferences.liveTrackingAccuracy) {
+                Picker(t("App Language"), selection: $preferences.appLanguage) {
+                    ForEach(AppLanguagePreference.allCases) { language in
+                        Text(t(language.title)).tag(language)
+                    }
+                }
+
+                Toggle(t("Upload to Custom Server"), isOn: $preferences.sendsLiveLocationToServer)
+
+                TextField(t("Server URL"), text: $preferences.liveLocationServerUploadURLString)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    #if os(iOS)
+                    .keyboardType(.URL)
+                    #endif
+
+                TextField(t("Bearer Token (optional)"), text: $preferences.liveLocationServerUploadBearerToken)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                LabeledContent(t("Test Endpoint"), value: LiveLocationServerUploadConfiguration.defaultTestEndpointURLString)
+            } header: {
+                Text(t("Language and Upload"))
+            } footer: {
+                Text(t("Accepted live-recording points only. Use an HTTP(S) endpoint you control. The default test endpoint is prefilled with this server IP and can be changed at any time."))
+            }
+
+            Section {
+                Picker(t("Accuracy Filter"), selection: $preferences.liveTrackingAccuracy) {
                     ForEach(AppLiveTrackingAccuracyPreference.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                        Text(t(mode.title)).tag(mode)
                     }
                 }
 
-                Picker("Recording Detail", selection: $preferences.liveTrackingDetail) {
+                Picker(t("Recording Detail"), selection: $preferences.liveTrackingDetail) {
                     ForEach(AppLiveTrackingDetailPreference.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                        Text(t(mode.title)).tag(mode)
                     }
                 }
 
-                Toggle("Allow Background Recording", isOn: $preferences.allowsBackgroundLiveTracking)
+                Toggle(t("Allow Background Recording"), isOn: $preferences.allowsBackgroundLiveTracking)
 
-                LabeledContent("Accepted Accuracy", value: "\(Int(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM)) m")
-                LabeledContent("Minimum Movement", value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM)) m")
-                LabeledContent("Minimum Time Gap", value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumTimeDeltaS)) s")
+                LabeledContent(t("Accepted Accuracy"), value: "\(Int(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM)) m")
+                LabeledContent(t("Minimum Movement"), value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM)) m")
+                LabeledContent(t("Minimum Time Gap"), value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumTimeDeltaS)) s")
             } header: {
-                Text("Live Recording")
+                Text(t("Live Recording"))
             } footer: {
-                Text("\(preferences.liveTrackingAccuracy.detail) \(preferences.liveTrackingDetail.detail) Background recording requires Always Allow permission and only affects local live-track recording.")
+                Text("\(t(preferences.liveTrackingAccuracy.detail)) \(t(preferences.liveTrackingDetail.detail)) Background recording requires Always Allow permission and only affects local live-track recording.")
             }
 
             Section {
-                LabeledContent("Location Data", value: "Stored locally on this device")
-                LabeledContent("Server Upload", value: "Not available")
-                LabeledContent("Live Recording", value: preferences.allowsBackgroundLiveTracking ? "Foreground + optional background" : "Foreground only")
+                LabeledContent(t("Location Data"), value: t("Stored locally on this device"))
+                LabeledContent(t("Server Upload"), value: serverUploadPrivacyValue)
+                LabeledContent(t("Live Recording"), value: preferences.allowsBackgroundLiveTracking ? t("Foreground + optional background") : t("Foreground only"))
             } header: {
-                Text("Privacy")
+                Text(t("Privacy"))
             } footer: {
-                Text("This app currently has no cloud sync and no server transfer. Background recording remains local to this device and still depends on Apple location permission.")
+                Text(t("This app keeps imports and live tracks local by default. Server upload is optional, user-controlled and only sends accepted live-recording points to the configured endpoint."))
             }
 
             Section {
-                Button("Reset Options") {
+                Button(t("Reset Options")) {
                     preferences.reset()
                 }
                 .foregroundStyle(.red)
             } header: {
-                Text("Technical")
+                Text(t("Technical"))
             }
         }
-        .navigationTitle("Options")
+        .navigationTitle(t("Options"))
+    }
+
+    private var serverUploadPrivacyValue: String {
+        guard preferences.sendsLiveLocationToServer else {
+            return t("Disabled")
+        }
+        return preferences.liveLocationServerUploadConfiguration.endpointURL == nil
+            ? t("Enabled (invalid URL)")
+            : t("Enabled")
+    }
+
+    private func t(_ english: String) -> String {
+        preferences.localized(english)
     }
 }
 #endif

@@ -64,6 +64,10 @@ public struct AppExportView: View {
         self._liveLocation = ObservedObject(wrappedValue: liveLocation)
     }
 
+    private func t(_ english: String) -> String {
+        preferences.localized(english)
+    }
+
     public var body: some View {
         if session.daySummaries.isEmpty && liveLocation.recordedTracks.isEmpty {
             emptyState
@@ -180,15 +184,15 @@ public struct AppExportView: View {
             }
         } header: {
             HStack {
-                Text("Days")
+                Text(t("Days"))
                 Spacer()
                 if selection.selectedDayCount == summaries.count {
-                    Button("Deselect All") {
+                    Button(t("Deselect All")) {
                         session.exportSelection.clearAllDays()
                     }
                     .font(.subheadline)
                 } else {
-                    Button("Select All") {
+                    Button(t("Select All")) {
                         session.exportSelection.selectAll(from: summaries.map(\.date))
                     }
                     .font(.subheadline)
@@ -209,15 +213,15 @@ public struct AppExportView: View {
             }
         } header: {
             HStack {
-                Text("Saved Live Tracks")
+                Text(t("Saved Live Tracks"))
                 Spacer()
                 if selection.selectedRecordedTrackCount == liveLocation.recordedTracks.count {
-                    Button("Deselect All") {
+                    Button(t("Deselect All")) {
                         session.exportSelection.clearRecordedTracks()
                     }
                     .font(.subheadline)
                 } else {
-                    Button("Select All") {
+                    Button(t("Select All")) {
                         session.exportSelection.selectAllRecordedTracks(from: liveLocation.recordedTracks.map(\.id))
                     }
                     .font(.subheadline)
@@ -384,7 +388,7 @@ public struct AppExportView: View {
 
     @ViewBuilder
     private var filterSection: some View {
-        Section("Filter Imported History") {
+        Section(t("Filter Imported History")) {
             VStack(alignment: .leading, spacing: 12) {
                 if !activeFilterDescriptions.isEmpty {
                     HStack(alignment: .top) {
@@ -561,7 +565,7 @@ public struct AppExportView: View {
         )
         let presentation = MapPresentation.exportPreview(previewData, unit: preferences.distanceUnit, mode: selectedMode)
 
-        Section("Preview") {
+        Section(t("Preview")) {
             VStack(alignment: .leading, spacing: 12) {
                 if previewData.hasMapContent {
                     if #available(iOS 17.0, macOS 14.0, *) {
@@ -597,7 +601,7 @@ public struct AppExportView: View {
             Divider()
             VStack(spacing: 12) {
                 if ExportFormat.allCases.count > 1 {
-                    Picker("Format", selection: $selectedFormat) {
+                    Picker(t("Format"), selection: $selectedFormat) {
                         ForEach(ExportFormat.allCases) { format in
                             Label(format.rawValue, systemImage: format.systemImage).tag(format)
                         }
@@ -618,7 +622,7 @@ public struct AppExportView: View {
                     }
                 }
 
-                Picker("Mode", selection: $selectedMode) {
+                Picker(t("Mode"), selection: $selectedMode) {
                     ForEach(ExportMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
@@ -693,9 +697,9 @@ public struct AppExportView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
-            Text("Nothing to Export")
+            Text(t("Nothing to Export"))
                 .font(.headline)
-            Text("Import a location history file or save a live track first to enable export.")
+            Text(t("Import a location history file or save a live track first to enable export."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

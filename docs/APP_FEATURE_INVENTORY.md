@@ -126,7 +126,9 @@ Present:
 - live recording with current-position marker and live polyline
 - live-recording options can change accepted accuracy and capture density for the local recorder
 - background live recording can be enabled in local settings and becomes active when the app has `Always Allow` authorization
+- accepted live-recording points can optionally be sent to a user-configured HTTP(S) endpoint with an optional bearer token
 - permission/status card and record toggle inside day detail
+- live-recording area can show the current server-upload status when upload is enabled
 - completed recordings are persisted as separate local `Saved Live Tracks`
 - dedicated recorded-tracks library page with summary, latest-track preview and editor navigation
 - saved-track editor supports point editing, midpoint insertion and delete
@@ -165,11 +167,15 @@ Present:
 - live-recording accuracy filter preference
 - live-recording detail preference for movement/time capture density
 - toggle for allowing background live recording
+- app-language preference with `English` / `Deutsch`
+- toggle for optional live-location server upload
+- configurable server URL and optional bearer token for live-location upload
 - reset-to-defaults action
-- privacy info section clarifying local-only storage, no server upload and optional background live recording after `Always Allow`
+- privacy info section clarifying local storage by default, optional server upload and optional background live recording after `Always Allow`
 
 Not present:
 - sync/server toggles
+- full end-to-end localization coverage across every string in the app
 - per-chart or per-screen visual customization
 
 ## 9. Export / Teilen / Server / Sync
@@ -196,7 +202,7 @@ Bewusst deaktiviert, aber vorhanden:
 Not present:
 - active CSV or KMZ export in the app UI
 - per-route selection inside a day
-- cloud sync, server upload or account-backed sharing
+- cloud sync or account-backed sharing
 
 ## 10. Fehlerzustände / Leerzustände / Status-UI
 
@@ -224,11 +230,11 @@ Present:
 - `GoogleTimelineConverter` enables direct Google Timeline imports inside the app shell
 - `ZIPFoundation` powers ZIP import support
 - `LiveLocationFeatureModel` drives permission, recording, live polyline and recorded-track state
+- a limited networking stack exists for optional live-location server upload (`URLSession`, JSON payload, bearer token)
 - `RecordedTrackFileStore` persists completed live tracks in app support storage
 - demo support loads bundled golden fixtures through the same app-support layer
 
 Not present:
-- networking stack
 - analytics / telemetry
 - server-backed persistence
 

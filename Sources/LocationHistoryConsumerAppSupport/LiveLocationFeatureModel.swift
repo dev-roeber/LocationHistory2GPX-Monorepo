@@ -13,14 +13,21 @@ public final class LiveLocationFeatureModel: ObservableObject {
     @Published public private(set) var recordedTracks: [RecordedTrack] = []
     @Published public private(set) var persistenceErrorMessage: String?
     @Published public private(set) var prefersBackgroundTracking = false
+    @Published public private(set) var serverUploadStatusMessage: String?
+    @Published public private(set) var isUploadingToServer = false
 
     private let client: LiveLocationClient?
     private let store: RecordedTrackStoring
+    private let uploader: LiveLocationServerUploading
     private var recorder: LiveTrackRecorder
+    private var serverUploadConfiguration = LiveLocationServerUploadConfiguration()
+    private var pendingUploadPoints: [LiveLocationUploadPoint] = []
+    private var currentRecordingSessionID = UUID()
 
     public init() {
         self.client = makeDefaultLiveLocationClient()
         self.store = RecordedTrackFileStore()
+        self.uploader = HTTPSLiveLocationServerUploader()
         self.recorder = LiveTrackRecorder()
         self.authorization = client?.authorization ?? .restricted
 
@@ -42,10 +49,12 @@ public final class LiveLocationFeatureModel: ObservableObject {
     public init(
         client: LiveLocationClient?,
         store: RecordedTrackStoring,
-        recorder: LiveTrackRecorder = LiveTrackRecorder()
+        recorder: LiveTrackRecorder = LiveTrackRecorder(),
+        uploader: LiveLocationServerUploading = HTTPSLiveLocationServerUploader()
     ) {
         self.client = client
         self.store = store
+        self.uploader = uploader
         self.recorder = recorder
         self.authorization = client?.authorization ?? .restricted
 
@@ -82,6 +91,10 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
     public var needsAlwaysAuthorizationUpgrade: Bool {
         prefersBackgroundTracking && authorization == .authorizedWhenInUse
+    }
+
+    public var serverUploadConfigurationState: LiveLocationServerUploadConfiguration {
+        serverUploadConfiguration
     }
 
     public var permissionTitle: String {
@@ -181,8 +194,34 @@ public final class LiveLocationFeatureModel: ObservableObject {
         }
     }
 
+    public func setServerUploadConfiguration(_ configuration: LiveLocationServerUploadConfiguration) {
+        serverUploadConfiguration = configuration
+
+        if !configuration.isEnabled {
+            pendingUploadPoints = []
+            isUploadingToServer = false
+            serverUploadStatusMessage = nil
+            return
+        }
+
+        guard configuration.endpointURL != nil else {
+            serverUploadStatusMessage = "Server upload is enabled, but the URL is invalid."
+            return
+        }
+
+        if pendingUploadPoints.isEmpty {
+            serverUploadStatusMessage = "Server upload ready for \(configuration.endpointDisplayName)."
+        }
+        schedulePendingUploadIfNeeded()
+    }
+
     private func startRecordingFlow() {
         persistenceErrorMessage = nil
+        currentRecordingSessionID = UUID()
+        pendingUploadPoints = []
+        if serverUploadConfiguration.isEnabled, serverUploadConfiguration.endpointURL != nil {
+            serverUploadStatusMessage = "Server upload ready for \(serverUploadConfiguration.endpointDisplayName)."
+        }
 
         guard let client else {
             authorization = .restricted
@@ -214,6 +253,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         isRecording = false
         client?.stopUpdatingLocation()
         currentLocation = nil
+        schedulePendingUploadIfNeeded()
 
         let finishedTrack = recorder.stop()
         liveTrackPoints = []
@@ -267,14 +307,17 @@ public final class LiveLocationFeatureModel: ObservableObject {
         }
 
         var recorder = self.recorder
-        var didAcceptAnySample = false
+        var acceptedPoints: [RecordedTrackPoint] = []
         for sample in samples {
-            didAcceptAnySample = recorder.append(sample) || didAcceptAnySample
+            if recorder.append(sample), let point = recorder.points.last {
+                acceptedPoints.append(point)
+            }
         }
         self.recorder = recorder
 
-        if didAcceptAnySample {
+        if !acceptedPoints.isEmpty {
             liveTrackPoints = recorder.points
+            enqueueUpload(points: acceptedPoints)
         }
     }
 
@@ -294,6 +337,92 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
     private func applyBackgroundTrackingConfiguration() {
         client?.setBackgroundTrackingEnabled(prefersBackgroundTracking && authorization == .authorizedAlways)
+    }
+
+    private func enqueueUpload(points: [RecordedTrackPoint]) {
+        guard !points.isEmpty else {
+            return
+        }
+
+        pendingUploadPoints.append(contentsOf: points.map {
+            LiveLocationUploadPoint(
+                latitude: $0.latitude,
+                longitude: $0.longitude,
+                timestamp: $0.timestamp,
+                horizontalAccuracyM: $0.horizontalAccuracyM
+            )
+        })
+        schedulePendingUploadIfNeeded()
+    }
+
+    private func schedulePendingUploadIfNeeded() {
+        guard !isUploadingToServer else {
+            return
+        }
+        guard serverUploadConfiguration.isEnabled else {
+            return
+        }
+        guard let endpoint = serverUploadConfiguration.endpointURL else {
+            serverUploadStatusMessage = "Server upload is enabled, but the URL is invalid."
+            return
+        }
+        guard !pendingUploadPoints.isEmpty else {
+            return
+        }
+
+        isUploadingToServer = true
+        let points = Array(pendingUploadPoints)
+        let request = LiveLocationUploadRequest(
+            source: "LocationHistory2GPX-iOS",
+            sessionID: currentRecordingSessionID,
+            captureMode: activeCaptureMode.rawValue,
+            sentAt: Date(),
+            points: points
+        )
+        let endpointDisplayName = serverUploadConfiguration.endpointDisplayName
+        let bearerToken = serverUploadConfiguration.trimmedBearerToken
+        serverUploadStatusMessage = "Uploading \(points.count) point\(points.count == 1 ? "" : "s") to \(endpointDisplayName)."
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            do {
+                try await self.uploader.upload(
+                    request: request,
+                    to: endpoint,
+                    bearerToken: bearerToken
+                )
+                self.handleUploadSuccess(sentPointCount: points.count, endpointDisplayName: endpointDisplayName)
+            } catch {
+                self.handleUploadFailure(error)
+            }
+        }
+    }
+
+    private func handleUploadSuccess(sentPointCount: Int, endpointDisplayName: String) {
+        if sentPointCount <= pendingUploadPoints.count {
+            pendingUploadPoints.removeFirst(sentPointCount)
+        } else {
+            pendingUploadPoints.removeAll()
+        }
+
+        isUploadingToServer = false
+        serverUploadStatusMessage = "Last upload sent \(sentPointCount) point\(sentPointCount == 1 ? "" : "s") to \(endpointDisplayName)."
+
+        if !pendingUploadPoints.isEmpty {
+            schedulePendingUploadIfNeeded()
+        }
+    }
+
+    private func handleUploadFailure(_ error: Error) {
+        isUploadingToServer = false
+        serverUploadStatusMessage = "Server upload failed: \(error.localizedDescription)"
+    }
+
+    private var activeCaptureMode: RecordedTrackCaptureMode {
+        isBackgroundTrackingActive ? .backgroundAlways : .foregroundWhileInUse
     }
 }
 

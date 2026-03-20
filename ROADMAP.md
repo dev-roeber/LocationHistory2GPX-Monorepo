@@ -5,7 +5,7 @@
 ### Repo-Truth-Zusammenfassung
 Lokaler iPhone-Betrieb wurde zuletzt auf Apple-Hardware real verifiziert (iPhone 15 Pro Max, iPhone 12 Pro Max, 2026-03-17).
 Der fruehere 19.x-UI-/UX-Block ist abgeschlossen, aber die Produktarbeit ist lokal **nicht** komplett beendet.
-Seitdem sind zusaetzlich Live-Tracking-Einstellungen, optionales Background-Recording im Codepfad, aktive `KML`-/`GeoJSON`-Exports, eine sichtbare Export-Vorschaukarte, echte lokale Area-Filter und Exportmodi fuer `Tracks` / `Waypoints` / `Both` umgesetzt worden.
+Seitdem sind zusaetzlich Live-Tracking-Einstellungen, optionales Background-Recording im Codepfad, aktive `KML`-/`GeoJSON`-Exports, eine sichtbare Export-Vorschaukarte, echte lokale Area-Filter, Exportmodi fuer `Tracks` / `Waypoints` / `Both`, optionaler Server-Upload fuer akzeptierte Live-Punkte und eine erste Deutsch/Englisch-Sprachumschaltung umgesetzt worden.
 Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wieder echte lokale Arbeit ab statt nur geparkte Apple-Themen.
 
 ### Fertige Punkte (repo-wahr abgeschlossen)
@@ -18,6 +18,7 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 - eigene `Saved Live Tracks`-Library plus Editor fuer gespeicherte lokale Tracks
 - aktuelle Position auf der Karte anzeigen
 - Live-Recording mit lokalen Einstellungen fuer Accuracy-Filter und Recording-Detail
+- optionaler Server-Upload fuer akzeptierte Live-Recording-Punkte inklusive URL-/Bearer-Token-Konfiguration und Retry-on-next-sample
 - GPX-Export fuer importierte History und gespeicherte Live-Tracks
 - KML-Export als aktives zweites Format
 - GeoJSON-Export als aktives drittes Format
@@ -25,6 +26,7 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 - Waypoint-Export aus importierten Visits sowie Activity-Start/-End-Koordinaten
 - sichtbare Export-Vorschaukarte direkt auf der Export-Seite
 - lokale Export-Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon
+- Sprachwahl `English` / `Deutsch` in den Optionen mit deutscher Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry- und zentrale Exportflaechen
 - Day-List-/Overview-/Insights-/Export-Politur aus den Phasen 19.31–19.38
 
 ### Teilweise umgesetzt / bewusst noch nicht vollstaendig
@@ -47,6 +49,9 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 - **Highlights / Insights-Ausbau**
   Basissystem ist vorhanden und die wichtigsten Leerseiten sind gehaertet.
   Was noch fehlt: weitere inhaltliche Highlights und gezielte neue Insight-Module.
+- **Sprache / Lokalisierung**
+  Deutsch/Englisch-Auswahl ist vorhanden und deckt zentrale Shell-, Optionen-, Import-, Live-Recording- und Exportflaechen ab.
+  Was noch fehlt: breitere Abdeckung der restlichen UI-Strings, konsistente Lokalisierungsstrategie fuer Core + Wrapper und frische Device-Sichtpruefung.
 - **Versionierung**
   Contract-/Schema-Versionierung ist sauber.
   Was noch fehlt: eine explizit dokumentierte, einheitliche App-/Release-Versionierungsstrategie ueber Core + Wrapper hinaus.
@@ -56,10 +61,8 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 
 ### Geplante Punkte (noch nicht umgesetzt)
 
-- Standort an Server eigener Wahl senden (ein-/ausschaltbar)
 - weitere Exportformate wie CSV oder KMZ
 - tiefergehende Konkurrenz-/Feature-Recherche ausserhalb des Repos
-- Deutsche Sprache als Auswahlmoeglichkeit neben Englisch in den Optionen
 - weitere Highlights in Overview/Insights
 - deutlich mehr Insight-Module und Insight-Tiefe
 - waehlbarer angezeigter Zeitraum fuer Overview/Insights
@@ -69,10 +72,10 @@ Offen bleiben mehrere groessere Folgepakete. `NEXT_STEPS.md` bildet deshalb wied
 
 Der sinnvolle lokale Fokus liegt jetzt nicht mehr auf allgemeiner 19.x-Politur, sondern auf klar abgegrenzten Ausbaupaketen:
 
-1. Server-Upload als separater Networking-Block
-2. Background-Recording auf echter Apple-Hardware verifizieren und haerten
-3. Live-Track-Oberflaeche und Datenbereinigung weiter schaerfen
-4. spaetere Produktausbaustufen fuer Highlights, Insights, Zeitraum, Sprache und Heatmap sauber schneiden
+1. Background-Recording auf echter Apple-Hardware verifizieren und haerten
+2. Live-Track-Oberflaeche und Datenbereinigung weiter schaerfen
+3. spaetere Produktausbaustufen fuer Highlights, Insights, Zeitraum und Heatmap sauber schneiden
+4. breitere Lokalisierungsabdeckung und weitere Exportformate nach GeoJSON sinnvoll schneiden
 
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt fuer spaetere Folgearbeit reserviert.
 

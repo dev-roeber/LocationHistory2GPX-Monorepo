@@ -210,6 +210,123 @@ final class LiveLocationFeatureModelTests: XCTestCase {
         }
     }
 
+    func testAcceptedSamplesUploadToConfiguredServer() async {
+        let client = await MainActor.run { TestLiveLocationClient(authorization: .authorizedWhenInUse) }
+        let store = InMemoryRecordedTrackStore()
+        let uploader = TestLiveLocationServerUploader()
+        let uploaded = expectation(description: "upload called")
+        uploader.onUpload = { uploaded.fulfill() }
+        let model = await MainActor.run { () -> LiveLocationFeatureModel in
+            let model = LiveLocationFeatureModel(client: client, store: store, uploader: uploader)
+            model.setServerUploadConfiguration(
+                LiveLocationServerUploadConfiguration(
+                    isEnabled: true,
+                    endpointURLString: "https://example.invalid/live",
+                    bearerToken: "secret"
+                )
+            )
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+            ])
+            return model
+        }
+
+        XCTAssertEqual(XCTWaiter.wait(for: [uploaded], timeout: 1.0), .completed)
+
+        XCTAssertEqual(uploader.requests.count, 1)
+        XCTAssertEqual(uploader.requests.first?.endpoint.absoluteString, "https://example.invalid/live")
+        XCTAssertEqual(uploader.requests.first?.bearerToken, "secret")
+        XCTAssertEqual(uploader.requests.first?.request.points.count, 1)
+        await MainActor.run {
+            XCTAssertEqual(model.serverUploadStatusMessage, "Last upload sent 1 point to example.invalid.")
+        }
+    }
+
+    func testInvalidServerUploadURLDoesNotSendSamples() async {
+        let client = await MainActor.run { TestLiveLocationClient(authorization: .authorizedWhenInUse) }
+        let store = InMemoryRecordedTrackStore()
+        let uploader = TestLiveLocationServerUploader()
+        let model = await MainActor.run { () -> LiveLocationFeatureModel in
+            LiveLocationFeatureModel(client: client, store: store, uploader: uploader)
+        }
+
+        await MainActor.run {
+            model.setServerUploadConfiguration(
+                LiveLocationServerUploadConfiguration(
+                    isEnabled: true,
+                    endpointURLString: "ftp://example.invalid/live",
+                    bearerToken: ""
+                )
+            )
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+            ])
+
+            XCTAssertEqual(model.serverUploadStatusMessage, "Server upload is enabled, but the URL is invalid.")
+        }
+
+        XCTAssertTrue(uploader.requests.isEmpty)
+    }
+
+    func testFailedUploadRetriesWhenAnotherAcceptedSampleArrives() async {
+        let client = await MainActor.run { TestLiveLocationClient(authorization: .authorizedWhenInUse) }
+        let store = InMemoryRecordedTrackStore()
+        let uploader = TestLiveLocationServerUploader()
+        uploader.error = TestLiveLocationUploadError.offline
+        let firstUpload = expectation(description: "first upload called")
+        let secondUpload = expectation(description: "retry upload called")
+        uploader.onUpload = {
+            switch uploader.requests.count {
+            case 1:
+                firstUpload.fulfill()
+            case 2:
+                secondUpload.fulfill()
+            default:
+                break
+            }
+        }
+
+        let model = await MainActor.run { () -> LiveLocationFeatureModel in
+            let model = LiveLocationFeatureModel(client: client, store: store, uploader: uploader)
+            model.setServerUploadConfiguration(
+                LiveLocationServerUploadConfiguration(
+                    isEnabled: true,
+                    endpointURLString: "https://example.invalid/live",
+                    bearerToken: ""
+                )
+            )
+            model.setRecordingEnabled(true)
+            return model
+        }
+
+        await MainActor.run {
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+            ])
+        }
+
+        XCTAssertEqual(XCTWaiter.wait(for: [firstUpload], timeout: 1.0), .completed)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        uploader.error = nil
+
+        await MainActor.run {
+            client.emit(samples: [
+                sample(offsetSeconds: 12, latitude: 52.5203, longitude: 13.4003, accuracy: 6),
+            ])
+        }
+
+        XCTAssertEqual(XCTWaiter.wait(for: [secondUpload], timeout: 1.0), .completed)
+
+        XCTAssertEqual(uploader.requests.count, 2)
+        XCTAssertEqual(uploader.requests.last?.request.points.count, 2)
+        await MainActor.run {
+            XCTAssertEqual(model.serverUploadStatusMessage, "Last upload sent 2 points to example.invalid.")
+        }
+    }
+
     private func sample(offsetSeconds: TimeInterval, latitude: Double, longitude: Double, accuracy: Double) -> LiveLocationSample {
         LiveLocationSample(
             latitude: latitude,
@@ -296,5 +413,39 @@ private final class InMemoryRecordedTrackStore: RecordedTrackStoring {
 
     func saveTracks(_ tracks: [RecordedTrack]) throws {
         savedTracks = tracks
+    }
+}
+
+private enum TestLiveLocationUploadError: Error {
+    case offline
+}
+
+private final class TestLiveLocationServerUploader: LiveLocationServerUploading {
+    struct RequestRecord {
+        let request: LiveLocationUploadRequest
+        let endpoint: URL
+        let bearerToken: String?
+    }
+
+    var requests: [RequestRecord] = []
+    var error: Error?
+    var onUpload: (() -> Void)?
+
+    func upload(
+        request: LiveLocationUploadRequest,
+        to endpoint: URL,
+        bearerToken: String?
+    ) async throws {
+        requests.append(
+            RequestRecord(
+                request: request,
+                endpoint: endpoint,
+                bearerToken: bearerToken
+            )
+        )
+        onUpload?()
+        if let error {
+            throw error
+        }
     }
 }

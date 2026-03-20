@@ -63,6 +63,10 @@ public struct AppContentSplitView: View {
         session.selectDayForDisplay(session.selectedDate)
     }
 
+    private func t(_ english: String) -> String {
+        preferences.localized(english)
+    }
+
     public var body: some View {
         Group {
             if horizontalSizeClass == .compact {
@@ -83,6 +87,16 @@ public struct AppContentSplitView: View {
         .onChange(of: preferences.allowsBackgroundLiveTracking) { _, _ in
             syncLiveRecordingSettings()
         }
+        .onChange(of: preferences.sendsLiveLocationToServer) { _, _ in
+            syncLiveRecordingSettings()
+        }
+        .onChange(of: preferences.liveLocationServerUploadURLString) { _, _ in
+            syncLiveRecordingSettings()
+        }
+        .onChange(of: preferences.liveLocationServerUploadBearerToken) { _, _ in
+            syncLiveRecordingSettings()
+        }
+        .environment(\.locale, preferences.appLocale)
     }
 
     // MARK: - Compact (iPhone) Tab View
@@ -94,7 +108,7 @@ public struct AppContentSplitView: View {
                     overviewPaneContent
                         .padding()
                 }
-                .navigationTitle("Overview")
+                .navigationTitle(t("Overview"))
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         actionsMenu
@@ -102,14 +116,14 @@ public struct AppContentSplitView: View {
                 }
             }
             .tabItem {
-                Label("Overview", systemImage: "chart.bar.doc.horizontal")
+                Label(t("Overview"), systemImage: "chart.bar.doc.horizontal")
             }
             .tag(0)
 
             NavigationStack(path: $daysNavigationPath) {
                 compactDayList
-                    .navigationTitle("Days")
-                    .searchable(text: $daySearchText, prompt: "Search by date")
+                    .navigationTitle(t("Days"))
+                    .searchable(text: $daySearchText, prompt: t("Search by date"))
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) {
                             actionsMenu
@@ -129,7 +143,7 @@ public struct AppContentSplitView: View {
                     }
             }
             .tabItem {
-                Label("Days", systemImage: "calendar")
+                Label(t("Days"), systemImage: "calendar")
             }
             .tag(1)
 
@@ -138,7 +152,7 @@ public struct AppContentSplitView: View {
                     insightsPaneContent
                         .padding()
                 }
-                .navigationTitle("Insights")
+                .navigationTitle(t("Insights"))
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         actionsMenu
@@ -146,13 +160,13 @@ public struct AppContentSplitView: View {
                 }
             }
             .tabItem {
-                Label("Insights", systemImage: "chart.xyaxis.line")
+                Label(t("Insights"), systemImage: "chart.xyaxis.line")
             }
             .tag(2)
 
             NavigationStack {
                 AppExportView(session: $session, liveLocation: liveLocation)
-                    .navigationTitle("Export")
+                    .navigationTitle(t("Export"))
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) {
                             actionsMenu
@@ -160,7 +174,7 @@ public struct AppContentSplitView: View {
                     }
             }
             .tabItem {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label(t("Export"), systemImage: "square.and.arrow.up")
             }
             .tag(3)
             .badge(session.exportSelection.count > 0 ? session.exportSelection.count : 0)
@@ -206,7 +220,7 @@ public struct AppContentSplitView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button("Export") {
+                        Button(t("Export")) {
                             selectedTab = 3
                         }
                         .font(.caption.weight(.semibold))
@@ -249,7 +263,7 @@ public struct AppContentSplitView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                         .accessibilityHidden(true)
-                    Text("No Results")
+                    Text(t("No Results"))
                         .font(.headline)
                     Text("No days match \"\(daySearchText)\".")
                         .font(.subheadline)
@@ -275,8 +289,8 @@ public struct AppContentSplitView: View {
                 ),
                 searchText: $daySearchText
             )
-            .navigationTitle("Days")
-            .searchable(text: $daySearchText, prompt: "Search by date, weekday or month")
+            .navigationTitle(t("Days"))
+            .searchable(text: $daySearchText, prompt: t("Search by date, weekday or month"))
         } detail: {
             Group {
                 detailPane
@@ -356,7 +370,7 @@ public struct AppContentSplitView: View {
     @ViewBuilder
     private var overviewPrimaryActionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Primary Actions")
+            Text(t("Primary Actions"))
                 .font(.title3.weight(.semibold))
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
@@ -370,7 +384,7 @@ public struct AppContentSplitView: View {
 
                 if horizontalSizeClass == .compact {
                     overviewActionButton(
-                        title: "Browse Days",
+                    title: t("Browse Days"),
                         subtitle: "Jump into the day list and open imported history entries.",
                         icon: "calendar",
                         color: .blue
@@ -379,7 +393,7 @@ public struct AppContentSplitView: View {
                     }
 
                     overviewActionButton(
-                        title: "Open Insights",
+                    title: t("Open Insights"),
                         subtitle: "Switch to charts and derived breakdowns for the current import.",
                         icon: "chart.xyaxis.line",
                         color: .indigo
@@ -389,7 +403,7 @@ public struct AppContentSplitView: View {
 
                     if session.hasDays {
                         overviewActionButton(
-                            title: "Export GPX",
+                            title: t("Export GPX"),
                             subtitle: "Choose days and prepare a GPX export from recorded routes.",
                             icon: "square.and.arrow.up",
                             color: .green
@@ -400,7 +414,7 @@ public struct AppContentSplitView: View {
                 }
 
                 overviewActionButton(
-                    title: "Saved Live Tracks",
+                    title: t("Saved Live Tracks"),
                     subtitle: "Open the separate local track library and edit finished recordings there.",
                     icon: "point.topleft.down.curvedto.point.bottomright.up",
                     color: .mint
@@ -410,7 +424,7 @@ public struct AppContentSplitView: View {
 
                 if horizontalSizeClass != .compact, session.hasDays {
                     overviewActionButton(
-                        title: "Export GPX",
+                        title: t("Export GPX"),
                         subtitle: "Open the export sheet for the current imported history.",
                         icon: "square.and.arrow.up",
                         color: .green
@@ -427,7 +441,7 @@ public struct AppContentSplitView: View {
         let hasHighlights = insights.busiestDay != nil || insights.longestDistanceDay != nil
         if hasHighlights {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Highlights")
+                Text(t("Highlights"))
                     .font(.title3.weight(.semibold))
                 HStack(spacing: 12) {
                     if let busiest = insights.busiestDay {
@@ -551,7 +565,7 @@ public struct AppContentSplitView: View {
     @ViewBuilder
     private func activeFiltersSection(_ filters: [String]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Filtered Export", systemImage: "line.3.horizontal.decrease.circle.fill")
+            Label(t("Filtered Export"), systemImage: "line.3.horizontal.decrease.circle.fill")
                 .font(.subheadline.weight(.medium))
                 .foregroundColor(.orange)
             Text(filters.joined(separator: " · "))
@@ -580,7 +594,7 @@ public struct AppContentSplitView: View {
                 Image(systemName: "chart.xyaxis.line")
                     .font(.largeTitle)
                     .foregroundStyle(.secondary)
-                Text("No Insights Available")
+                Text(t("No Insights Available"))
                     .font(.headline)
                 Text("Load a location history file to see detailed insights.")
                     .font(.subheadline)
@@ -598,7 +612,7 @@ public struct AppContentSplitView: View {
                     Button {
                         session.selectDay(nil)
                     } label: {
-                        Label("Overview", systemImage: "chevron.backward")
+                        Label(t("Overview"), systemImage: "chevron.backward")
                     }
                     .buttonStyle(.bordered)
 
@@ -620,7 +634,7 @@ public struct AppContentSplitView: View {
                     insightsPaneContent
                     if session.hasDays {
                         Label(
-                            "Select a day from the list to view details.",
+                            t("Select a day from the list to view details."),
                             systemImage: "hand.tap"
                         )
                         .font(.subheadline)
@@ -629,7 +643,7 @@ public struct AppContentSplitView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Overview")
+            .navigationTitle(t("Overview"))
         }
     }
 
@@ -650,30 +664,30 @@ public struct AppContentSplitView: View {
             Button {
                 presentSheet(.options)
             } label: {
-                Label("Options", systemImage: "slider.horizontal.3")
+                Label(t("Options"), systemImage: "slider.horizontal.3")
             }
             Divider()
             Button {
                 presentSheet(.tracksLibrary)
             } label: {
-                Label("Saved Live Tracks", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                Label(t("Saved Live Tracks"), systemImage: "point.topleft.down.curvedto.point.bottomright.up")
             }
             if session.hasDays && horizontalSizeClass != .compact {
                 Divider()
                 Button {
                     presentSheet(.export)
                 } label: {
-                    Label("Export…", systemImage: "square.and.arrow.up")
+                    Label("\(t("Export"))…", systemImage: "square.and.arrow.up")
                 }
             }
             if session.hasLoadedContent || session.message?.kind == .error {
                 Divider()
                 Button(role: .destructive, action: onClear) {
-                    Label("Clear", systemImage: "xmark.circle")
+                    Label(t("Clear"), systemImage: "xmark.circle")
                 }
             }
         } label: {
-            Label("Actions", systemImage: "ellipsis.circle")
+            Label(t("Actions"), systemImage: "ellipsis.circle")
         }
         .sheet(item: $presentedSheet) { sheet in
             NavigationStack {
@@ -681,10 +695,10 @@ public struct AppContentSplitView: View {
                 case .export:
                     AppExportView(session: $session, liveLocation: liveLocation)
                         .environmentObject(preferences)
-                        .navigationTitle("Export")
+                        .navigationTitle(t("Export"))
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { presentedSheet = nil }
+                                Button(t("Done")) { presentedSheet = nil }
                             }
                         }
                 case .tracksLibrary:
@@ -692,14 +706,14 @@ public struct AppContentSplitView: View {
                         .environmentObject(preferences)
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { presentedSheet = nil }
+                                Button(t("Done")) { presentedSheet = nil }
                             }
                         }
                 case .options:
                     AppOptionsView(preferences: preferences)
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { presentedSheet = nil }
+                                Button(t("Done")) { presentedSheet = nil }
                             }
                         }
                 }
@@ -716,6 +730,7 @@ public struct AppContentSplitView: View {
     private func syncLiveRecordingSettings() {
         liveLocation.updateRecorderConfiguration(preferences.liveTrackRecorderConfiguration)
         liveLocation.setBackgroundTrackingPreference(preferences.allowsBackgroundLiveTracking)
+        liveLocation.setServerUploadConfiguration(preferences.liveLocationServerUploadConfiguration)
     }
 
     private func handleDaysTabReselection() {
@@ -740,14 +755,14 @@ public struct AppContentSplitView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label("Saved Live Tracks", systemImage: "slider.horizontal.3")
+                    Label(t("Saved Live Tracks"), systemImage: "slider.horizontal.3")
                         .font(.headline)
                     Text(liveTracksOverviewMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Open Library") {
+                Button(t("Open Library")) {
                     presentSheet(.tracksLibrary)
                 }
                 .buttonStyle(.borderedProminent)
@@ -787,7 +802,7 @@ public struct AppContentSplitView: View {
                 Image(systemName: "slider.horizontal.3")
                     .font(.largeTitle)
                     .foregroundStyle(.secondary)
-                Text("Saved Live Tracks Unavailable")
+                Text(t("Saved Live Tracks Unavailable"))
                     .font(.headline)
                 Text("Saved live tracks can be reviewed and edited on platforms that support the local track library.")
                     .font(.subheadline)
@@ -796,7 +811,7 @@ public struct AppContentSplitView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(24)
-            .navigationTitle("Saved Live Tracks")
+            .navigationTitle(t("Saved Live Tracks"))
         }
     }
 

@@ -160,9 +160,13 @@ public final class AppPreferences: ObservableObject {
         static let startTab = "app.preferences.startTab"
         static let mapStyle = "app.preferences.mapStyle"
         static let showsTechnicalImportDetails = "app.preferences.showsTechnicalImportDetails"
+        static let appLanguage = "app.preferences.appLanguage"
         static let liveTrackingAccuracy = "app.preferences.liveTrackingAccuracy"
         static let liveTrackingDetail = "app.preferences.liveTrackingDetail"
         static let liveTrackingBackground = "app.preferences.liveTrackingBackground"
+        static let liveTrackingServerUploadEnabled = "app.preferences.liveTrackingServerUploadEnabled"
+        static let liveTrackingServerUploadURL = "app.preferences.liveTrackingServerUploadURL"
+        static let liveTrackingServerUploadBearerToken = "app.preferences.liveTrackingServerUploadBearerToken"
     }
 
     private let userDefaults: UserDefaults
@@ -183,6 +187,10 @@ public final class AppPreferences: ObservableObject {
         didSet { userDefaults.set(showsTechnicalImportDetails, forKey: Keys.showsTechnicalImportDetails) }
     }
 
+    @Published public var appLanguage: AppLanguagePreference {
+        didSet { userDefaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
+    }
+
     @Published public var liveTrackingAccuracy: AppLiveTrackingAccuracyPreference {
         didSet { userDefaults.set(liveTrackingAccuracy.rawValue, forKey: Keys.liveTrackingAccuracy) }
     }
@@ -195,6 +203,18 @@ public final class AppPreferences: ObservableObject {
         didSet { userDefaults.set(allowsBackgroundLiveTracking, forKey: Keys.liveTrackingBackground) }
     }
 
+    @Published public var sendsLiveLocationToServer: Bool {
+        didSet { userDefaults.set(sendsLiveLocationToServer, forKey: Keys.liveTrackingServerUploadEnabled) }
+    }
+
+    @Published public var liveLocationServerUploadURLString: String {
+        didSet { userDefaults.set(liveLocationServerUploadURLString, forKey: Keys.liveTrackingServerUploadURL) }
+    }
+
+    @Published public var liveLocationServerUploadBearerToken: String {
+        didSet { userDefaults.set(liveLocationServerUploadBearerToken, forKey: Keys.liveTrackingServerUploadBearerToken) }
+    }
+
     public var liveTrackRecorderConfiguration: LiveTrackRecorderConfiguration {
         LiveTrackRecorderConfiguration(
             maximumAcceptedAccuracyM: liveTrackingAccuracy.maximumAcceptedAccuracyM,
@@ -203,6 +223,22 @@ public final class AppPreferences: ObservableObject {
             minimumTimeDeltaS: liveTrackingDetail.minimumTimeDeltaS,
             minimumPersistedPointCount: 2
         )
+    }
+
+    public var liveLocationServerUploadConfiguration: LiveLocationServerUploadConfiguration {
+        LiveLocationServerUploadConfiguration(
+            isEnabled: sendsLiveLocationToServer,
+            endpointURLString: liveLocationServerUploadURLString,
+            bearerToken: liveLocationServerUploadBearerToken
+        )
+    }
+
+    public var appLocale: Locale {
+        appLanguage.locale
+    }
+
+    public func localized(_ english: String) -> String {
+        appLanguage.localized(english)
     }
 
     public init(userDefaults: UserDefaults = .standard) {
@@ -223,6 +259,11 @@ public final class AppPreferences: ObservableObject {
             from: userDefaults
         ) ?? .standard
         self.showsTechnicalImportDetails = userDefaults.object(forKey: Keys.showsTechnicalImportDetails) as? Bool ?? true
+        self.appLanguage = Self.loadEnum(
+            AppLanguagePreference.self,
+            key: Keys.appLanguage,
+            from: userDefaults
+        ) ?? .english
         self.liveTrackingAccuracy = Self.loadEnum(
             AppLiveTrackingAccuracyPreference.self,
             key: Keys.liveTrackingAccuracy,
@@ -234,6 +275,10 @@ public final class AppPreferences: ObservableObject {
             from: userDefaults
         ) ?? .balanced
         self.allowsBackgroundLiveTracking = userDefaults.object(forKey: Keys.liveTrackingBackground) as? Bool ?? false
+        self.sendsLiveLocationToServer = userDefaults.object(forKey: Keys.liveTrackingServerUploadEnabled) as? Bool ?? false
+        self.liveLocationServerUploadURLString = userDefaults.string(forKey: Keys.liveTrackingServerUploadURL)
+            ?? LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
+        self.liveLocationServerUploadBearerToken = userDefaults.string(forKey: Keys.liveTrackingServerUploadBearerToken) ?? ""
     }
 
     public func reset() {
@@ -241,17 +286,25 @@ public final class AppPreferences: ObservableObject {
         userDefaults.removeObject(forKey: Keys.startTab)
         userDefaults.removeObject(forKey: Keys.mapStyle)
         userDefaults.removeObject(forKey: Keys.showsTechnicalImportDetails)
+        userDefaults.removeObject(forKey: Keys.appLanguage)
         userDefaults.removeObject(forKey: Keys.liveTrackingAccuracy)
         userDefaults.removeObject(forKey: Keys.liveTrackingDetail)
         userDefaults.removeObject(forKey: Keys.liveTrackingBackground)
+        userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadEnabled)
+        userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadURL)
+        userDefaults.removeObject(forKey: Keys.liveTrackingServerUploadBearerToken)
 
         distanceUnit = .metric
         startTab = .overview
         preferredMapStyle = .standard
         showsTechnicalImportDetails = true
+        appLanguage = .english
         liveTrackingAccuracy = .balanced
         liveTrackingDetail = .balanced
         allowsBackgroundLiveTracking = false
+        sendsLiveLocationToServer = false
+        liveLocationServerUploadURLString = LiveLocationServerUploadConfiguration.defaultTestEndpointURLString
+        liveLocationServerUploadBearerToken = ""
     }
 
     private static func loadEnum<T: RawRepresentable>(
