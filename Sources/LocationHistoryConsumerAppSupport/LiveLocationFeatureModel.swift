@@ -187,7 +187,9 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
     public func setBackgroundTrackingPreference(_ enabled: Bool) {
         prefersBackgroundTracking = enabled
-        applyBackgroundTrackingConfiguration()
+        if isRecording {
+            applyBackgroundTrackingConfiguration()
+        }
 
         if enabled, authorization == .authorizedWhenInUse {
             client?.requestAlwaysAuthorization()
@@ -279,7 +281,9 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
     private func handleAuthorizationChange(_ authorization: LiveLocationAuthorization) {
         self.authorization = authorization
-        applyBackgroundTrackingConfiguration()
+        if isRecording {
+            applyBackgroundTrackingConfiguration()
+        }
 
         guard isAwaitingAuthorization else {
             return
