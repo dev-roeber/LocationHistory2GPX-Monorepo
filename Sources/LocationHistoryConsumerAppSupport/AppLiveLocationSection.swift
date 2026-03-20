@@ -48,7 +48,9 @@ public struct AppLiveLocationSection: View {
 
             savedTracksSection
 
-            Text("Completed live tracks are saved when you switch recording off. No automatic resume runs after app relaunch.")
+            Text(liveLocation.prefersBackgroundTracking
+                ? "Completed live tracks are saved when you switch recording off. Background recording still depends on Always Allow permission and does not auto-resume after app relaunch."
+                : "Completed live tracks are saved when you switch recording off. No automatic resume runs after app relaunch.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

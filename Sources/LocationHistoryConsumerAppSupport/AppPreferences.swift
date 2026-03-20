@@ -73,6 +73,86 @@ public enum AppMapStylePreference: String, CaseIterable, Identifiable {
     }
 }
 
+public enum AppLiveTrackingAccuracyPreference: String, CaseIterable, Identifiable {
+    case relaxed
+    case balanced
+    case strict
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .relaxed: return "Relaxed"
+        case .balanced: return "Balanced"
+        case .strict: return "Strict"
+        }
+    }
+
+    public var detail: String {
+        switch self {
+        case .relaxed: return "Accepts up to 100 m accuracy."
+        case .balanced: return "Accepts up to 65 m accuracy."
+        case .strict: return "Accepts up to 25 m accuracy."
+        }
+    }
+
+    var maximumAcceptedAccuracyM: Double {
+        switch self {
+        case .relaxed: return 100
+        case .balanced: return 65
+        case .strict: return 25
+        }
+    }
+}
+
+public enum AppLiveTrackingDetailPreference: String, CaseIterable, Identifiable {
+    case batterySaver
+    case balanced
+    case detailed
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .batterySaver: return "Battery Saver"
+        case .balanced: return "Balanced"
+        case .detailed: return "Detailed"
+        }
+    }
+
+    public var detail: String {
+        switch self {
+        case .batterySaver: return "Fewer stored points, larger movement threshold."
+        case .balanced: return "Default spacing for local live tracks."
+        case .detailed: return "Keeps more movement detail with tighter thresholds."
+        }
+    }
+
+    var duplicateDistanceThresholdM: Double {
+        switch self {
+        case .batterySaver: return 5
+        case .balanced: return 3
+        case .detailed: return 2
+        }
+    }
+
+    var minimumDistanceDeltaM: Double {
+        switch self {
+        case .batterySaver: return 25
+        case .balanced: return 15
+        case .detailed: return 8
+        }
+    }
+
+    var minimumTimeDeltaS: TimeInterval {
+        switch self {
+        case .batterySaver: return 15
+        case .balanced: return 8
+        case .detailed: return 4
+        }
+    }
+}
+
 @MainActor
 public final class AppPreferences: ObservableObject {
     private enum Keys {
@@ -80,6 +160,9 @@ public final class AppPreferences: ObservableObject {
         static let startTab = "app.preferences.startTab"
         static let mapStyle = "app.preferences.mapStyle"
         static let showsTechnicalImportDetails = "app.preferences.showsTechnicalImportDetails"
+        static let liveTrackingAccuracy = "app.preferences.liveTrackingAccuracy"
+        static let liveTrackingDetail = "app.preferences.liveTrackingDetail"
+        static let liveTrackingBackground = "app.preferences.liveTrackingBackground"
     }
 
     private let userDefaults: UserDefaults
@@ -100,6 +183,28 @@ public final class AppPreferences: ObservableObject {
         didSet { userDefaults.set(showsTechnicalImportDetails, forKey: Keys.showsTechnicalImportDetails) }
     }
 
+    @Published public var liveTrackingAccuracy: AppLiveTrackingAccuracyPreference {
+        didSet { userDefaults.set(liveTrackingAccuracy.rawValue, forKey: Keys.liveTrackingAccuracy) }
+    }
+
+    @Published public var liveTrackingDetail: AppLiveTrackingDetailPreference {
+        didSet { userDefaults.set(liveTrackingDetail.rawValue, forKey: Keys.liveTrackingDetail) }
+    }
+
+    @Published public var allowsBackgroundLiveTracking: Bool {
+        didSet { userDefaults.set(allowsBackgroundLiveTracking, forKey: Keys.liveTrackingBackground) }
+    }
+
+    public var liveTrackRecorderConfiguration: LiveTrackRecorderConfiguration {
+        LiveTrackRecorderConfiguration(
+            maximumAcceptedAccuracyM: liveTrackingAccuracy.maximumAcceptedAccuracyM,
+            duplicateDistanceThresholdM: liveTrackingDetail.duplicateDistanceThresholdM,
+            minimumDistanceDeltaM: liveTrackingDetail.minimumDistanceDeltaM,
+            minimumTimeDeltaS: liveTrackingDetail.minimumTimeDeltaS,
+            minimumPersistedPointCount: 2
+        )
+    }
+
     public init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
         self.distanceUnit = Self.loadEnum(
@@ -118,6 +223,17 @@ public final class AppPreferences: ObservableObject {
             from: userDefaults
         ) ?? .standard
         self.showsTechnicalImportDetails = userDefaults.object(forKey: Keys.showsTechnicalImportDetails) as? Bool ?? true
+        self.liveTrackingAccuracy = Self.loadEnum(
+            AppLiveTrackingAccuracyPreference.self,
+            key: Keys.liveTrackingAccuracy,
+            from: userDefaults
+        ) ?? .balanced
+        self.liveTrackingDetail = Self.loadEnum(
+            AppLiveTrackingDetailPreference.self,
+            key: Keys.liveTrackingDetail,
+            from: userDefaults
+        ) ?? .balanced
+        self.allowsBackgroundLiveTracking = userDefaults.object(forKey: Keys.liveTrackingBackground) as? Bool ?? false
     }
 
     public func reset() {
@@ -125,11 +241,17 @@ public final class AppPreferences: ObservableObject {
         userDefaults.removeObject(forKey: Keys.startTab)
         userDefaults.removeObject(forKey: Keys.mapStyle)
         userDefaults.removeObject(forKey: Keys.showsTechnicalImportDetails)
+        userDefaults.removeObject(forKey: Keys.liveTrackingAccuracy)
+        userDefaults.removeObject(forKey: Keys.liveTrackingDetail)
+        userDefaults.removeObject(forKey: Keys.liveTrackingBackground)
 
         distanceUnit = .metric
         startTab = .overview
         preferredMapStyle = .standard
         showsTechnicalImportDetails = true
+        liveTrackingAccuracy = .balanced
+        liveTrackingDetail = .balanced
+        allowsBackgroundLiveTracking = false
     }
 
     private static func loadEnum<T: RawRepresentable>(

@@ -1,10 +1,13 @@
 import Foundation
+#if canImport(UniformTypeIdentifiers)
+import UniformTypeIdentifiers
+#endif
 
 public enum ExportFormat: String, Identifiable, CaseIterable {
     case gpx = "GPX"
     case kml = "KML"
 
-    public static let allCases: [ExportFormat] = [.gpx]
+    public static let allCases: [ExportFormat] = [.gpx, .kml]
 
     public var id: String { rawValue }
 
@@ -22,7 +25,7 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
         case .gpx:
             return "GPS Exchange Format – compatible with most navigation and mapping apps."
         case .kml:
-            return "Keyhole Markup Language – architecture placeholder until the in-app export flow is expanded."
+            return "Keyhole Markup Language – useful for Google Earth and other map viewers."
         }
     }
 
@@ -34,4 +37,15 @@ public enum ExportFormat: String, Identifiable, CaseIterable {
             return "map.fill"
         }
     }
+
+    #if canImport(UniformTypeIdentifiers)
+    public var contentType: UTType {
+        switch self {
+        case .gpx:
+            return .gpx
+        case .kml:
+            return .kml
+        }
+    }
+    #endif
 }

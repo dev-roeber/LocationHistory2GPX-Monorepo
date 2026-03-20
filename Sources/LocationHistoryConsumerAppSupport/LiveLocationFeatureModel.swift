@@ -12,6 +12,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
     @Published public private(set) var liveTrackPoints: [RecordedTrackPoint] = []
     @Published public private(set) var recordedTracks: [RecordedTrack] = []
     @Published public private(set) var persistenceErrorMessage: String?
+    @Published public private(set) var prefersBackgroundTracking = false
 
     private let client: LiveLocationClient?
     private let store: RecordedTrackStoring
@@ -71,6 +72,18 @@ public final class LiveLocationFeatureModel: ObservableObject {
         liveTrackPoints.count >= 2
     }
 
+    public var recorderConfiguration: LiveTrackRecorderConfiguration {
+        recorder.configuration
+    }
+
+    public var isBackgroundTrackingActive: Bool {
+        prefersBackgroundTracking && authorization == .authorizedAlways
+    }
+
+    public var needsAlwaysAuthorizationUpgrade: Bool {
+        prefersBackgroundTracking && authorization == .authorizedWhenInUse
+    }
+
     public var permissionTitle: String {
         switch authorization {
         case .notDetermined:
@@ -80,6 +93,12 @@ public final class LiveLocationFeatureModel: ObservableObject {
         case .denied:
             return "Location Access Denied"
         case .authorizedWhenInUse, .authorizedAlways:
+            if isRecording && isBackgroundTrackingActive {
+                return "Recording in Background"
+            }
+            if needsAlwaysAuthorizationUpgrade {
+                return "Background Upgrade Pending"
+            }
             return isRecording ? "Recording Live Track" : "Live Location Ready"
         }
     }
@@ -99,11 +118,20 @@ public final class LiveLocationFeatureModel: ObservableObject {
         case .denied:
             return "Enable While Using the App access in Settings to show your position and record live tracks."
         case .authorizedWhenInUse, .authorizedAlways:
+            if needsAlwaysAuthorizationUpgrade {
+                return "Background recording is enabled in Options, but Apple has only granted While Using the App so far. Approve Always Allow to keep recording when the app leaves the foreground."
+            }
             if isRecording {
+                if isBackgroundTrackingActive {
+                    return "Recording can continue in the background and stays local to this app until you stop."
+                }
                 if liveTrackPoints.isEmpty {
                     return "Waiting for accurate foreground location updates."
                 }
                 return "Recording stays local to this app and is saved only when you stop."
+            }
+            if prefersBackgroundTracking {
+                return "Location is ready. Start recording to capture a live track and keep it running in the background when Always Allow is active."
             }
             return "Foreground location is authorized. Start recording to show your position and begin a new live track."
         }
@@ -140,6 +168,19 @@ public final class LiveLocationFeatureModel: ObservableObject {
         persistRecordedTracks(updatedTracks)
     }
 
+    public func updateRecorderConfiguration(_ configuration: LiveTrackRecorderConfiguration) {
+        recorder.updateConfiguration(configuration)
+    }
+
+    public func setBackgroundTrackingPreference(_ enabled: Bool) {
+        prefersBackgroundTracking = enabled
+        applyBackgroundTrackingConfiguration()
+
+        if enabled, authorization == .authorizedWhenInUse {
+            client?.requestAlwaysAuthorization()
+        }
+    }
+
     private func startRecordingFlow() {
         persistenceErrorMessage = nil
 
@@ -150,6 +191,10 @@ public final class LiveLocationFeatureModel: ObservableObject {
 
         switch client.authorization {
         case .authorizedWhenInUse, .authorizedAlways:
+            applyBackgroundTrackingConfiguration()
+            if prefersBackgroundTracking, client.authorization == .authorizedWhenInUse {
+                client.requestAlwaysAuthorization()
+            }
             recorder.start()
             liveTrackPoints = []
             isRecording = true
@@ -177,13 +222,24 @@ public final class LiveLocationFeatureModel: ObservableObject {
             return
         }
 
+        let persistedTrack = RecordedTrack(
+            id: finishedTrack.id,
+            startedAt: finishedTrack.startedAt,
+            endedAt: finishedTrack.endedAt,
+            dayKey: finishedTrack.dayKey,
+            distanceM: finishedTrack.distanceM,
+            captureMode: isBackgroundTrackingActive ? .backgroundAlways : .foregroundWhileInUse,
+            points: finishedTrack.points
+        )
+
         var updatedTracks = recordedTracks
-        updatedTracks.insert(finishedTrack, at: 0)
+        updatedTracks.insert(persistedTrack, at: 0)
         persistRecordedTracks(updatedTracks)
     }
 
     private func handleAuthorizationChange(_ authorization: LiveLocationAuthorization) {
         self.authorization = authorization
+        applyBackgroundTrackingConfiguration()
 
         guard isAwaitingAuthorization else {
             return
@@ -234,6 +290,10 @@ public final class LiveLocationFeatureModel: ObservableObject {
         } catch {
             persistenceErrorMessage = "Live track changes could not be saved."
         }
+    }
+
+    private func applyBackgroundTrackingConfiguration() {
+        client?.setBackgroundTrackingEnabled(prefersBackgroundTracking && authorization == .authorizedAlways)
     }
 }
 

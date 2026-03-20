@@ -6,7 +6,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 
 - Consumer only
 - keine allgemeine Producer-Pipeline oder Takeout-Aufbereitung fuer Google-Rohdaten
-- keine GPX-/GeoJSON-/CSV-Erzeugung
+- keine GeoJSON-/CSV-Erzeugung und keine allgemeine Producer-Exportpipeline
 - keine fertige Produkt-App in diesem Schritt
 - offline-first, ohne Netzwerkcode, Analytics-Tracking oder Cloud-Sync
 
@@ -28,7 +28,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - read-only Query-/ViewState-Daten aus dem App-Export ableiten
 - eine kleine produktnahe App-Shell-Struktur fuer lokalen JSON-/ZIP-Import bereitstellen
 - die App-Shell import-first mit klarerem Quellen-/Statusbereich und Reset-/Replace-Fluss fuehren
-- foreground-only Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen
+- Live-Location auf der Karte anzeigen und als getrennten Live-Track lokal aufzeichnen; optional auch im Background weiterfuehren, wenn der Nutzer das lokal aktiviert und `Always Allow` gewaehrt
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
 - lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab und technische Importdetails speichern
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
@@ -42,7 +42,6 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 
 - Producer-Logik aus dem Python-Repo
 - `trips_index.json` konsumieren
-- fertiges Background-Location-Tracking
 - Auto-Resume eines laufenden Live-Tracks nach App-Neustart
 - Mergen aufgezeichneter Live-Tracks in importierte Originaldaten
 
@@ -56,7 +55,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - `Sources/LocationHistoryConsumerAppSupport/`
   - generische Session-/Loader-Typen
   - gemeinsame SwiftUI-Produkt-UI fuer App und Demo (NavigationSplitView, Dashboard, Day-Detail, Map)
-  - Live-Location-/Recording-Domain fuer foreground-only Tracking und getrennte Recorded-Track-Persistenz
+  - Live-Location-/Recording-Domain fuer lokales Tracking mit optionalem Background-Modus und getrennte Recorded-Track-Persistenz
 - `Sources/LocationHistoryConsumerDemoSupport/`
   - `DemoDataLoader.swift`
   - `Resources/golden_app_export_sample_small.json`
@@ -172,7 +171,8 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - ein zentrales Actions-Menue in der Toolbar fuehrt Import, Demo, Optionen und Clear
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
-- Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen GPX-Dateinamen vor dem fileExporter-Dialog
+- Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen Dateinamen passend zum aktiven Exportformat vor dem fileExporter-Dialog
+- Export-Flow zeigt jetzt eine sichtbare Vorschaukarte und schaltet `GPX` und `KML` als aktive Dateiformate frei
 - Import-Persistenz-Code (Security-Scoped Bookmark) vorhanden; Auto-Restore aktuell bewusst deaktiviert (Phase 19.5) – Start immer manuell ueber Import oder Demo
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
 - bleibt offline-only; die neue Live-Recording-Logik bleibt lokal und klar vom Import-/Query-Layer getrennt
@@ -198,7 +198,7 @@ Stand 2026-03-17 ist auf einer realen macOS-/Xcode-Maschine ehrlich verifiziert:
 
 Stand 2026-03-17 ist noch offen:
 - ein separat protokollierter foreground-Lauf exakt ueber `Product > Run` in Xcode, falls genau dieser IDE-spezifische Weg regressionskritisch wird
-- foreground-only Live-Location-/Permission-Flow in einer separat dokumentierten Apple-UI-Session (Simulator oder echtes iPhone)
+- Live-Location-/Permission-Flow inklusive optionaler `Always Allow`-Erweiterung fuer Background-Recording in einer separat dokumentierten Apple-UI-Session (Simulator oder echtes iPhone)
 
 Zusatz fuer diese konkrete Maschine: mit aktivem `/Library/Developer/CommandLineTools` schlug ein nacktes `swift test` an `no such module 'XCTest'` fehl. Der gruene Testlauf wurde ehrlich mit `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test` erreicht.
 

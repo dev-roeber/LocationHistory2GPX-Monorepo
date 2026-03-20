@@ -42,7 +42,7 @@ Alternativ kann das Verzeichnis in Xcode geoeffnet werden. Die produktnahe App-S
 - kein signierter Apple-App-Build
 - keine `Info.plist`-/Bundle-/Icon-/Entitlement-Ausarbeitung
 - keine Cloud-/Server-Funktionen
-- kein Background-Tracking oder Auto-Resume laufender Live-Tracks
+- keine hardware-verifizierte Background-Recording-Session oder Auto-Resume laufender Live-Tracks
 
 ## Lokale Verifikation
 

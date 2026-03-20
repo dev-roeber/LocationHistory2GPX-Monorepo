@@ -226,5 +226,5 @@ Nicht separat als eigener Nachweis festgehalten:
 - kein `.xcodeproj`, nur Swift Package
 - keine Signierung, keine Distribution, keine Entitlements-Arbeit
 - kein Sync und keine Cloud-/Server-Anteile
-- kein Background-Tracking und kein Auto-Resume laufender Live-Tracks
+- keine hardware-verifizierte Background-Recording-Session und kein Auto-Resume laufender Live-Tracks
 - Apple-Verifikation ersetzt nicht `swift test`, und `swift test` ersetzt keinen echten Apple-UI-Lauf

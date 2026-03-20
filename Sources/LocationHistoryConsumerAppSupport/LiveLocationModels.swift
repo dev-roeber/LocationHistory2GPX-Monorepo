@@ -57,6 +57,7 @@ public struct RecordedTrackPoint: Codable, Equatable, Hashable {
 
 public enum RecordedTrackCaptureMode: String, Codable, Equatable, Hashable {
     case foregroundWhileInUse
+    case backgroundAlways
 }
 
 public struct RecordedTrack: Codable, Equatable, Identifiable, Hashable {

@@ -135,6 +135,81 @@ final class LiveLocationFeatureModelTests: XCTestCase {
         }
     }
 
+    func testRecorderConfigurationUpdateAppliesToSubsequentSamples() {
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
+
+            model.updateRecorderConfiguration(
+                LiveTrackRecorderConfiguration(
+                    maximumAcceptedAccuracyM: 10,
+                    duplicateDistanceThresholdM: 3,
+                    minimumDistanceDeltaM: 15,
+                    minimumTimeDeltaS: 8,
+                    minimumPersistedPointCount: 2
+                )
+            )
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 12),
+                sample(offsetSeconds: 12, latitude: 52.5203, longitude: 13.4003, accuracy: 8),
+            ])
+
+            XCTAssertEqual(model.recorderConfiguration.maximumAcceptedAccuracyM, 10)
+            XCTAssertEqual(model.liveTrackPoints.count, 1)
+            XCTAssertEqual(model.currentLocation?.horizontalAccuracyM, 8)
+        }
+    }
+
+    func testBackgroundPreferenceRequestsAlwaysAuthorizationFromWhenInUse() {
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedWhenInUse)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
+
+            model.setBackgroundTrackingPreference(true)
+
+            XCTAssertTrue(model.prefersBackgroundTracking)
+            XCTAssertTrue(model.needsAlwaysAuthorizationUpgrade)
+            XCTAssertEqual(client.requestAlwaysAuthorizationCallCount, 1)
+            XCTAssertEqual(client.lastBackgroundTrackingEnabled, false)
+        }
+    }
+
+    func testBackgroundPreferenceActivatesClientWhenAlwaysAuthorized() {
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedAlways)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
+
+            model.setBackgroundTrackingPreference(true)
+
+            XCTAssertTrue(model.isBackgroundTrackingActive)
+            XCTAssertEqual(client.lastBackgroundTrackingEnabled, true)
+        }
+    }
+
+    func testStoppingAlwaysAuthorizedRecordingStoresBackgroundCaptureMode() {
+        MainActor.assumeIsolated {
+            let client = TestLiveLocationClient(authorization: .authorizedAlways)
+            let store = InMemoryRecordedTrackStore()
+            let model = LiveLocationFeatureModel(client: client, store: store)
+
+            model.setBackgroundTrackingPreference(true)
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+                sample(offsetSeconds: 12, latitude: 52.5203, longitude: 13.4003, accuracy: 6),
+            ])
+
+            model.setRecordingEnabled(false)
+
+            XCTAssertEqual(model.recordedTracks.first?.captureMode, .backgroundAlways)
+            XCTAssertEqual(store.savedTracks.first?.captureMode, .backgroundAlways)
+        }
+    }
+
     private func sample(offsetSeconds: TimeInterval, latitude: Double, longitude: Double, accuracy: Double) -> LiveLocationSample {
         LiveLocationSample(
             latitude: latitude,
@@ -167,8 +242,10 @@ private final class TestLiveLocationClient: LiveLocationClient {
     var onLocationSamples: (([LiveLocationSample]) -> Void)?
 
     private(set) var requestWhenInUseAuthorizationCallCount = 0
+    private(set) var requestAlwaysAuthorizationCallCount = 0
     private(set) var startUpdatingLocationCallCount = 0
     private(set) var stopUpdatingLocationCallCount = 0
+    private(set) var lastBackgroundTrackingEnabled = false
 
     init(authorization: LiveLocationAuthorization) {
         self.authorization = authorization
@@ -176,6 +253,14 @@ private final class TestLiveLocationClient: LiveLocationClient {
 
     func requestWhenInUseAuthorization() {
         requestWhenInUseAuthorizationCallCount += 1
+    }
+
+    func requestAlwaysAuthorization() {
+        requestAlwaysAuthorizationCallCount += 1
+    }
+
+    func setBackgroundTrackingEnabled(_ enabled: Bool) {
+        lastBackgroundTrackingEnabled = enabled
     }
 
     func startUpdatingLocation() {

@@ -7,6 +7,8 @@ public protocol LiveLocationClient: AnyObject {
     var onLocationSamples: (([LiveLocationSample]) -> Void)? { get set }
 
     func requestWhenInUseAuthorization()
+    func requestAlwaysAuthorization()
+    func setBackgroundTrackingEnabled(_ enabled: Bool)
     func startUpdatingLocation()
     func stopUpdatingLocation()
 }
@@ -50,6 +52,18 @@ public final class SystemLiveLocationClient: NSObject, LiveLocationClient {
 
     public func requestWhenInUseAuthorization() {
         manager.requestWhenInUseAuthorization()
+    }
+
+    public func requestAlwaysAuthorization() {
+        manager.requestAlwaysAuthorization()
+    }
+
+    public func setBackgroundTrackingEnabled(_ enabled: Bool) {
+        manager.allowsBackgroundLocationUpdates = enabled
+        manager.pausesLocationUpdatesAutomatically = !enabled
+        #if os(iOS)
+        manager.showsBackgroundLocationIndicator = enabled
+        #endif
     }
 
     public func startUpdatingLocation() {

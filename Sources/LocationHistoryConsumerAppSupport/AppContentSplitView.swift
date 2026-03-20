@@ -64,10 +64,24 @@ public struct AppContentSplitView: View {
     }
 
     public var body: some View {
-        if horizontalSizeClass == .compact {
-            compactTabView
-        } else {
-            regularSplitView
+        Group {
+            if horizontalSizeClass == .compact {
+                compactTabView
+            } else {
+                regularSplitView
+            }
+        }
+        .onAppear {
+            syncLiveRecordingSettings()
+        }
+        .onChange(of: preferences.liveTrackingAccuracy) { _, _ in
+            syncLiveRecordingSettings()
+        }
+        .onChange(of: preferences.liveTrackingDetail) { _, _ in
+            syncLiveRecordingSettings()
+        }
+        .onChange(of: preferences.allowsBackgroundLiveTracking) { _, _ in
+            syncLiveRecordingSettings()
         }
     }
 
@@ -697,6 +711,11 @@ public struct AppContentSplitView: View {
         DispatchQueue.main.async {
             presentedSheet = sheet
         }
+    }
+
+    private func syncLiveRecordingSettings() {
+        liveLocation.updateRecorderConfiguration(preferences.liveTrackRecorderConfiguration)
+        liveLocation.setBackgroundTrackingPreference(preferences.allowsBackgroundLiveTracking)
     }
 
     private func handleDaysTabReselection() {

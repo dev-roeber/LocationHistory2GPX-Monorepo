@@ -98,4 +98,4 @@ Die kleine App-Shell in `Sources/LocationHistoryConsumerApp/` ist bewusst produk
 - import-first Leerlaufzustand mit klarer Erklaerung der unterstuetzten lokalen JSON-/ZIP-Dateien
 - kompakter Quellen-/Contract-Bereich fuer aktive Quelle, Schema-Version, Exportzeitpunkt, Input-Format und Tagesanzahl
 - klarer Open-/Replace-/Clear-Fluss ohne Persistenz oder Dateiverlauf
-- kein Sync, keine Server-/Cloud-Funktionen, kein Background-Tracking
+- kein Sync, keine Server-/Cloud-Funktionen und kein Auto-Resume eines laufenden Live-Tracks nach App-Neustart

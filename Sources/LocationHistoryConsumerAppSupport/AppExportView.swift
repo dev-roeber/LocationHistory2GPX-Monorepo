@@ -5,99 +5,50 @@ import LocationHistoryConsumer
 import UniformTypeIdentifiers
 #endif
 
-// MARK: - Export View
-
-/// The Export tab / sheet content.
-///
-/// Displays all available days with checkboxes, a format picker,
-/// and a button that triggers the system file-export flow.
 public struct AppExportView: View {
     @EnvironmentObject private var preferences: AppPreferences
     @Binding var session: AppSessionState
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @State private var selectedFormat: ExportFormat = .gpx
     @State private var isExporting = false
-    @State private var exportDocument: GPXDocument?
+    @State private var exportDocument: ExportDocument?
     @State private var exportError: String?
-    @State private var selectedRecordedTrackIDs: Set<UUID> = []
+    #if canImport(UniformTypeIdentifiers)
+    @State private var exportContentType: UTType = .gpx
+    #endif
 
     public init(session: Binding<AppSessionState>, liveLocation: LiveLocationFeatureModel) {
         self._session = session
         self._liveLocation = ObservedObject(wrappedValue: liveLocation)
     }
 
-    // MARK: - Body
-
     public var body: some View {
         let summaries = session.daySummaries
-        if summaries.isEmpty {
+        if summaries.isEmpty && liveLocation.recordedTracks.isEmpty {
             emptyState
         } else {
             exportContent(summaries: summaries)
         }
     }
 
-    // MARK: - Main Content
-
     @ViewBuilder
     private func exportContent(summaries: [DaySummary]) -> some View {
         let selection = session.exportSelection
+
         VStack(spacing: 0) {
             List {
                 selectionSummarySection(selection: selection, summaries: summaries)
 
-                Section {
-                    ForEach(summaries, id: \.date) { summary in
-                        dayRow(summary: summary, isSelected: selection.isSelected(summary.date))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                session.exportSelection.toggle(summary.date)
-                            }
-                    }
-                    } header: {
-                    HStack {
-                        Text("Days")
-                        Spacer()
-                        if selection.count == summaries.count {
-                            Button("Deselect All") {
-                                session.exportSelection.clearAll()
-                            }
-                            .font(.subheadline)
-                        } else {
-                            Button("Select All") {
-                                session.exportSelection.selectAll(from: summaries.map(\.date))
-                            }
-                            .font(.subheadline)
-                        }
-                    }
+                if !selection.isEmpty {
+                    previewSection(selection: selection, summaries: summaries)
+                }
+
+                if !summaries.isEmpty {
+                    daysSection(summaries: summaries, selection: selection)
                 }
 
                 if !liveLocation.recordedTracks.isEmpty {
-                    Section {
-                        ForEach(liveLocation.recordedTracks) { track in
-                            recordedTrackRow(track: track, isSelected: selectedRecordedTrackIDs.contains(track.id))
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    toggleRecordedTrack(track.id)
-                                }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Saved Live Tracks")
-                            Spacer()
-                            if selectedRecordedTrackIDs.count == liveLocation.recordedTracks.count {
-                                Button("Deselect All") {
-                                    selectedRecordedTrackIDs.removeAll()
-                                }
-                                .font(.subheadline)
-                            } else {
-                                Button("Select All") {
-                                    selectedRecordedTrackIDs = Set(liveLocation.recordedTracks.map(\.id))
-                                }
-                                .font(.subheadline)
-                            }
-                        }
-                    }
+                    recordedTracksSection(selection: selection)
                 }
             }
             #if os(iOS)
@@ -112,8 +63,8 @@ public struct AppExportView: View {
         .fileExporter(
             isPresented: $isExporting,
             document: exportDocument,
-            contentType: .gpx,
-            defaultFilename: exportDocument?.suggestedFilename ?? "lh2gpx-export.gpx"
+            contentType: exportContentType,
+            defaultFilename: exportDocument?.suggestedFilename ?? "lh2gpx-export.\(selectedFormat.fileExtension)"
         ) { result in
             if case let .failure(error) = result {
                 exportError = error.localizedDescription
@@ -130,16 +81,72 @@ public struct AppExportView: View {
             Text(exportError ?? "")
         }
         .onChange(of: liveLocation.recordedTracks) { _, tracks in
-            let validIDs = Set(tracks.map(\.id))
-            selectedRecordedTrackIDs = selectedRecordedTrackIDs.intersection(validIDs)
+            pruneInvalidRecordedTrackSelection(validTracks: tracks)
         }
     }
 
-    // MARK: - Day Row
+    @ViewBuilder
+    private func daysSection(summaries: [DaySummary], selection: ExportSelectionState) -> some View {
+        Section {
+            ForEach(summaries, id: \.date) { summary in
+                dayRow(summary: summary, isSelected: selection.isSelected(summary.date))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        session.exportSelection.toggle(summary.date)
+                    }
+            }
+        } header: {
+            HStack {
+                Text("Days")
+                Spacer()
+                if selection.selectedDayCount == summaries.count {
+                    Button("Deselect All") {
+                        session.exportSelection.clearAllDays()
+                    }
+                    .font(.subheadline)
+                } else {
+                    Button("Select All") {
+                        session.exportSelection.selectAll(from: summaries.map(\.date))
+                    }
+                    .font(.subheadline)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func recordedTracksSection(selection: ExportSelectionState) -> some View {
+        Section {
+            ForEach(liveLocation.recordedTracks) { track in
+                recordedTrackRow(track: track, isSelected: selection.isSelected(recordedTrackID: track.id))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        session.exportSelection.toggleRecordedTrack(track.id)
+                    }
+            }
+        } header: {
+            HStack {
+                Text("Saved Live Tracks")
+                Spacer()
+                if selection.selectedRecordedTrackCount == liveLocation.recordedTracks.count {
+                    Button("Deselect All") {
+                        session.exportSelection.clearRecordedTracks()
+                    }
+                    .font(.subheadline)
+                } else {
+                    Button("Select All") {
+                        session.exportSelection.selectAllRecordedTracks(from: liveLocation.recordedTracks.map(\.id))
+                    }
+                    .font(.subheadline)
+                }
+            }
+        }
+    }
 
     @ViewBuilder
     private func dayRow(summary: DaySummary, isSelected: Bool) -> some View {
         let hasRoutes = summary.pathCount > 0
+
         HStack(spacing: 12) {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
@@ -159,7 +166,7 @@ public struct AppExportView: View {
                             .foregroundStyle(.secondary)
                     }
                     if !hasRoutes {
-                        Label("No GPX route data", systemImage: "exclamationmark.circle")
+                        Label("No route geometry", systemImage: "exclamationmark.circle")
                             .foregroundStyle(.tertiary)
                     }
                 }
@@ -194,7 +201,7 @@ public struct AppExportView: View {
                         .foregroundStyle(.secondary)
                     Label(formatDistance(track.distanceM, unit: preferences.distanceUnit), systemImage: "ruler")
                         .foregroundStyle(.secondary)
-                    Text("Local recording")
+                    Text(captureModeLabel(for: track))
                         .foregroundStyle(.tertiary)
                 }
                 .font(.caption)
@@ -214,19 +221,32 @@ public struct AppExportView: View {
 
     @ViewBuilder
     private func selectionSummarySection(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
+        let snapshot = ExportSelectionContent.snapshot(
+            selection: selection,
+            summaries: summaries,
+            recordedTracks: liveLocation.recordedTracks
+        )
+
         Section {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(selectionSummaryTitle(selection: selection))
+                        Text(selectionSummaryTitle(snapshot: snapshot))
                             .font(.subheadline.weight(.semibold))
-                        Text(selectionSummaryMessage(selection: selection, summaries: summaries))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Text(ExportPresentation.helperMessage(
+                            selection: selection,
+                            summaries: summaries,
+                            recordedTracks: liveLocation.recordedTracks,
+                            format: selectedFormat
+                        ))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
+
                     Spacer()
-                    if !selection.isEmpty || !selectedRecordedTrackIDs.isEmpty {
-                        Text(exportFilenamePreview(selection: selection))
+
+                    if snapshot.selectedSourceCount > 0 {
+                        Text(exportFilenamePreview(selection: selection, summaries: summaries))
                             .font(.caption2.monospaced())
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 8)
@@ -236,33 +256,22 @@ public struct AppExportView: View {
                     }
                 }
 
-                if !selection.isEmpty {
+                if snapshot.selectedSourceCount > 0 {
                     HStack(spacing: 10) {
                         exportSummaryBadge(
-                            title: "\(selectedRouteDayCount(selection: selection, summaries: summaries)) route day\(selectedRouteDayCount(selection: selection, summaries: summaries) == 1 ? "" : "s")",
+                            title: "\(snapshot.selectedSourceCount) \(snapshot.selectedSourceCount == 1 ? "source" : "sources")",
+                            systemImage: "tray.full"
+                        )
+                        exportSummaryBadge(
+                            title: "\(snapshot.routeCount) \(snapshot.routeCount == 1 ? "route" : "routes")",
                             systemImage: "location.north.line"
                         )
-                        exportSummaryBadge(
-                            title: formatDistance(selectedRouteDistance(selection: selection, summaries: summaries), unit: preferences.distanceUnit),
-                            systemImage: "ruler"
-                        )
-                        if !selectedRecordedTrackIDs.isEmpty {
+                        if selectedDistance(selection: selection, summaries: summaries) > 0 {
                             exportSummaryBadge(
-                                title: "\(selectedRecordedTrackIDs.count) live track\(selectedRecordedTrackIDs.count == 1 ? "" : "s")",
-                                systemImage: "point.topleft.down.curvedto.point.bottomright.up"
+                                title: formatDistance(selectedDistance(selection: selection, summaries: summaries), unit: preferences.distanceUnit),
+                                systemImage: "ruler"
                             )
                         }
-                    }
-                } else if !selectedRecordedTrackIDs.isEmpty {
-                    HStack(spacing: 10) {
-                        exportSummaryBadge(
-                            title: "\(selectedRecordedTrackIDs.count) live track\(selectedRecordedTrackIDs.count == 1 ? "" : "s")",
-                            systemImage: "point.topleft.down.curvedto.point.bottomright.up"
-                        )
-                        exportSummaryBadge(
-                            title: formatDistance(selectedRecordedTrackDistance, unit: preferences.distanceUnit),
-                            systemImage: "ruler"
-                        )
                     }
                 }
             }
@@ -270,11 +279,45 @@ public struct AppExportView: View {
         }
     }
 
-    // MARK: - Export Bar
+    @ViewBuilder
+    private func previewSection(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
+        let previewData = ExportPreviewDataBuilder.previewData(
+            importedExport: session.content?.export,
+            selection: selection,
+            recordedTracks: liveLocation.recordedTracks
+        )
+        let presentation = MapPresentation.exportPreview(previewData, unit: preferences.distanceUnit)
+
+        Section("Preview") {
+            VStack(alignment: .leading, spacing: 12) {
+                if previewData.hasMapContent {
+                    if #available(iOS 17.0, macOS 14.0, *) {
+                        AppExportPreviewMapView(previewData: previewData)
+                    } else {
+                        Label("Map preview requires a newer Apple platform version, but the export summary below still reflects the current selection.", systemImage: "map")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    MapSectionSupplementaryView(presentation: presentation)
+                } else {
+                    Label("The current selection has no routes with exportable geometry to preview.", systemImage: "map")
+                        .font(.subheadline.weight(.medium))
+                    Text(ExportPresentation.helperMessage(
+                        selection: selection,
+                        summaries: summaries,
+                        recordedTracks: liveLocation.recordedTracks,
+                        format: selectedFormat
+                    ))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
 
     @ViewBuilder
     private func exportBar(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
-        let disabledReason = exportDisabledReason(selection: selection, summaries: summaries)
         VStack(spacing: 0) {
             Divider()
             VStack(spacing: 12) {
@@ -290,7 +333,7 @@ public struct AppExportView: View {
                         Image(systemName: selectedFormat.systemImage)
                             .foregroundColor(.accentColor)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("GPX")
+                            Text(selectedFormat.rawValue)
                                 .font(.subheadline.weight(.medium))
                             Text(selectedFormat.description)
                                 .font(.caption)
@@ -302,16 +345,32 @@ public struct AppExportView: View {
 
                 exportButton(selection: selection, summaries: summaries)
 
-                if let disabledReason {
-                    Label(disabledReason, systemImage: "info.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else if !selection.isEmpty || !selectedRecordedTrackIDs.isEmpty {
-                    Label("Suggested file name: \(exportFilenamePreview(selection: selection))", systemImage: "doc")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                if isExportReady(selection: selection, summaries: summaries) {
+                    Label(
+                        ExportPresentation.filenameMessage(
+                            selection: selection,
+                            summaries: summaries,
+                            recordedTracks: liveLocation.recordedTracks,
+                            format: selectedFormat
+                        ),
+                        systemImage: "doc"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Label(
+                        ExportPresentation.helperMessage(
+                            selection: selection,
+                            summaries: summaries,
+                            recordedTracks: liveLocation.recordedTracks,
+                            format: selectedFormat
+                        ),
+                        systemImage: "info.circle"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.horizontal)
@@ -323,31 +382,23 @@ public struct AppExportView: View {
 
     @ViewBuilder
     private func exportButton(selection: ExportSelectionState, summaries: [DaySummary]) -> some View {
-        let hasRoutes = selectedDaysHaveRoutes(selection: selection, summaries: summaries) || hasSelectedRecordedTracks
-        let label: String = {
-            let dayCount = selection.count
-            let trackCount = selectedRecordedTrackIDs.count
-            if dayCount == 0 && trackCount == 0 { return "Select routes or live tracks to export" }
-            if dayCount > 0 && trackCount == 0 {
-                return "Export \(dayCount) \(dayCount == 1 ? "day" : "days") as \(selectedFormat.rawValue)"
-            }
-            if dayCount == 0 {
-                return "Export \(trackCount) \(trackCount == 1 ? "live track" : "live tracks") as \(selectedFormat.rawValue)"
-            }
-            return "Export \(dayCount) day\(dayCount == 1 ? "" : "s") + \(trackCount) live track\(trackCount == 1 ? "" : "s")"
-        }()
-
         Button {
             prepareExport(selection: selection, summaries: summaries)
         } label: {
-            Label(label, systemImage: "square.and.arrow.up")
-                .frame(maxWidth: .infinity)
+            Label(
+                ExportPresentation.buttonTitle(
+                    selection: selection,
+                    summaries: summaries,
+                    recordedTracks: liveLocation.recordedTracks,
+                    format: selectedFormat
+                ),
+                systemImage: "square.and.arrow.up"
+            )
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
-        .disabled((selection.isEmpty && selectedRecordedTrackIDs.isEmpty) || !hasRoutes)
+        .disabled(!isExportReady(selection: selection, summaries: summaries))
     }
-
-    // MARK: - Empty State
 
     private var emptyState: some View {
         VStack(spacing: 16) {
@@ -357,7 +408,7 @@ public struct AppExportView: View {
                 .accessibilityHidden(true)
             Text("Nothing to Export")
                 .font(.headline)
-            Text("Import a location history file first to enable export.")
+            Text("Import a location history file or save a live track first to enable export.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -366,103 +417,52 @@ public struct AppExportView: View {
         .padding(32)
     }
 
-    // MARK: - Helpers
-
-    private func selectedDaysHaveRoutes(selection: ExportSelectionState, summaries: [DaySummary]) -> Bool {
-        summaries
-            .filter { selection.isSelected($0.date) }
-            .contains { $0.pathCount > 0 }
+    private func isExportReady(selection: ExportSelectionState, summaries: [DaySummary]) -> Bool {
+        switch ExportPresentation.readiness(
+            selection: selection,
+            summaries: summaries,
+            recordedTracks: liveLocation.recordedTracks
+        ) {
+        case .ready:
+            return true
+        case .nothingSelected, .noRoutesSelected:
+            return false
+        }
     }
 
-    private var hasSelectedRecordedTracks: Bool {
-        !selectedRecordedTracks.isEmpty
-    }
-
-    private var selectedRecordedTracks: [RecordedTrack] {
-        liveLocation.recordedTracks.filter { selectedRecordedTrackIDs.contains($0.id) }
-    }
-
-    private var selectedRecordedTrackDistance: Double {
-        selectedRecordedTracks.reduce(0) { $0 + $1.distanceM }
-    }
-
-    private func selectedRouteDayCount(selection: ExportSelectionState, summaries: [DaySummary]) -> Int {
-        summaries
-            .filter { selection.isSelected($0.date) && $0.pathCount > 0 }
-            .count
-    }
-
-    private func selectedRouteDistance(selection: ExportSelectionState, summaries: [DaySummary]) -> Double {
-        summaries
+    private func selectedDistance(selection: ExportSelectionState, summaries: [DaySummary]) -> Double {
+        let dayDistance = summaries
             .filter { selection.isSelected($0.date) }
             .reduce(0) { $0 + $1.totalPathDistanceM }
+        let trackDistance = selectedRecordedTracks(selection: selection)
+            .reduce(0) { $0 + $1.distanceM }
+        return dayDistance + trackDistance
     }
 
-    private func exportDisabledReason(selection: ExportSelectionState, summaries: [DaySummary]) -> String? {
-        if selection.isEmpty && selectedRecordedTrackIDs.isEmpty {
-            return "Select at least one day or saved live track to enable GPX export."
-        }
-        if !selectedDaysHaveRoutes(selection: selection, summaries: summaries) && !hasSelectedRecordedTracks {
-            return "The current selection contains no routes with GPS points and no saved live tracks, so no GPX file can be generated."
-        }
-        return nil
+    private func selectedRecordedTracks(selection: ExportSelectionState) -> [RecordedTrack] {
+        liveLocation.recordedTracks.filter { selection.isSelected(recordedTrackID: $0.id) }
     }
 
-    private func exportFilenamePreview(selection: ExportSelectionState) -> String {
-        let selectedDates = Array(selection.selectedDates)
-        let selectedTrackCount = selectedRecordedTrackIDs.count
-        if selectedDates.isEmpty && selectedTrackCount == 0 {
-            return GPXBuilder.suggestedFilename(for: [])
-        }
-        if !selectedDates.isEmpty && selectedTrackCount == 0 {
-            return GPXBuilder.suggestedFilename(for: selectedDates)
-        }
-        if selectedDates.isEmpty {
-            if let firstTrack = selectedRecordedTracks.first, selectedTrackCount == 1 {
-                return "lh2gpx-live-track-\(firstTrack.dayKey).gpx"
-            }
-            return "lh2gpx-live-tracks.gpx"
-        }
-        let baseName = GPXBuilder.suggestedFilename(for: selectedDates).replacingOccurrences(of: ".gpx", with: "")
-        return "\(baseName)_plus-live-tracks.gpx"
+    private func exportFilenamePreview(selection: ExportSelectionState, summaries: [DaySummary]) -> String {
+        ExportPresentation.suggestedFilename(
+            selection: selection,
+            summaries: summaries,
+            recordedTracks: liveLocation.recordedTracks,
+            format: selectedFormat
+        )
     }
 
-    private func selectionSummaryTitle(selection: ExportSelectionState) -> String {
-        let dayCount = selection.count
-        let trackCount = selectedRecordedTrackIDs.count
-        if dayCount == 0 && trackCount == 0 {
-            return "Select routes for GPX export"
+    private func selectionSummaryTitle(snapshot: ExportSelectionSnapshot) -> String {
+        if snapshot.selectedSourceCount == 0 {
+            return "Select routes for export"
         }
-        if dayCount > 0 && trackCount == 0 {
-            return "\(dayCount) day\(dayCount == 1 ? "" : "s") selected"
+        if snapshot.selectedDayCount > 0 && snapshot.selectedRecordedTrackCount == 0 {
+            return "\(snapshot.selectedDayCount) imported day\(snapshot.selectedDayCount == 1 ? "" : "s") selected"
         }
-        if dayCount == 0 {
-            return "\(trackCount) live track\(trackCount == 1 ? "" : "s") selected"
+        if snapshot.selectedDayCount == 0 {
+            return "\(snapshot.selectedRecordedTrackCount) saved live track\(snapshot.selectedRecordedTrackCount == 1 ? "" : "s") selected"
         }
-        return "\(dayCount) day\(dayCount == 1 ? "" : "s") + \(trackCount) live track\(trackCount == 1 ? "" : "s") selected"
-    }
-
-    private func selectionSummaryMessage(selection: ExportSelectionState, summaries: [DaySummary]) -> String {
-        if selection.isEmpty && selectedRecordedTrackIDs.isEmpty {
-            return "Pick one or more imported days with recorded routes or include saved live tracks. The suggested filename updates automatically from your selection."
-        }
-
-        let routeDays = selectedRouteDayCount(selection: selection, summaries: summaries)
-        let liveTracks = selectedRecordedTrackIDs.count
-
-        if routeDays == 0 && liveTracks == 0 {
-            return "Selected days are tracked for export, but none of them currently contain route points that GPX can write."
-        }
-
-        if routeDays == 0 {
-            return "GPX will include \(liveTracks) selected saved live track\(liveTracks == 1 ? "" : "s")."
-        }
-
-        if liveTracks == 0 {
-            return "GPX will include routes from \(routeDays) selected day\(routeDays == 1 ? "" : "s")."
-        }
-
-        return "GPX will include routes from \(routeDays) day\(routeDays == 1 ? "" : "s") plus \(liveTracks) saved live track\(liveTracks == 1 ? "" : "s")."
+        return "\(snapshot.selectedDayCount) imported day\(snapshot.selectedDayCount == 1 ? "" : "s") + \(snapshot.selectedRecordedTrackCount) saved live track\(snapshot.selectedRecordedTrackCount == 1 ? "" : "s") selected"
     }
 
     @ViewBuilder
@@ -477,21 +477,40 @@ public struct AppExportView: View {
     }
 
     private func prepareExport(selection: ExportSelectionState, summaries: [DaySummary]) {
-        guard let export = session.content?.export else { return }
-        let selectedDates = selection.selectedDates
-        let days = AppExportQueries.days(in: export).filter { selectedDates.contains($0.date) }
-        let additionalTracks = selectedRecordedTracks.map(gpxTrack(from:))
-        let gpxString = GPXBuilder.build(from: days, additionalTracks: additionalTracks)
-        let filename = exportFilenamePreview(selection: selection)
-        exportDocument = GPXDocument(content: gpxString, suggestedFilename: filename)
+        let exportDays = ExportSelectionContent.exportDays(
+            importedExport: session.content?.export,
+            selection: selection,
+            recordedTracks: liveLocation.recordedTracks
+        )
+
+        guard !exportDays.isEmpty else {
+            exportError = "The current selection contains no exportable route geometry."
+            return
+        }
+
+        let content: String
+        switch selectedFormat {
+        case .gpx:
+            content = GPXBuilder.build(from: exportDays)
+        case .kml:
+            content = KMLBuilder.build(from: exportDays)
+        }
+
+        exportDocument = ExportDocument(
+            content: content,
+            suggestedFilename: exportFilenamePreview(selection: selection, summaries: summaries)
+        )
+        #if canImport(UniformTypeIdentifiers)
+        exportContentType = selectedFormat.contentType
+        #endif
         isExporting = true
     }
 
-    private func toggleRecordedTrack(_ id: UUID) {
-        if selectedRecordedTrackIDs.contains(id) {
-            selectedRecordedTrackIDs.remove(id)
-        } else {
-            selectedRecordedTrackIDs.insert(id)
+    private func pruneInvalidRecordedTrackSelection(validTracks: [RecordedTrack]) {
+        let validIDs = Set(validTracks.map(\.id))
+        let invalidIDs = session.exportSelection.selectedRecordedTrackIDs.subtracting(validIDs)
+        for id in invalidIDs {
+            session.exportSelection.toggleRecordedTrack(id)
         }
     }
 
@@ -503,18 +522,13 @@ public struct AppExportView: View {
         return formatter.string(from: track.startedAt)
     }
 
-    private func gpxTrack(from track: RecordedTrack) -> GPXTrack {
-        GPXTrack(
-            name: "Saved Live Track – \(savedTrackTitle(track))",
-            type: "foreground_while_in_use",
-            points: track.points.map {
-                GPXTrackPoint(
-                    latitude: $0.latitude,
-                    longitude: $0.longitude,
-                    time: ISO8601DateFormatter().string(from: $0.timestamp)
-                )
-            }
-        )
+    private func captureModeLabel(for track: RecordedTrack) -> String {
+        switch track.captureMode {
+        case .foregroundWhileInUse:
+            return "Foreground recording"
+        case .backgroundAlways:
+            return "Background recording"
+        }
     }
 }
 

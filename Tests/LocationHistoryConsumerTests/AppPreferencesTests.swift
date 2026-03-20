@@ -27,6 +27,11 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .overview)
             XCTAssertEqual(preferences.preferredMapStyle, .standard)
             XCTAssertTrue(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
+            XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
+            XCTAssertFalse(preferences.allowsBackgroundLiveTracking)
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM, 65)
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM, 15)
         }
     }
 
@@ -35,6 +40,9 @@ final class AppPreferencesTests: XCTestCase {
         defaults.set(AppStartTabPreference.insights.rawValue, forKey: "app.preferences.startTab")
         defaults.set(AppMapStylePreference.hybrid.rawValue, forKey: "app.preferences.mapStyle")
         defaults.set(false, forKey: "app.preferences.showsTechnicalImportDetails")
+        defaults.set(AppLiveTrackingAccuracyPreference.strict.rawValue, forKey: "app.preferences.liveTrackingAccuracy")
+        defaults.set(AppLiveTrackingDetailPreference.detailed.rawValue, forKey: "app.preferences.liveTrackingDetail")
+        defaults.set(true, forKey: "app.preferences.liveTrackingBackground")
 
         MainActor.assumeIsolated {
             let preferences = AppPreferences(userDefaults: defaults)
@@ -43,6 +51,11 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .insights)
             XCTAssertEqual(preferences.preferredMapStyle, .hybrid)
             XCTAssertFalse(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.liveTrackingAccuracy, .strict)
+            XCTAssertEqual(preferences.liveTrackingDetail, .detailed)
+            XCTAssertTrue(preferences.allowsBackgroundLiveTracking)
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM, 25)
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM, 8)
         }
     }
 
@@ -53,6 +66,9 @@ final class AppPreferencesTests: XCTestCase {
             preferences.startTab = .export
             preferences.preferredMapStyle = .hybrid
             preferences.showsTechnicalImportDetails = false
+            preferences.liveTrackingAccuracy = .strict
+            preferences.liveTrackingDetail = .batterySaver
+            preferences.allowsBackgroundLiveTracking = true
 
             preferences.reset()
 
@@ -60,6 +76,9 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(preferences.startTab, .overview)
             XCTAssertEqual(preferences.preferredMapStyle, .standard)
             XCTAssertTrue(preferences.showsTechnicalImportDetails)
+            XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
+            XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
+            XCTAssertFalse(preferences.allowsBackgroundLiveTracking)
         }
     }
 
@@ -70,6 +89,18 @@ final class AppPreferencesTests: XCTestCase {
             let preferences = AppPreferences(userDefaults: defaults)
 
             XCTAssertEqual(preferences.startTab, .overview)
+        }
+    }
+
+    func testInvalidLiveTrackingValuesFallBackToDefaults() {
+        defaults.set("nonsense", forKey: "app.preferences.liveTrackingAccuracy")
+        defaults.set("still-nonsense", forKey: "app.preferences.liveTrackingDetail")
+
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+
+            XCTAssertEqual(preferences.liveTrackingAccuracy, .balanced)
+            XCTAssertEqual(preferences.liveTrackingDetail, .balanced)
         }
     }
 }

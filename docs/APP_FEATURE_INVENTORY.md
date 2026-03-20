@@ -123,7 +123,9 @@ Not present:
 ## 6a. Local Recording / Saved Live Tracks
 
 Present:
-- foreground-only live recording with current-position marker and live polyline
+- live recording with current-position marker and live polyline
+- live-recording options can change accepted accuracy and capture density for the local recorder
+- background live recording can be enabled in local settings and becomes active when the app has `Always Allow` authorization
 - permission/status card and record toggle inside day detail
 - completed recordings are persisted as separate local `Saved Live Tracks`
 - dedicated recorded-tracks library page with summary, latest-track preview and editor navigation
@@ -131,7 +133,6 @@ Present:
 - live-recording area links into the separate library instead of duplicating a second inline editor flow
 
 Not present:
-- background live tracking
 - auto-resume of in-progress recordings after relaunch
 - merging saved live tracks back into imported history
 
@@ -161,12 +162,14 @@ Present:
 - start-tab preference for compact layout
 - default map-style preference
 - toggle for showing technical import details
+- live-recording accuracy filter preference
+- live-recording detail preference for movement/time capture density
+- toggle for allowing background live recording
 - reset-to-defaults action
-- privacy info section clarifying local-only storage, no server upload and foreground-only live recording
+- privacy info section clarifying local-only storage, no server upload and optional background live recording after `Always Allow`
 
 Not present:
 - sync/server toggles
-- background-location settings
 - per-chart or per-screen visual customization
 
 ## 9. Export / Teilen / Server / Sync
@@ -176,18 +179,19 @@ Present:
 - export sheet entry on regular width
 - multi-day selection with `Select All` / `Deselect All`
 - saved live tracks can be selected in the same export flow
+- export preview map for the current selection with route metrics and legend summary
 - system `fileExporter` flow
-- GPX generation from selected imported days and selected saved live tracks
-- suggested export filename based on selected days
+- GPX and KML generation from selected imported days and selected saved live tracks
+- suggested export filename based on selected days, saved tracks and the active format
 - export summary card with selected-day count, route-day count, distance total and filename preview
 - disabled export button when nothing is selected or no selected day has routes
 - explicit disabled-reason messaging and clearer marking of days without GPX route data
 
 Bewusst deaktiviert, aber vorhanden:
-- `ExportFormat` enum exists as an extension point for additional formats
+- export architecture can still grow beyond the active `GPX`/`KML` formats
 
 Not present:
-- active KML or CSV export in the app UI
+- active CSV, GeoJSON or KMZ export in the app UI
 - per-route selection inside a day
 - waypoint export for visits / activities
 - cloud sync, server upload or account-backed sharing
@@ -231,10 +235,9 @@ Not present:
 Present as underlaying code, but not active as product behavior:
 - import bookmark restore infrastructure exists, but auto-restore on launch is parked
 - recorded live tracks persist after recording stops, but there is no draft resume for an in-progress recording
-- export architecture can grow beyond GPX, but only GPX is currently active
+- export architecture can grow beyond GPX/KML, but further formats are still inactive
 
 Explicitly not present as active product features:
-- background location tracking
 - automatic resume of live recording after app relaunch
 - merge of recorded live tracks into imported history
 - dedicated sync/server features

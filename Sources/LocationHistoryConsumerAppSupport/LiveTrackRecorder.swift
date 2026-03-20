@@ -26,7 +26,7 @@ public struct LiveTrackRecorder {
     public private(set) var points: [RecordedTrackPoint] = []
     public private(set) var isRecording = false
 
-    private let configuration: LiveTrackRecorderConfiguration
+    public private(set) var configuration: LiveTrackRecorderConfiguration
     private let calendar: Calendar
 
     public init(
@@ -35,6 +35,10 @@ public struct LiveTrackRecorder {
     ) {
         self.configuration = configuration
         self.calendar = calendar
+    }
+
+    public mutating func updateConfiguration(_ configuration: LiveTrackRecorderConfiguration) {
+        self.configuration = configuration
     }
 
     public mutating func start() {
