@@ -45,6 +45,10 @@ enum AppDateDisplay {
         return formatter
     }()
 
+    // NOTE: Static formatters use the device locale by default, not the app language.
+    // The weekday and monthYear formatters are most impactful since they produce
+    // day-of-week and month names in the device language rather than the app language.
+    // Use weekday(_:locale:) and monthYear(_:locale:) overloads for localized output.
     private static let weekdayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.setLocalizedDateFormatFromTemplate("EEEE")
@@ -72,9 +76,19 @@ enum AppDateDisplay {
         return weekday(d)
     }
 
+    static func weekday(_ iso: String, locale: Locale) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return iso }
+        return weekday(d, locale: locale)
+    }
+
     static func monthYear(_ iso: String) -> String {
         guard let d = isoFormatter.date(from: iso) else { return String(iso.prefix(7)) }
         return monthYear(d)
+    }
+
+    static func monthYear(_ iso: String, locale: Locale) -> String {
+        guard let d = isoFormatter.date(from: iso) else { return String(iso.prefix(7)) }
+        return monthYear(d, locale: locale)
     }
 
     static func longDate(_ date: Date) -> String {
@@ -97,8 +111,22 @@ enum AppDateDisplay {
         weekdayFormatter.string(from: date)
     }
 
+    static func weekday(_ date: Date, locale: Locale) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
+        return formatter.string(from: date)
+    }
+
     static func monthYear(_ date: Date) -> String {
         monthYearFormatter.string(from: date)
+    }
+
+    static func monthYear(_ date: Date, locale: Locale) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("LLLL yyyy")
+        return formatter.string(from: date)
     }
 }
 
@@ -144,7 +172,7 @@ enum AppTimeDisplay {
             return nil
         }
 
-        return "\(time(startDate)) - \(time(endDate))"
+        return "\(time(startDate)) – \(time(endDate))"
     }
 
     static func timeRange(start: Date?, end: Date?) -> String? {
@@ -154,7 +182,7 @@ enum AppTimeDisplay {
             return nil
         }
 
-        return "\(time(start)) - \(time(end))"
+        return "\(time(start)) – \(time(end))"
     }
 
     static func duration(start: String?, end: String?) -> String? {
@@ -290,15 +318,32 @@ func iconForVisitType(_ type: String?) -> String {
     }
 }
 
-func displayNameForVisitType(_ type: String?, default defaultName: String = "Unknown Place") -> String {
+func displayNameForVisitType(_ type: String?, default defaultName: String = "Unknown Place", language: AppLanguagePreference = .english) -> String {
+    if language.isGerman {
+        switch (type ?? "").uppercased() {
+        case "HOME": return "Zuhause"
+        case "WORK": return "Arbeit"
+        case "CAFE": return "Café"
+        case "RESTAURANT": return "Restaurant"
+        case "PARK": return "Park"
+        case "GYM", "LEISURE": return "Fitnessstudio"
+        case "HOTEL", "STAY": return "Hotel"
+        case "EVENT": return "Event"
+        case "UNKNOWN", "": return defaultName
+        default:
+            guard let type, !type.isEmpty else { return defaultName }
+            return type.capitalized
+        }
+    }
     switch (type ?? "").uppercased() {
     case "HOME": return "Home"
     case "WORK": return "Work"
     case "CAFE": return "Cafe"
+    case "RESTAURANT": return "Restaurant"
     case "PARK": return "Park"
-    case "LEISURE": return "Leisure"
+    case "GYM", "LEISURE": return "Gym"
+    case "HOTEL", "STAY": return "Hotel"
     case "EVENT": return "Event"
-    case "STAY": return "Stay"
     case "UNKNOWN", "": return defaultName
     default:
         guard let type, !type.isEmpty else { return defaultName }
@@ -320,16 +365,37 @@ func iconForActivityType(_ type: String?) -> String {
     }
 }
 
-func displayNameForActivityType(_ type: String?, default defaultName: String = "Activity") -> String {
+func displayNameForActivityType(_ type: String?, default defaultName: String = "Activity", language: AppLanguagePreference = .english) -> String {
+    if language.isGerman {
+        switch (type ?? "").uppercased() {
+        case "WALKING":                         return "Zu Fuß"
+        case "RUNNING":                         return "Laufen"
+        case "CYCLING":                         return "Fahrrad"
+        case "IN PASSENGER VEHICLE", "IN_VEHICLE": return "Auto"
+        case "FLYING":                          return "Flug"
+        case "IN BUS", "IN_BUS":               return "Bus"
+        case "IN SUBWAY", "IN_SUBWAY":          return "U-Bahn"
+        case "IN TRAIN", "IN_TRAIN":            return "Zug"
+        case "IN TRAM", "IN_TRAM":             return "Straßenbahn"
+        case "MOTORCYCLING":                    return "Motorrad"
+        case "SKIING":                          return "Ski"
+        default:
+            guard let type else { return "Aktivität" }
+            return type.capitalized
+        }
+    }
     switch (type ?? "").uppercased() {
     case "WALKING":              return "Walking"
     case "CYCLING":              return "Cycling"
     case "RUNNING":              return "Running"
     case "FLYING":               return "Flying"
-    case "IN PASSENGER VEHICLE": return "Car"
-    case "IN BUS":               return "Bus"
-    case "IN TRAIN":             return "Train"
-    case "IN SUBWAY":            return "Subway"
+    case "IN PASSENGER VEHICLE", "IN_VEHICLE": return "Car"
+    case "IN BUS", "IN_BUS":    return "Bus"
+    case "IN TRAIN", "IN_TRAIN": return "Train"
+    case "IN SUBWAY", "IN_SUBWAY": return "Subway"
+    case "IN TRAM", "IN_TRAM":  return "Tram"
+    case "MOTORCYCLING":         return "Motorcycling"
+    case "SKIING":               return "Skiing"
     default:
         guard let type else { return defaultName }
         return type.capitalized

@@ -39,9 +39,9 @@ enum OverviewPresentation {
         if let firstDate = daySummaries.map(\.date).min(),
            let lastDate = daySummaries.map(\.date).max() {
             if language.isGerman {
-                subtitle = "\(AppDateDisplay.mediumDate(firstDate)) - \(AppDateDisplay.mediumDate(lastDate)) · \(contentfulDayCount) \(contentfulDayCount == 1 ? "inhaltlicher Tag" : "inhaltliche Tage")"
+                subtitle = "\(AppDateDisplay.mediumDate(firstDate)) - \(AppDateDisplay.mediumDate(lastDate)) · \(contentfulDayCount) \(contentfulDayCount == 1 ? "aktiver Tag" : "aktive Tage")"
             } else {
-                subtitle = "\(AppDateDisplay.mediumDate(firstDate)) - \(AppDateDisplay.mediumDate(lastDate)) · \(contentfulDayCount) contentful \(contentfulDayCount == 1 ? "day" : "days")"
+                subtitle = "\(AppDateDisplay.mediumDate(firstDate)) - \(AppDateDisplay.mediumDate(lastDate)) · \(contentfulDayCount) active \(contentfulDayCount == 1 ? "day" : "days")"
             }
         } else {
             subtitle = language.isGerman
@@ -52,12 +52,12 @@ enum OverviewPresentation {
         let visitsNote = averageNote(
             total: overview.totalVisitCount,
             days: contentfulDayCount,
-            suffix: language.isGerman ? "pro inhaltlichem Tag" : "per contentful day"
+            suffix: language.isGerman ? "pro aktivem Tag" : "per active day"
         )
         let activitiesNote = averageNote(
             total: overview.totalActivityCount,
             days: contentfulDayCount,
-            suffix: language.isGerman ? "pro inhaltlichem Tag" : "per contentful day"
+            suffix: language.isGerman ? "pro aktivem Tag" : "per active day"
         )
         let routesNote: String?
         if totalExportableRoutes > 0 {

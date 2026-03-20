@@ -51,16 +51,18 @@ public struct AppOptionsView: View {
 
                 Toggle(t("Upload to Custom Server"), isOn: $preferences.sendsLiveLocationToServer)
 
-                TextField(t("Server URL"), text: $preferences.liveLocationServerUploadURLString)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                    .keyboardType(.URL)
-                    #endif
+                if preferences.sendsLiveLocationToServer {
+                    TextField(t("Server URL"), text: $preferences.liveLocationServerUploadURLString)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        #if os(iOS)
+                        .keyboardType(.URL)
+                        #endif
 
-                TextField(t("Bearer Token (optional)"), text: $preferences.liveLocationServerUploadBearerToken)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                    TextField(t("Bearer Token (optional)"), text: $preferences.liveLocationServerUploadBearerToken)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                }
 
                 Picker(t("Upload Batch Size"), selection: $preferences.liveTrackingUploadBatch) {
                     ForEach(AppLiveTrackingUploadBatchPreference.allCases) { batch in

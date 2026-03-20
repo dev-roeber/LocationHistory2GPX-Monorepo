@@ -120,11 +120,11 @@ enum MapPresentation {
         )
         var noteParts: [String] = []
         if !mapData.visitAnnotations.isEmpty && !mapData.pathOverlays.isEmpty {
-            noteParts.append("Pins show imported visits and lines show imported route geometry.")
+            noteParts.append("Pins show imported visits and lines show imported route paths.")
         } else if !mapData.visitAnnotations.isEmpty {
             noteParts.append("Only imported visits have usable coordinates on this day.")
         } else if !mapData.pathOverlays.isEmpty {
-            noteParts.append("Only imported route geometry has usable coordinates on this day.")
+            noteParts.append("Only imported route paths have usable coordinates on this day.")
         }
         if let dominantMode {
             noteParts.append("\(dominantMode) dominates the plotted movement.")
@@ -236,7 +236,7 @@ enum MapPresentation {
             ? nil
             : (language.isGerman
                 ? "Die Vorschau nutzt exportierbare \(mode == .waypoints ? "Wegpunkt-Positionen" : mode == .tracks ? "Routengeometrie" : "Routengeometrie und Wegpunkt-Positionen") aus \(sourceParts.joined(separator: " und "))."
-                : "Preview uses exportable \(mode == .waypoints ? "waypoint locations" : mode == .tracks ? "route geometry" : "route geometry and waypoint locations") from \(sourceParts.joined(separator: " and ")).")
+                : "Preview uses exportable \(mode == .waypoints ? "waypoint locations" : mode == .tracks ? "route paths" : "route paths and waypoint locations") from \(sourceParts.joined(separator: " and ")).")
         if let dominantMode {
             let dominantSentence = language.isGerman
                 ? "\(dominantMode) liefert den stärksten sichtbaren Routenkontext."

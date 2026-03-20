@@ -121,7 +121,7 @@ public struct AppContentSplitView: View {
             NavigationStack(path: $daysNavigationPath) {
                 compactDayList
                     .navigationTitle(t("Days"))
-                    .searchable(text: $daySearchText, prompt: t("Search by date"))
+                    .searchable(text: $daySearchText, prompt: t("Search by date, weekday or month"))
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) {
                             actionsMenu
@@ -175,7 +175,7 @@ public struct AppContentSplitView: View {
                 Label(t("Export"), systemImage: "square.and.arrow.up")
             }
             .tag(3)
-            .badge(session.exportSelection.count > 0 ? session.exportSelection.count : 0)
+            .badge(session.exportSelection.count)
 
             if #available(iOS 17.0, *) {
                 NavigationStack {
@@ -350,7 +350,7 @@ public struct AppContentSplitView: View {
                         .font(.title3)
                         .foregroundColor(.accentColor)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Total Distance")
+                        Text(t("Total Distance"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(formatDistance(insights.totalDistanceM, unit: preferences.distanceUnit))
@@ -392,7 +392,7 @@ public struct AppContentSplitView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
                 overviewActionButton(
                     title: openButtonTitle,
-                    subtitle: "Replace the current import with another local file.",
+                    subtitle: t("Replace the current import with another local file."),
                     icon: "doc.badge.plus",
                     color: .accentColor,
                     action: onOpen
@@ -401,7 +401,7 @@ public struct AppContentSplitView: View {
                 if horizontalSizeClass == .compact {
                     overviewActionButton(
                     title: t("Browse Days"),
-                        subtitle: "Jump into the day list and open imported history entries.",
+                        subtitle: t("Jump into the day list and open imported history entries."),
                         icon: "calendar",
                         color: .blue
                     ) {
@@ -410,7 +410,7 @@ public struct AppContentSplitView: View {
 
                     overviewActionButton(
                     title: t("Open Insights"),
-                        subtitle: "Switch to charts and derived breakdowns for the current import.",
+                        subtitle: t("Switch to charts and derived breakdowns for the current import."),
                         icon: "chart.xyaxis.line",
                         color: .indigo
                     ) {
@@ -420,7 +420,7 @@ public struct AppContentSplitView: View {
                     if session.hasDays {
                         overviewActionButton(
                             title: t("Export GPX"),
-                            subtitle: "Choose days and prepare a GPX export from recorded routes.",
+                            subtitle: t("Choose days and prepare a GPX export from recorded routes."),
                             icon: "square.and.arrow.up",
                             color: .green
                         ) {
@@ -431,7 +431,7 @@ public struct AppContentSplitView: View {
 
                 overviewActionButton(
                     title: t("Saved Live Tracks"),
-                    subtitle: "Open the separate local track library and edit finished recordings there.",
+                    subtitle: t("Open the separate local track library and edit finished recordings there."),
                     icon: "point.topleft.down.curvedto.point.bottomright.up",
                     color: .mint
                 ) {
@@ -441,7 +441,7 @@ public struct AppContentSplitView: View {
                 if session.hasDays {
                     overviewActionButton(
                         title: t("Heatmap"),
-                        subtitle: "Visualize your movement density on a map.",
+                        subtitle: t("Visualize your movement density on a map."),
                         icon: "thermometer.medium",
                         color: .red
                     ) {
@@ -452,7 +452,7 @@ public struct AppContentSplitView: View {
                 if horizontalSizeClass != .compact, session.hasDays {
                     overviewActionButton(
                         title: t("Export GPX"),
-                        subtitle: "Open the export sheet for the current imported history.",
+                        subtitle: t("Open the export sheet for the current imported history."),
                         icon: "square.and.arrow.up",
                         color: .green
                     ) {
@@ -473,7 +473,7 @@ public struct AppContentSplitView: View {
                 HStack(spacing: 12) {
                     if let busiest = insights.busiestDay {
                         highlightCard(
-                            title: "Busiest Day",
+                            title: t("Busiest Day"),
                             value: busiest.value,
                             date: AppDateDisplay.mediumDate(busiest.date),
                             icon: "flame.fill",
@@ -486,7 +486,7 @@ public struct AppContentSplitView: View {
                     }
                     if let longest = insights.longestDistanceDay {
                         highlightCard(
-                            title: "Longest Distance",
+                            title: t("Longest Distance"),
                             value: longestDistanceValue(for: longest),
                             date: AppDateDisplay.mediumDate(longest.date),
                             icon: "road.lanes",
@@ -623,7 +623,7 @@ public struct AppContentSplitView: View {
                     .foregroundStyle(.secondary)
                 Text(t("No Insights Available"))
                     .font(.headline)
-                Text("Load a location history file to see detailed insights.")
+                Text(t("Load a location history file to see detailed insights."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -795,7 +795,7 @@ public struct AppContentSplitView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label(t("Saved Live Tracks"), systemImage: "slider.horizontal.3")
+                    Label(t("Saved Live Tracks"), systemImage: "point.topleft.down.curvedto.point.bottomright.up")
                         .font(.headline)
                     Text(liveTracksOverviewMessage)
                         .font(.caption)
@@ -856,27 +856,23 @@ public struct AppContentSplitView: View {
     }
 
     private var openButtonTitle: String {
-        session.hasLoadedContent ? "Open Another File" : "Open location history file"
+        session.hasLoadedContent ? t("Open Another File") : t("Open location history file")
     }
 
     private var demoButtonTitle: String {
         session.source == .demoFixture(name: AppContentLoader.defaultDemoFixtureName)
-            ? "Reload Demo" : "Demo Data"
+            ? t("Reload Demo") : t("Demo Data")
     }
 
     private var liveTracksOverviewMessage: String {
         if liveLocation.recordedTracks.isEmpty {
-            return "Saved live tracks live in a separate local library. Record a short track on any day, then open it from here."
+            return t("Saved live tracks live in a separate local library. Record a short track on any day, then open it from here.")
         }
-        return "Open the local track library directly from Overview to edit points, insert midpoints or delete a saved live track."
+        return t("Open the local track library directly from Overview to edit points, insert midpoints or delete a saved live track.")
     }
 
     private func savedTrackTitle(_ track: RecordedTrack) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: track.startedAt)
+        AppDateDisplay.abbreviatedDateTime(track.startedAt)
     }
 
     private func longestDistanceValue(for highlight: DayHighlight) -> String {

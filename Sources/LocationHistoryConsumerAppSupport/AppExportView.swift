@@ -29,8 +29,8 @@ private enum ExportAccuracyFilterOption: String, Identifiable, CaseIterable {
 
 private enum ExportAreaFilterOption: String, Identifiable, CaseIterable {
     case none = "No Area Filter"
-    case bounds = "Bounding Box"
-    case polygon = "Polygon"
+    case bounds = "Rectangle"
+    case polygon = "Custom Shape"
 
     var id: String { rawValue }
 }
@@ -296,6 +296,7 @@ public struct AppExportView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(AppDateDisplay.mediumDate(summary.date)), \(routeCountText(summary.pathCount))")
         .accessibilityValue(isSelected ? t("Selected") : t("Not selected"))
+        .accessibilityHint(t("Double-tap to toggle selection"))
         .accessibilityAddTraits(.isButton)
     }
 
@@ -330,6 +331,7 @@ public struct AppExportView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(savedTrackTitle(track)), \(pointCountText(track.pointCount))")
         .accessibilityValue(isSelected ? t("Selected") : t("Not selected"))
+        .accessibilityHint(t("Double-tap to toggle selection"))
         .accessibilityAddTraits(.isButton)
     }
 
@@ -827,7 +829,7 @@ public struct AppExportView: View {
         )
 
         guard !exportDays.isEmpty else {
-            exportError = t("The current selection contains no exportable route geometry.")
+            exportError = t("The current selection contains no exportable route paths.")
             return
         }
 
@@ -1086,9 +1088,9 @@ public struct AppExportView: View {
         case .none:
             return nil
         case .bounds:
-            return localSpatialFilter == nil ? nil : "Area: Bounding box"
+            return localSpatialFilter == nil ? nil : "Area: Rectangle"
         case .polygon:
-            return localSpatialFilter == nil ? nil : "Area: Polygon"
+            return localSpatialFilter == nil ? nil : "Area: Custom Shape"
         }
     }
 
@@ -1100,13 +1102,13 @@ public struct AppExportView: View {
             guard hasBoundsInput else {
                 return nil
             }
-            return localSpatialFilter == nil ? "Enter valid min/max latitude and longitude values to activate the bounding-box filter." : nil
+            return localSpatialFilter == nil ? "Enter valid min/max latitude and longitude values to activate the rectangle filter." : nil
         case .polygon:
             let trimmed = polygonCoordinatesText.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else {
                 return nil
             }
-            return localSpatialFilter == nil ? "Provide at least three valid `lat,lon` lines to activate the polygon filter." : nil
+            return localSpatialFilter == nil ? "Provide at least three valid `lat,lon` lines to activate the custom shape filter." : nil
         }
     }
 
@@ -1173,11 +1175,7 @@ public struct AppExportView: View {
     }
 
     private func savedTrackTitle(_ track: RecordedTrack) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = preferences.appLocale
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: track.startedAt)
+        AppDateDisplay.abbreviatedDateTime(track.startedAt)
     }
 
     private func captureModeLabel(for track: RecordedTrack) -> String {

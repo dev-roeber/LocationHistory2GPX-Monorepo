@@ -203,7 +203,7 @@ public struct AppDayDetailView: View {
                 Image(systemName: iconForActivityType(activity.activityType))
                     .foregroundColor(CardAccent.activity)
                     .font(.subheadline)
-                Text(displayNameForActivityType(activity.activityType))
+                Text(displayNameForActivityType(activity.activityType, language: preferences.appLanguage))
                     .font(.subheadline.weight(.medium))
             }
             HStack(spacing: 12) {
@@ -226,7 +226,7 @@ public struct AppDayDetailView: View {
                 Image(systemName: iconForActivityType(path.activityType))
                     .foregroundColor(CardAccent.path)
                     .font(.subheadline)
-                Text(t(displayNameForActivityType(path.activityType, default: "Route")))
+                Text(displayNameForActivityType(path.activityType, default: t("Route"), language: preferences.appLanguage))
                     .font(.subheadline.weight(.medium))
             }
             HStack(spacing: 12) {
@@ -248,6 +248,8 @@ public struct AppDayDetailView: View {
                 .foregroundColor(color)
             Text(value)
                 .font(.headline.monospacedDigit())
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
