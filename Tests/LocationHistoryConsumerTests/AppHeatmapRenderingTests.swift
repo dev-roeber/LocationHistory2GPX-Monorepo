@@ -1,5 +1,6 @@
 import XCTest
 import MapKit
+import LocationHistoryConsumer
 @testable import LocationHistoryConsumerAppSupport
 
 final class AppHeatmapRenderingTests: XCTestCase {
@@ -73,6 +74,117 @@ final class AppHeatmapRenderingTests: XCTestCase {
         XCTAssertLessThan(high.blue, mid.blue)
     }
 
+    // MARK: - HeatmapMode enum
+
+    func testHeatmapModeEnumExistsWithRouteAndDensityCases() {
+        // Verifies both cases exist and have distinct identifiers
+        let route = HeatmapMode.route
+        let density = HeatmapMode.density
+        XCTAssertNotEqual(route.id, density.id)
+        XCTAssertEqual(HeatmapMode.allCases.count, 2)
+        XCTAssertTrue(HeatmapMode.allCases.contains(.route))
+        XCTAssertTrue(HeatmapMode.allCases.contains(.density))
+    }
+
+    func testHeatmapModeLabelKeysAreNonEmpty() {
+        for mode in HeatmapMode.allCases {
+            XCTAssertFalse(mode.labelKey.isEmpty, "labelKey for \(mode) should not be empty")
+        }
+    }
+
+    // MARK: - Route Grid Builder
+
+    func testRouteGridBuilderProducesSegmentsFromPaths() {
+        let export = makeExportWithPaths()
+        let grid = RouteGridBuilder.computeGrid(for: export, step: 0.006)
+        // With 10 path points there should be 9 segments -> at least 1 bin
+        XCTAssertFalse(grid.isEmpty, "Route grid should contain at least one bin from path data")
+    }
+
+    func testRouteGridCoarserStepProducesFewerBinsThanFineStep() {
+        let export = makeExportWithPaths()
+        let coarse = RouteGridBuilder.computeGrid(for: export, step: 0.08)
+        let fine   = RouteGridBuilder.computeGrid(for: export, step: 0.003)
+        // Same segments fall into fewer bins at coarser resolution
+        XCTAssertLessThanOrEqual(coarse.count, fine.count)
+    }
+
+    func testRouteGridBinsAreEmptyWhenNoPathData() {
+        let export = makeEmptyExport()
+        let grid = RouteGridBuilder.computeGrid(for: export, step: 0.006)
+        XCTAssertTrue(grid.isEmpty, "Route grid should be empty when export has no paths or activities")
+    }
+
+    func testRouteVisibleSegmentsRespectViewportBounds() {
+        let export = makeExportWithPaths()
+        let step = HeatmapLOD.medium.routeSegmentStep
+        let grid = RouteGridBuilder.computeGrid(for: export, step: step)
+
+        guard !grid.isEmpty else {
+            XCTFail("Expected non-empty route grid")
+            return
+        }
+
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 52.52, longitude: 13.405),
+            span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5)
+        )
+        let viewportKey = RouteViewportKey(region: region, lod: .medium)
+        let segments = RouteGridBuilder.visibleSegments(
+            in: grid,
+            viewportKey: viewportKey,
+            step: step,
+            lod: .medium
+        )
+
+        XCTAssertFalse(segments.isEmpty, "Visible segments should be non-empty within data bounds")
+        XCTAssertLessThanOrEqual(segments.count, HeatmapLOD.medium.routeSelectionLimit)
+    }
+
+    func testRouteSegmentLineWidthIncreasesWithIntensity() {
+        let export = makeExportWithRepeatedRoute()
+        let step = HeatmapLOD.high.routeSegmentStep
+        let grid = RouteGridBuilder.computeGrid(for: export, step: step)
+
+        guard !grid.isEmpty else {
+            XCTFail("Expected non-empty route grid for repeated route test")
+            return
+        }
+
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 52.52, longitude: 13.405),
+            span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+        )
+        let viewportKey = RouteViewportKey(region: region, lod: .high)
+        let segments = RouteGridBuilder.visibleSegments(
+            in: grid,
+            viewportKey: viewportKey,
+            step: step,
+            lod: .high
+        )
+
+        guard segments.count >= 2 else { return } // nothing to compare
+
+        let sorted = segments.sorted { $0.normalizedIntensity < $1.normalizedIntensity }
+        let low = sorted.first!
+        let high = sorted.last!
+        XCTAssertLessThanOrEqual(low.lineWidth, high.lineWidth,
+            "Segments with higher intensity should have larger lineWidth")
+    }
+
+    func testRoutePaletteIsClearlyDistinctFromDensityPalette() {
+        // Route palette should have strong green/cyan at low end (not blue like density)
+        let routeLow = RoutePalette.rgb(for: 0.05)
+        let densityLow = HeatmapPalette.rgb(for: 0.05)
+
+        // Route low-end: more green/cyan
+        XCTAssertGreaterThan(routeLow.green, densityLow.green)
+        // Density low-end: more blue
+        XCTAssertGreaterThan(densityLow.blue, routeLow.green * 0.3)
+    }
+
+    // MARK: - Helpers
+
     private func clusteredPoints() -> [WeightedPoint] {
         var points: [WeightedPoint] = []
 
@@ -89,5 +201,65 @@ final class AppHeatmapRenderingTests: XCTestCase {
         }
 
         return points
+    }
+
+    private func makeExportWithPaths() -> AppExport {
+        // 10 path points as flat_coordinates (9 segments through Berlin)
+        var flatPairs: [String] = []
+        for i in 0..<10 {
+            let lat = 52.50 + Double(i) * 0.005
+            let lon = 13.40 + Double(i) * 0.003
+            flatPairs.append("\(lat), \(lon)")
+        }
+        let flatJSON = flatPairs.joined(separator: ", ")
+        return decodeExport(daysJSON: """
+        [{"date":"2025-01-01","visits":[],"activities":[],"paths":[
+          {"activity_type":"walking","distance_m":500,"points":[],"flat_coordinates":[\(flatJSON)]}
+        ]}]
+        """)
+    }
+
+    private func makeExportWithRepeatedRoute() -> AppExport {
+        // Same short corridor repeated across 20 days to build high-intensity bins
+        var dayJSONParts: [String] = []
+        for i in 0..<20 {
+            var flatPairs: [String] = []
+            for j in 0..<5 {
+                let lat = 52.515 + Double(j) * 0.001
+                let lon = 13.402 + Double(j) * 0.001
+                flatPairs.append("\(lat), \(lon)")
+            }
+            let flatJSON = flatPairs.joined(separator: ", ")
+            let dateStr = String(format: "2025-01-%02d", i + 1)
+            dayJSONParts.append("""
+            {"date":"\(dateStr)","visits":[],"activities":[],"paths":[
+              {"activity_type":"cycling","distance_m":200,"points":[],"flat_coordinates":[\(flatJSON)]}
+            ]}
+            """)
+        }
+        return decodeExport(daysJSON: "[\(dayJSONParts.joined(separator: ","))]")
+    }
+
+    private func makeEmptyExport() -> AppExport {
+        decodeExport(daysJSON: "[]")
+    }
+
+    private func decodeExport(daysJSON: String) -> AppExport {
+        let json = """
+        {
+          "schema_version": "1.0",
+          "meta": {
+            "exported_at": "2025-01-01T00:00:00Z",
+            "tool_version": "1.0",
+            "source": {},
+            "output": {},
+            "config": {},
+            "filters": {}
+          },
+          "data": { "days": \(daysJSON) }
+        }
+        """
+        let data = json.data(using: .utf8)!
+        return try! JSONDecoder().decode(AppExport.self, from: data)
     }
 }
