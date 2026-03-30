@@ -22,43 +22,9 @@ public struct AppHeatmapView: View {
 
     public var body: some View {
         ZStack {
-            Map(position: $mapPosition) {
-                // Use MapCircle with overlapping radii for a smooth, organic heatmap look.
-                // The cells are already viewport-culled, so SwiftUI only renders what is strictly necessary.
-                ForEach(model.visibleCells) { cell in
-                    MapCircle(center: cell.coordinate, radius: cell.radius)
-                        .foregroundStyle(cell.color.opacity(cell.opacity))
-                }
-                .blendMode(.plusLighter)
-            }
-            .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
-            .ignoresSafeArea(edges: .top)
-            .onMapCameraChange(frequency: .onEnd) { context in
-                // High-performance reactive updates:
-                // We use 'onEnd' or a debounced continuous update to slice the pre-computed grid.
-                model.updateForRegion(context.region)
-            }
-            .onMapCameraChange(frequency: .continuous) { context in
-                model.debounceUpdateForRegion(context.region)
-            }
-
-            // Status indicator for background pre-computation
+            mapView
             if model.isCalculating {
-                VStack {
-                    Spacer()
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Pre-computing LOD clusters…")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(.thinMaterial, in: Capsule())
-                    .padding()
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                calculatingOverlay
             }
         }
         .navigationTitle("Heatmap")
@@ -77,6 +43,44 @@ public struct AppHeatmapView: View {
                 ))
             }
         }
+    }
+
+    @ViewBuilder
+    private var mapView: some View {
+        Map(position: $mapPosition) {
+            ForEach(model.visibleCells) { cell in
+                MapCircle(center: cell.coordinate, radius: cell.radius)
+                    .foregroundStyle(cell.color.opacity(cell.opacity))
+            }
+        }
+        .blendMode(.plusLighter)
+        .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
+        .ignoresSafeArea(edges: .top)
+        .onMapCameraChange(frequency: .onEnd) { context in
+            model.updateForRegion(context.region)
+        }
+        .onMapCameraChange(frequency: .continuous) { context in
+            model.debounceUpdateForRegion(context.region)
+        }
+    }
+
+    @ViewBuilder
+    private var calculatingOverlay: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Pre-computing LOD clusters…")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.thinMaterial, in: Capsule())
+            .padding()
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
 
@@ -307,6 +311,13 @@ final class AppHeatmapModel {
 }
 
 // MARK: - Supporting Types
+
+extension CLLocationCoordinate2D: @retroactive Equatable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+    }
+}
+
 
 struct GridKey: Hashable, Equatable {
     let lat: Int32
