@@ -32,7 +32,7 @@ Minimales separates iOS-Consumer-Repo fuer den stabilen App-Export von `Location
 - aufgezeichnete Live-Tracks getrennt von importierter History lokal persistieren (save on stop, ohne Auto-Resume)
 - lokale App-Optionen fuer Distanz-Einheit, Kartenstil, Start-Tab, Sprache, technische Importdetails, optionalen Server-Upload und dessen Upload-Batching speichern
 - auf compact iPhone-Layouts unter iOS 17+ einen dedizierten `Live`-Tab fuer Live-Location und Live-Recording anzeigen
-- fuer importierte History auf iOS 17+/macOS 14+ ein eigenes Heatmap-Sheet oeffnen (implementiert, aber noch nicht separat Apple-/Performance-verifiziert)
+- fuer importierte History auf iOS 17+/macOS 14+ ein eigenes Heatmap-Sheet mit Deckkraft-Regler, Radius-Presets, `Auf Daten zoomen`, kleiner Dichte-Legende, geglaettetem viewport-/LOD-basiertem Aggregations-Rendering sowie staerkerem Farb-/Kontrast-Mapping fuer mittlere und hohe Dichte oeffnen (implementiert, aber noch nicht separat Apple-/Performance-verifiziert)
 - importierte History und gespeicherte Live-Tracks lokal als `GPX`, `KML` oder `GeoJSON` exportieren
 - zwischen `Tracks`, `Waypoints` und `Both` als Exportmodus wechseln
 - importierte History lokal nach Datum, Genauigkeit, Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon fuer den Export filtern
@@ -108,7 +108,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
 
 Auf Apple-Plattformen kann die lokale Demo-Harness danach ueber das Swift Package in Xcode oder per `swift run LocationHistoryConsumerDemo` gestartet werden. Sie ist bewusst keine Produkt-App. Standardmaessig nutzt sie eine feste lokale Demo-Fixture, kann aber auch lokal eine `app_export.json` fuer denselben Consumer-Contract laden.
 
-Zusaetzlich gibt es jetzt eine kleine produktnahe App-Shell `LocationHistoryConsumerApp`. Sie startet leerer und import-zentriert, bleibt aber weiter offline-only und noch keine fertige Produkt-App. Unter Linux ist nur der nicht-UI Teil ueber `swift test` ehrlich verifizierbar.
+Zusaetzlich gibt es jetzt eine kleine produktnahe App-Shell `LocationHistoryConsumerApp`. Sie startet leerer und import-zentriert, arbeitet standardmaessig offline-first und ist noch keine fertige Produkt-App. Der optionale nutzergesteuerte Server-Upload akzeptierter Live-Recording-Punkte ist separat konfigurierbar und standardmaessig deaktiviert. Unter Linux ist nur der nicht-UI-Teil ueber `swift test` ehrlich verifizierbar.
 
 Die aktuelle Apple-/Xcode-nahe Vorbereitung ist bewusst klein und jetzt in `docs/XCODE_RUNBOOK.md`, `docs/APPLE_VERIFICATION_CHECKLIST.md` und der historischen Vorbereitungsnotiz `docs/XCODE_APP_PREPARATION.md` beschrieben. Es gibt weiterhin absichtlich kein aufgeblasenes `.xcodeproj`.
 
@@ -179,7 +179,7 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - VoiceOver-Accessibility: semantische Labels, Gruppierung, dekorative Icons ausgeblendet
 - konsistente Leer-/Fehler-/Ladezustaende mit SF Symbols und klaren Texten
 - ein zentrales Actions-Menue in der Toolbar fuehrt Import, Demo, Optionen und Clear
-- das Actions-Menue kann auf unterstuetzten Apple-Plattformen zusaetzlich ein eigenes Heatmap-Sheet fuer importierte History oeffnen
+- das Actions-Menue kann auf unterstuetzten Apple-Plattformen zusaetzlich ein eigenes Heatmap-Sheet fuer importierte History mit lokalen Darstellungsreglern, geglaettetem viewport-basiert aggregiertem Dichte-Rendering und verstaerktem Farb-/Kontrast-Mapping oeffnen
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen Dateinamen passend zum aktiven Exportformat vor dem fileExporter-Dialog
@@ -207,14 +207,25 @@ Stand 2026-03-17 ist auf einer realen macOS-/Xcode-Maschine ehrlich verifiziert:
 - `LocationHistoryConsumerApp` baut fuer `platform=macOS` erfolgreich per `xcodebuild`
 - die produktnahe App-Shell startet sichtbar in einer echten foreground-App-Session
 - `Load Demo Data`, `Open location history file`, `Open Another File`, `Clear`, invalides JSON und ein echter Zero-Day-Import wurden als reale Apple-UI-Durchgaenge verifiziert
-- `swift test` laeuft mit dem echten Xcode-Developer-Dir gruen
+
+Stand 2026-03-30 ist auf diesem aktuellen Mac-Repo-Stand per CLI erneut geprueft:
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build`: BUILD SUCCEEDED
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumer-Package -destination 'platform=macOS' test`: 224 Tests, 0 Failures
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 224 Tests, 0 Failures
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'generic/platform=iOS' build`: BUILD SUCCEEDED
+- `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=latest' -only-testing:LH2GPXWrapperTests test`: TEST SUCCEEDED
+- ein manueller Xcode-Start auf dem verbundenen iPhone bleibt fuer diesen Batch ein positiver Teilbefund, ist aber bewusst getrennt von den CLI-Build-/Test-Ergebnissen zu lesen
 
 Stand 2026-03-17 ist noch offen:
 - ein separat protokollierter foreground-Lauf exakt ueber `Product > Run` in Xcode, falls genau dieser IDE-spezifische Weg regressionskritisch wird
 - Live-Location-/Permission-Flow inklusive optionaler `Always Allow`-Erweiterung fuer Background-Recording in einer separat dokumentierten Apple-UI-Session (Simulator oder echtes iPhone)
-- Heatmap-Sheet, dedizierter `Live`-Tab sowie Upload-Batching/Upload-Status stammen aus spaeteren 2026-03-20-Commits und sind auf Apple-Hardware noch nicht separat verifiziert
+- Heatmap-Sheet inklusive des spaeter nachgezogenen geglaetteten Aggregations-Renderers, des Batch-3-Farb-/Kontrast-Mappings und der lokalen Darstellungsregler, dedizierter `Live`-Tab sowie Upload-Batching/Upload-Status sind auf Apple-Hardware noch nicht separat verifiziert
 
-Zusatz fuer diese konkrete Maschine: mit aktivem `/Library/Developer/CommandLineTools` schlug ein nacktes `swift test` an `no such module 'XCTest'` fehl. Der gruene Testlauf wurde ehrlich mit `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test` erreicht.
+Die zuletzt 2 roten SwiftPM-/macOS-Tests sind auf dem aktuellen Repo-Stand in Batch 2 geklaert:
+- `AppPreferencesTests.testStoredValuesAreLoaded`: gruen; Test-Setup folgt jetzt dem Keychain-first-Produktverhalten
+- `DayDetailPresentationTests.testTimeRangeFormattingAvoidsRawISOStrings`: gruen; Testerwartung folgt jetzt der im UI konsistent verwendeten Gedankenstrich-Formatierung
+
+Zusatz fuer diese konkrete Maschine: mit aktivem `/Library/Developer/CommandLineTools` schlug ein nacktes `swift test` an `no such module 'XCTest'` fehl. Die aktuellen Apple-CLI-Laeufe wurden deshalb ehrlich mit `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` gefahren.
 
 Fuer den reproduzierbaren no-days-Apple-UI-Fall gibt es jetzt zusaetzlich `Fixtures/contract/golden_app_export_no_days_zero.json`.
 

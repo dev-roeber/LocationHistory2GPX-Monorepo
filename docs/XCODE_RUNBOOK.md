@@ -201,7 +201,38 @@ Stand 2026-03-17 wurde auf einer echten macOS-/Xcode-Maschine Folgendes real gep
 - `xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build` lief erfolgreich durch
 - das gebaute Binary `.../Build/Products/Debug/LocationHistoryConsumerApp` liess sich bauen und fuer die echte UI-Session starten; der foreground-App-Launch ist seit Phase 13 ueber `scripts/run_app_shell_macos.sh` standardisiert
 - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test` lief fuer den damaligen Snapshot erfolgreich; dieser historische Lauf umfasste 28 Tests
-- dieser historische Apple-Testlauf ist nicht der aktuelle Repo-Stand: die frische Linux-Verifikation vom 2026-03-30 zaehlt 217 ausgefuehrte Tests, 2 Skips und 14 Failures; ein neuer Xcode-Testlauf war auf diesem Linux-Host nicht moeglich
+- fuer den aktuellen Repo-Stand wurde am 2026-03-30 auf diesem Mac neu geprueft:
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build`: BUILD SUCCEEDED
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumer-Package -destination 'platform=macOS' test`: 224 Tests, 0 Failures
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 224 Tests, 0 Failures
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'generic/platform=iOS' build`: BUILD SUCCEEDED
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=latest' -only-testing:LH2GPXWrapperTests test`: TEST SUCCEEDED
+- Heatmap UX Batch 1 (2026-03-30) hat den aktuellen Core-Stand danach erneut per CLI abgesichert:
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 222 Tests, 0 Failures
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build`: BUILD SUCCEEDED
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumer-Package -destination 'platform=macOS' test`: 222 Tests, 0 Failures
+  - dabei wurden nur Heatmap-UI-/Display-Details geaendert (ruhigere low-zoom Darstellung, lokale Controls fuer Deckkraft/Radius/`Auf Daten zoomen`, kleine Dichte-Legende); kein neuer Apple-Device-Lauf fuer das Sheet selbst
+- Heatmap Visual & Performance Batch 2 (2026-03-30) hat den Renderer danach erneut per CLI abgesichert:
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 224 Tests, 0 Failures
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build`: BUILD SUCCEEDED
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumer-Package -destination 'platform=macOS' test`: 224 Tests, 0 Failures
+  - dabei wurde die Heatmap auf geglaettete aggregierte Polygon-Zellen mit viewport-basierter Zellselektion, per-LOD begrenzten sichtbaren Elementen und wiederverwendbarem Viewport-Cache umgestellt; ein neuer Apple-Device-Lauf fuer das Sheet selbst fand in diesem Batch bewusst nicht statt
+- Heatmap Color / Contrast / Opacity Batch 3 (2026-03-30) hat die visuelle Schicht des Polygon-/LOD-Renderers danach erneut per CLI abgesichert:
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 227 Tests, 0 Failures
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build`: BUILD SUCCEEDED
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumer-Package -destination 'platform=macOS' test`: 227 Tests, 0 Failures
+  - dabei wurden die Farbpalette, die Intensitaetskurve und die interne 100-%-Deckkraft-Kennlinie der Heatmap sichtbar verstaerkt; LOD, viewport-basierte Zellselektion und Cache-Struktur blieben bestehen, und ein neuer Apple-Device-Lauf fuer das Sheet selbst fand in diesem Batch bewusst nicht statt
+- fuer den anschliessenden Device-End-to-End-Block am 2026-03-30 wurde zusaetzlich ein echtes iPhone verwendet:
+  - Geraet: `iPhone 15 Pro Max` (`iPhone16,2`), iOS `26.3 (23D127)`, via USB verfuegbar, entsperrt, Developer Mode aktiv
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -allowProvisioningUpdates -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'id=00008130-00163D0A0461401C' -only-testing:LH2GPXWrapperUITests`: echter Device-Lauf
+  - `LH2GPXWrapperUITestsLaunchTests.testLaunch` lief auf dem Geraet erfolgreich; der Wrapper startet auf aktueller Hardware stabil
+  - `LH2GPXWrapperUITests.testAppStoreScreenshots` scheiterte nicht an Launch oder Signing, sondern an einer inhaltlichen Erwartung: statt leerem Import-State war bereits eine wiederhergestellte `location-history.zip` aktiv, deshalb erschien kein `Demo Data`-Button
+  - der zugehoerige echte AX-Snapshot zeigte den Uebersichtsbildschirm mit aktiver importierter Quelle, sichtbarer `Heatmap`-Aktion und sichtbarem dediziertem `Live`-Tab
+  - damit sind Wrapper-Launch, sichtbarer Auto-Restore und die Praesenz von `Heatmap`/`Live` auf Device belegt; echtes Oeffnen des Heatmap-Sheets, Live-Recording, Background-Recording und Upload-End-to-End wurden in diesem Batch nicht erreicht
+- die 2 in Batch 1 noch offenen Test-vs-Code-Widersprueche sind in Batch 2 repo-wahr geklaert:
+  - `AppPreferencesTests.testStoredValuesAreLoaded`: Test-Setup folgt jetzt dem Keychain-first-Produktpfad auf Apple
+  - `DayDetailPresentationTests.testTimeRangeFormattingAvoidsRawISOStrings`: Test-Erwartung folgt jetzt der im Produktcode konsistent verwendeten Gedankenstrich-Formatierung
+- ein manueller Xcode-Start auf dem verbundenen iPhone bleibt fuer diesen Batch ein positiver Teilbefund, wird hier aber bewusst getrennt von den CLI-Build-/Testresultaten gefuehrt
 - echte interaktive Apple-UI-Laeufe wurden erfolgreich gegen die produktnahe App-Shell ausgefuehrt:
   - sichtbarer import-first Startscreen
   - `Load Demo Data`
@@ -228,5 +259,5 @@ Nicht separat als eigener Nachweis festgehalten:
 - keine Signierung, keine Distribution, keine Entitlements-Arbeit
 - kein Sync und keine Cloud-/Server-Anteile
 - keine hardware-verifizierte Background-Recording-Session und kein Auto-Resume laufender Live-Tracks
-- keine frische Apple-Verifikation fuer das spaeter hinzugekommene Heatmap-Sheet, den dedizierten `Live`-Tab oder Upload-Batching/Upload-Status
+- keine frische Apple-Verifikation fuer das spaeter hinzugekommene Heatmap-Sheet inklusive der neuen lokalen UX-Controls und des spaeter nachgezogenen Aggregations-/Polygon-Renderers, den dedizierten `Live`-Tab oder Upload-Batching/Upload-Status
 - Apple-Verifikation ersetzt nicht `swift test`, und `swift test` ersetzt keinen echten Apple-UI-Lauf

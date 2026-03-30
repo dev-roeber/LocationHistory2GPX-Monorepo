@@ -9,12 +9,49 @@ Diese Checkliste trennt klar zwischen:
 
 Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 
-## Statusstand 2026-03-30
+## Statusstand 2026-03-30 (Apple Device Verification Batch 1)
 
-### Bereits real verifiziert
+### Wichtige Einschraenkung
+
+Der Verifikationsstand vom 2026-03-17 basiert auf einem aelteren Repo-Stand (vor den 2026-03-18/19/20-Commits). Die seither hinzugekommenen Features (Live-Tab, Heatmap, Background-Recording, Server-Upload) sind auf Apple-Hardware nicht separat verifiziert.
+
+Batch 2 hat den Apple-CLI-Stand fuer den aktuellen Repo-Stand auf macOS auf gruen gezogen. Diese Gruen-Aussage gilt nur fuer die dokumentierten CLI-Builds/-Tests; sie ersetzt weiterhin keine frische Device-End-to-End-Verifikation der spaeter hinzugekommenen Features.
+
+Apple Device Verification Batch 1 (2026-03-30) hat zusaetzlich einen echten iPhone-Teilbefund geliefert:
+
+- verbundenes Geraet: `iPhone 15 Pro Max` (`iPhone16,2`), iOS `26.3 (23D127)`, via USB verfuegbar und entsperrt
+- `xcodebuild test -allowProvisioningUpdates -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'id=00008130-00163D0A0461401C' -only-testing:LH2GPXWrapperUITests` lief gegen dieses Geraet real an
+- `LH2GPXWrapperUITestsLaunchTests.testLaunch` lief auf dem echten iPhone erfolgreich durch
+- `LH2GPXWrapperUITests.testAppStoreScreenshots` scheiterte nicht an Launch oder Signing, sondern daran, dass der erwartete `Demo Data`-Button im realen Startzustand nicht vorhanden war
+- der zugehoerige Accessibility-Snapshot zeigte einen bereits wiederhergestellten Import (`Imported file: location-history.zip`) im Uebersichtsbildschirm sowie sichtbare Einstiege fuer `Heatmap` und den dedizierten `Live`-Tab
+- daraus folgt: Device-Launch, sichtbarer Auto-Restore und die grundsaetzliche Praesenz von `Heatmap`/`Live` sind jetzt teilbelegt; Oeffnen und funktionales Durchlaufen dieser Pfade bleibt offen
+
+Heatmap UX Batch 1 (2026-03-30) hat danach nur Display-/Bedienungsdetails des Heatmap-Sheets veraendert:
+
+- lokale Controls fuer Deckkraft, Radius-Presets, `Auf Daten zoomen` und eine kleine Dichte-Legende
+- ruhigere Darstellung auf mittleren/grossen Zoomstufen sowie kompaktere Sheet-Chrome
+- fuer diese UX-Aenderungen existiert in diesem Batch bewusst kein neuer Apple-Device-Nachweis; der Heatmap-Device-Status bleibt deshalb offen
+
+Heatmap Visual & Performance Batch 2 (2026-03-30) hat den Renderer danach strukturell umgestellt:
+
+- geglaettete aggregierte Polygon-Zellen statt sichtbar ueberlappender Einzelkreis-Stempel
+- viewport-basierte Zellselektion mit per-LOD begrenzten sichtbaren Elementen
+- wiederverwendbarer Viewport-Cache fuer ruhigere Zoom-/Pan-Reaktionen
+- zwei kleine Heatmap-Regressionstests fuer Aggregation und viewport-/limit-respektierende Sichtbarkeit
+- fuer diese Rendering-/Performance-Aenderungen existiert in diesem Batch bewusst ebenfalls kein neuer Apple-Device-Nachweis; der Heatmap-Device-Status bleibt offen
+
+Heatmap Color / Contrast / Opacity Batch 3 (2026-03-30) hat danach nur die visuelle Schicht des neuen Renderers nachgeschaerft:
+
+- staerkeres nichtlineares Deckkraft-Mapping, damit 100 % im Slider sichtbar voller wirkt
+- weich interpolierte Farbpalette statt grober Farbstufen
+- angehobene Intensitaetskurve fuer besser sichtbare mittlere/hohe Dichte
+- drei kleine Logiktests fuer Intensitaets-Lift, High-End-Opacity und waermer werdende Palette
+- auch fuer diese Farb-/Kontrast-Aenderungen existiert in diesem Batch bewusst kein neuer Apple-Device-Nachweis; der Heatmap-Device-Status bleibt offen
+
+### Bereits real verifiziert (2026-03-17, vor Post-2026-03-18-Features)
 
 - [x] Xcode-Schemes aus dem Swift Package sind ueber das echte Xcode sichtbar
-- [x] `LocationHistoryConsumerApp` baut fuer `platform=macOS`
+- [x] `LocationHistoryConsumerApp` baut fuer `platform=macOS` (2026-03-17; nach Apple Stabilization Batch 1: macOS-Build-Fehler behoben, Wrapper-iOS-Build gruen)
 - [x] das gebaute App-Shell-Binary startet sichtbar in einer echten foreground-App-Session
 - [x] `Load Demo Data`
 - [x] `Open location history file`
@@ -28,13 +65,27 @@ Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 
 - [x] reproduzierbarer foreground-Launch via `scripts/run_app_shell_macos.sh` (standardisiertes .app-Bundle statt ad-hoc-Wrapper)
 
+### Apple Stabilization Batch 2 (2026-03-30) – CLI-Stand
+
+- [x] `swift build --target LocationHistoryConsumerAppSupport` laeuft fehlerfrei auf macOS
+- [x] `swift build` (alle Targets) laeuft fehlerfrei auf macOS
+- [x] `swift test` laeuft auf macOS durch: 224 Tests, 0 Failures
+- [x] `xcodebuild test -scheme LocationHistoryConsumer-Package -destination 'platform=macOS'` laeuft auf macOS durch: 224 Tests, 0 Failures
+- [x] `xcodebuild build -scheme LH2GPXWrapper -destination generic/platform=iOS` erfolgreich
+- [x] `xcodebuild -list` (Wrapper Package Resolution) erfolgreich
+- [x] `xcodebuild test -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=latest' -only-testing:LH2GPXWrapperTests` erfolgreich
+- [x] manueller Xcode-Start auf dem verbundenen iPhone liegt als separater positiver Teilbefund vor; er ersetzt keine CLI-Aussage
+- [x] Wrapper-Launch auf echtem iPhone 15 Pro Max via XCUITest-Runner erneut belegt (`LH2GPXWrapperUITestsLaunchTests.testLaunch`)
+
 ### Noch offen
 
 - [ ] foreground-Run explizit ueber `Product > Run` in Xcode selbst noch einmal separat bestaetigen, falls genau dieser IDE-spezifische Laufweg regressionskritisch wird
 - [ ] Live-Location-/Permission-Flow inklusive optionaler `Always Allow`-Erweiterung fuer Background-Recording in einer echten Apple-UI-Session verifizieren und separat protokollieren
-- [ ] den dedizierten `Live`-Tab auf iPhone/iOS 17+ in einer echten Apple-Session separat verifizieren
-- [ ] das Heatmap-Sheet fuer importierte History auf Apple-Hardware visuell und performanceseitig verifizieren
+- [ ] den dedizierten `Live`-Tab auf iPhone/iOS 17+ funktional verifizieren; Sichtbarkeit im realen AX-Snapshot ist belegt, echte Interaktion noch nicht
+- [ ] das Heatmap-Sheet fuer importierte History auf Apple-Hardware visuell und performanceseitig verifizieren; der Einstieg ist im realen AX-Snapshot sichtbar, das Sheet selbst noch nicht geoefnet, und die spaeter hinzugekommenen UX-Controls, der neue Aggregations-/Polygon-Renderer sowie das Batch-3-Farb-/Kontrast-Mapping sind auf Device ebenfalls noch nicht separat bestaetigt
 - [ ] Upload-Batching, Upload-Status und optionalen Server-Upload-Flow in einer echten Apple-Session separat verifizieren
+- [ ] Background-Recording auf echtem iPhone verifizieren (Permission-Upgrade, Background-Aufnahme, Stop/Persistenz)
+- [ ] Wrapper-Auto-Restore nach Reaktivierung (2026-03-20) kontrolliert mit Positiv-, Datei-fehlt- und Clear-Pfad auf echtem Device nachweisen; ein spontaner positiver Restore-Befund liegt jetzt vor
 
 ## Reale Apple-UI-Session 2026-03-17
 
