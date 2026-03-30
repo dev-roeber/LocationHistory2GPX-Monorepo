@@ -3,6 +3,22 @@ import SwiftUI
 import MapKit
 import LocationHistoryConsumer
 
+// MARK: - Heatmap Mode
+
+enum HeatmapMode: String, CaseIterable, Identifiable {
+    case route
+    case density
+
+    var id: String { rawValue }
+
+    var labelKey: String {
+        switch self {
+        case .route: return "Routes"
+        case .density: return "Density"
+        }
+    }
+}
+
 /// A professional-grade heatmap that uses Level-Of-Detail (LOD) pre-computation,
 /// viewport-bounded bin selection, and smoothed raster cells instead of visible circle stamps.
 @available(iOS 17.0, macOS 14.0, *)
@@ -15,6 +31,7 @@ public struct AppHeatmapView: View {
     @State private var isFirstLoad = true
     @State private var overlayOpacity = 0.7
     @State private var radiusPreset: HeatmapRadiusPreset = .balanced
+    @State private var heatmapMode: HeatmapMode = .route
 
     public init(export: AppExport) {
         self.export = export
@@ -38,6 +55,7 @@ public struct AppHeatmapView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: model.visibleCells.count)
+        .animation(.easeInOut(duration: 0.25), value: model.visibleRouteSegments.count)
         .onAppear {
             if isFirstLoad {
                 model.startPrecomputation()
@@ -49,6 +67,11 @@ public struct AppHeatmapView: View {
                 seedInitialViewport(center: center)
             }
         }
+        .onChange(of: heatmapMode) { _, _ in
+            if let region = model.lastRegion {
+                model.updateForRegion(region)
+            }
+        }
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
 #endif
@@ -57,9 +80,19 @@ public struct AppHeatmapView: View {
     @ViewBuilder
     private var mapView: some View {
         Map(position: $mapPosition) {
-            ForEach(model.visibleCells) { cell in
-                MapPolygon(coordinates: scaledPolygonCoordinates(for: cell))
-                    .foregroundStyle(cell.color.opacity(effectiveOpacity(for: cell)))
+            if heatmapMode == .density {
+                ForEach(model.visibleCells) { cell in
+                    MapPolygon(coordinates: scaledPolygonCoordinates(for: cell))
+                        .foregroundStyle(cell.color.opacity(effectiveOpacity(for: cell)))
+                }
+            } else {
+                ForEach(model.visibleRouteSegments) { seg in
+                    MapPolyline(coordinates: seg.coordinates)
+                        .stroke(
+                            seg.color.opacity(routeEffectiveOpacity(for: seg)),
+                            lineWidth: seg.lineWidth
+                        )
+                }
             }
         }
         .mapStyle(preferences.preferredMapStyle.isHybrid ? .hybrid : .standard)
@@ -109,6 +142,19 @@ public struct AppHeatmapView: View {
                     .multilineTextAlignment(.trailing)
             }
 
+            // Mode picker
+            VStack(alignment: .leading, spacing: 6) {
+                Text(t("Mode"))
+                    .font(.caption.weight(.semibold))
+                Picker(t("Mode"), selection: $heatmapMode) {
+                    ForEach(HeatmapMode.allCases) { mode in
+                        Text(t(mode.labelKey)).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(t("Opacity"))
@@ -121,19 +167,23 @@ public struct AppHeatmapView: View {
                 Slider(value: $overlayOpacity, in: 0.35...1.0)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(t("Radius"))
-                    .font(.caption.weight(.semibold))
-                Picker(t("Radius"), selection: $radiusPreset) {
-                    ForEach(HeatmapRadiusPreset.allCases) { preset in
-                        Text(t(preset.labelKey)).tag(preset)
+            if heatmapMode == .density {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(t("Radius"))
+                        .font(.caption.weight(.semibold))
+                    Picker(t("Radius"), selection: $radiusPreset) {
+                        ForEach(HeatmapRadiusPreset.allCases) { preset in
+                            Text(t(preset.labelKey)).tag(preset)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-            }
 
-            densityLegend
+                densityLegend
+            } else {
+                routeLegend
+            }
         }
         .padding(12)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -161,6 +211,33 @@ public struct AppHeatmapView: View {
                     HeatmapPalette.color(for: 0.5).opacity(0.70),
                     HeatmapPalette.color(for: 0.78).opacity(0.82),
                     HeatmapPalette.color(for: 0.98).opacity(0.92),
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 7)
+            .clipShape(Capsule())
+        }
+    }
+
+    @ViewBuilder
+    private var routeLegend: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(t("Rare"))
+                Spacer()
+                Text(t("Frequent"))
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+
+            LinearGradient(
+                colors: [
+                    RoutePalette.color(for: 0.04).opacity(0.5),
+                    RoutePalette.color(for: 0.25).opacity(0.65),
+                    RoutePalette.color(for: 0.55).opacity(0.78),
+                    RoutePalette.color(for: 0.80).opacity(0.88),
+                    RoutePalette.color(for: 1.0).opacity(0.95),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -198,6 +275,12 @@ public struct AppHeatmapView: View {
             overlayOpacity: overlayOpacity,
             lod: cell.lod
         )
+    }
+
+    private func routeEffectiveOpacity(for seg: RouteSegment) -> Double {
+        let control = HeatmapVisualStyle.remappedControlOpacity(overlayOpacity)
+        let base = 0.55 + seg.normalizedIntensity * 0.40
+        return min(max(base * control, 0.18), 0.96)
     }
 
     private func scaledPolygonCoordinates(for cell: HeatCell) -> [CLLocationCoordinate2D] {
@@ -290,6 +373,217 @@ enum HeatmapLOD: CaseIterable {
         if spanDelta > 0.12 { return .medium }
         return .high
     }
+
+    // Route-specific: segment step (degrees) for binning
+    var routeSegmentStep: Double {
+        switch self {
+        case .macro: return 0.08
+        case .low: return 0.025
+        case .medium: return 0.006
+        case .high: return 0.0018
+        }
+    }
+
+    var routeSelectionLimit: Int {
+        switch self {
+        case .macro: return 150
+        case .low: return 400
+        case .medium: return 800
+        case .high: return 1200
+        }
+    }
+}
+
+// MARK: - Route Palette
+
+enum RoutePalette {
+    // Cyan → Teal → Green → Yellow-Green → Orange → Deep-Orange
+    // Clearly distinct from the density heatmap (blue→cyan→yellow→red)
+    static let gradientStops: [(position: Double, color: HeatmapRGB)] = [
+        (0.00, HeatmapRGB(red: 0.0,  green: 0.70, blue: 0.85)),  // cyan
+        (0.20, HeatmapRGB(red: 0.0,  green: 0.82, blue: 0.62)),  // teal-green
+        (0.45, HeatmapRGB(red: 0.18, green: 0.88, blue: 0.18)),  // bright green
+        (0.68, HeatmapRGB(red: 0.82, green: 0.88, blue: 0.08)),  // yellow-green
+        (0.85, HeatmapRGB(red: 1.0,  green: 0.52, blue: 0.04)),  // orange
+        (1.00, HeatmapRGB(red: 0.94, green: 0.18, blue: 0.02)),  // deep red-orange
+    ]
+
+    nonisolated static func rgb(for normalized: Double) -> HeatmapRGB {
+        let clamped = min(max(normalized, 0.0), 1.0)
+        guard let first = gradientStops.first else {
+            return HeatmapRGB(red: 0.0, green: 0.7, blue: 0.85)
+        }
+        if clamped <= first.position { return first.color }
+        for index in 1..<gradientStops.count {
+            let previous = gradientStops[index - 1]
+            let current = gradientStops[index]
+            guard clamped <= current.position else { continue }
+            let distance = current.position - previous.position
+            let fraction = distance > 0 ? (clamped - previous.position) / distance : 0
+            return previous.color.interpolated(to: current.color, fraction: fraction)
+        }
+        return gradientStops.last?.color ?? first.color
+    }
+
+    nonisolated static func color(for normalized: Double) -> Color {
+        rgb(for: normalized).color
+    }
+}
+
+// MARK: - Route Segment
+
+struct RouteSegment: Identifiable {
+    let id: Int
+    let coordinates: [CLLocationCoordinate2D]
+    let normalizedIntensity: Double
+    let color: Color
+    let lineWidth: Double
+}
+
+// MARK: - Route Grid Builder
+
+enum RouteGridBuilder {
+    struct SegBin: Hashable {
+        let lat: Int32
+        let lon: Int32
+    }
+
+    nonisolated static func computeGrid(
+        for export: AppExport,
+        step: Double
+    ) -> [SegBin: Int] {
+        var counts: [SegBin: Int] = [:]
+
+        func addSegments(from coords: [Double]) {
+            guard coords.count >= 4 else { return }
+            var i = 0
+            while i + 3 < coords.count {
+                let lat1 = coords[i]; let lon1 = coords[i + 1]
+                let lat2 = coords[i + 2]; let lon2 = coords[i + 3]
+                let midLat = (lat1 + lat2) / 2.0
+                let midLon = (lon1 + lon2) / 2.0
+                let bin = SegBin(
+                    lat: Int32(floor(midLat / step)),
+                    lon: Int32(floor(midLon / step))
+                )
+                counts[bin, default: 0] += 1
+                i += 2
+            }
+        }
+
+        func addPathPoints(_ pts: [PathPoint]) {
+            guard pts.count >= 2 else { return }
+            for i in 0..<(pts.count - 1) {
+                let midLat = (pts[i].lat + pts[i + 1].lat) / 2.0
+                let midLon = (pts[i].lon + pts[i + 1].lon) / 2.0
+                let bin = SegBin(
+                    lat: Int32(floor(midLat / step)),
+                    lon: Int32(floor(midLon / step))
+                )
+                counts[bin, default: 0] += 1
+            }
+        }
+
+        for day in export.data.days {
+            for path in day.paths {
+                if let flats = path.flatCoordinates {
+                    addSegments(from: flats)
+                } else if !path.points.isEmpty {
+                    addPathPoints(path.points)
+                }
+            }
+            for activity in day.activities {
+                if let flats = activity.flatCoordinates {
+                    addSegments(from: flats)
+                } else if let sLat = activity.startLat, let sLon = activity.startLon,
+                          let eLat = activity.endLat, let eLon = activity.endLon {
+                    let midLat = (sLat + eLat) / 2.0
+                    let midLon = (sLon + eLon) / 2.0
+                    let bin = SegBin(
+                        lat: Int32(floor(midLat / step)),
+                        lon: Int32(floor(midLon / step))
+                    )
+                    counts[bin, default: 0] += 1
+                }
+            }
+        }
+
+        return counts
+    }
+
+    nonisolated static func visibleSegments(
+        in grid: [SegBin: Int],
+        viewportKey: RouteViewportKey,
+        step: Double,
+        lod: HeatmapLOD
+    ) -> [RouteSegment] {
+        guard let maxCount = grid.values.max(), maxCount > 0 else { return [] }
+
+        var segments: [RouteSegment] = []
+        segments.reserveCapacity(min(lod.routeSelectionLimit, 512))
+
+        for lat in viewportKey.minLatBin...viewportKey.maxLatBin {
+            for lon in viewportKey.minLonBin...viewportKey.maxLonBin {
+                let bin = SegBin(lat: lat, lon: lon)
+                guard let count = grid[bin] else { continue }
+                let normalized = Double(count) / Double(maxCount)
+                guard normalized >= 0.012 else { continue }
+
+                let centerLat = (Double(lat) * step) + (step / 2.0)
+                let centerLon = (Double(lon) * step) + (step / 2.0)
+                let half = step * 0.42
+
+                let coords: [CLLocationCoordinate2D] = [
+                    CLLocationCoordinate2D(latitude: centerLat - half, longitude: centerLon - half),
+                    CLLocationCoordinate2D(latitude: centerLat + half, longitude: centerLon + half),
+                ]
+
+                let displayI = pow(normalized, 0.55)
+                let lineWidth = 1.5 + displayI * 5.5
+
+                segments.append(RouteSegment(
+                    id: Int(lat) &* 100_003 &+ Int(lon),
+                    coordinates: coords,
+                    normalizedIntensity: normalized,
+                    color: RoutePalette.color(for: displayI),
+                    lineWidth: lineWidth
+                ))
+            }
+        }
+
+        segments.sort { $0.normalizedIntensity < $1.normalizedIntensity }
+
+        if segments.count > lod.routeSelectionLimit {
+            // Keep the most intense segments
+            segments.sort { $0.normalizedIntensity > $1.normalizedIntensity }
+            segments = Array(segments.prefix(lod.routeSelectionLimit))
+            segments.sort { $0.normalizedIntensity < $1.normalizedIntensity }
+        }
+
+        return segments
+    }
+}
+
+struct RouteViewportKey: Hashable {
+    let lod: HeatmapLOD
+    let minLatBin: Int32
+    let maxLatBin: Int32
+    let minLonBin: Int32
+    let maxLonBin: Int32
+
+    init(region: MKCoordinateRegion, lod: HeatmapLOD) {
+        self.lod = lod
+        let step = lod.routeSegmentStep
+        let pad = 0.12
+        let minLat = region.center.latitude  - (region.span.latitudeDelta  / 2.0) * (1 + pad)
+        let maxLat = region.center.latitude  + (region.span.latitudeDelta  / 2.0) * (1 + pad)
+        let minLon = region.center.longitude - (region.span.longitudeDelta / 2.0) * (1 + pad)
+        let maxLon = region.center.longitude + (region.span.longitudeDelta / 2.0) * (1 + pad)
+        self.minLatBin = Int32(floor(minLat / step))
+        self.maxLatBin = Int32(floor(maxLat / step))
+        self.minLonBin = Int32(floor(minLon / step))
+        self.maxLonBin = Int32(floor(maxLon / step))
+    }
 }
 
 // MARK: - ViewModel
@@ -298,16 +592,19 @@ enum HeatmapLOD: CaseIterable {
 @Observable @MainActor
 final class AppHeatmapModel {
     var visibleCells: [HeatCell] = []
+    var visibleRouteSegments: [RouteSegment] = []
     var isCalculating = false
     var initialCenter: CLLocationCoordinate2D?
     var dataRegion: MKCoordinateRegion?
     var hasData: Bool { dataRegion != nil }
+    private(set) var lastRegion: MKCoordinateRegion?
 
     private let export: AppExport
     private var lodGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
+    private var routeGrids: [HeatmapLOD: [RouteGridBuilder.SegBin: Int]] = [:]
     private var viewportCache: [HeatmapViewportKey: [HeatCell]] = [:]
+    private var routeViewportCache: [RouteViewportKey: [RouteSegment]] = [:]
 
-    private var lastRegion: MKCoordinateRegion?
     private var updateTask: Task<Void, Never>?
 
     init(export: AppExport) {
@@ -320,6 +617,7 @@ final class AppHeatmapModel {
         let snapshot = export
 
         Task.detached(priority: .userInitiated) {
+            // --- Density points ---
             var points: [WeightedPoint] = []
             for day in snapshot.data.days {
                 for visit in day.visits {
@@ -357,6 +655,15 @@ final class AppHeatmapModel {
                 generatedGrids[lod] = HeatmapGridBuilder.computeGrid(for: points, lod: lod)
             }
 
+            // --- Route grids ---
+            var generatedRouteGrids: [HeatmapLOD: [RouteGridBuilder.SegBin: Int]] = [:]
+            for lod in HeatmapLOD.allCases {
+                generatedRouteGrids[lod] = RouteGridBuilder.computeGrid(
+                    for: snapshot,
+                    step: lod.routeSegmentStep
+                )
+            }
+
             let centerCoord: CLLocationCoordinate2D?
             if let mediumGrid = generatedGrids[.medium],
                let denseCell = mediumGrid.values.max(by: { $0.count < $1.count }) {
@@ -369,6 +676,7 @@ final class AppHeatmapModel {
 
             let dataRegion = Self.regionThatFits(points: points)
             let completedGrids = generatedGrids
+            let completedRouteGrids = generatedRouteGrids
             let fallbackRegion = centerCoord.map {
                 MKCoordinateRegion(
                     center: $0,
@@ -378,7 +686,9 @@ final class AppHeatmapModel {
 
             await MainActor.run {
                 self.lodGrids = completedGrids
+                self.routeGrids = completedRouteGrids
                 self.viewportCache = [:]
+                self.routeViewportCache = [:]
                 self.initialCenter = centerCoord
                 self.dataRegion = dataRegion
                 self.isCalculating = false
@@ -411,17 +721,35 @@ final class AppHeatmapModel {
     private func performCulling(region: MKCoordinateRegion) {
         guard !lodGrids.isEmpty else { return }
         let lod = HeatmapLOD.optimalLOD(for: region.span.latitudeDelta)
-        guard let fullGrid = lodGrids[lod] else { return }
 
-        let viewportKey = HeatmapViewportKey(region: region, lod: lod)
-        if let cached = viewportCache[viewportKey] {
-            visibleCells = cached
-            return
+        // Density
+        if let fullGrid = lodGrids[lod] {
+            let viewportKey = HeatmapViewportKey(region: region, lod: lod)
+            if let cached = viewportCache[viewportKey] {
+                visibleCells = cached
+            } else {
+                let culled = HeatmapGridBuilder.visibleCells(in: fullGrid, viewportKey: viewportKey)
+                viewportCache[viewportKey] = culled
+                visibleCells = culled
+            }
         }
 
-        let culled = HeatmapGridBuilder.visibleCells(in: fullGrid, viewportKey: viewportKey)
-        viewportCache[viewportKey] = culled
-        visibleCells = culled
+        // Route
+        if let routeGrid = routeGrids[lod] {
+            let routeKey = RouteViewportKey(region: region, lod: lod)
+            if let cached = routeViewportCache[routeKey] {
+                visibleRouteSegments = cached
+            } else {
+                let segs = RouteGridBuilder.visibleSegments(
+                    in: routeGrid,
+                    viewportKey: routeKey,
+                    step: lod.routeSegmentStep,
+                    lod: lod
+                )
+                routeViewportCache[routeKey] = segs
+                visibleRouteSegments = segs
+            }
+        }
     }
 
     nonisolated private static func regionThatFits(points: [WeightedPoint]) -> MKCoordinateRegion? {
