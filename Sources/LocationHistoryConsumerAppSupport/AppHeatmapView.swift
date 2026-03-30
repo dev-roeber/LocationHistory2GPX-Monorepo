@@ -156,11 +156,11 @@ public struct AppHeatmapView: View {
 
             LinearGradient(
                 colors: [
-                    Color(red: 0.0, green: 0.2, blue: 0.8).opacity(0.35),
-                    Color(red: 0.0, green: 0.8, blue: 0.8).opacity(0.45),
-                    Color(red: 0.2, green: 0.8, blue: 0.2).opacity(0.55),
-                    Color(red: 1.0, green: 0.8, blue: 0.0).opacity(0.65),
-                    Color(red: 1.0, green: 0.2, blue: 0.2).opacity(0.75),
+                    HeatmapPalette.color(for: 0.06).opacity(0.45),
+                    HeatmapPalette.color(for: 0.24).opacity(0.56),
+                    HeatmapPalette.color(for: 0.5).opacity(0.68),
+                    HeatmapPalette.color(for: 0.78).opacity(0.8),
+                    HeatmapPalette.color(for: 0.98).opacity(0.9),
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -192,9 +192,12 @@ public struct AppHeatmapView: View {
     }
 
     private func effectiveOpacity(for cell: HeatCell) -> Double {
-        let emphasis = 0.55 + (cell.normalizedIntensity * 0.65)
-        let value = cell.opacity * overlayOpacity * cell.lod.overlayOpacityMultiplier * emphasis
-        return min(max(value, 0.05), 0.74)
+        HeatmapVisualStyle.effectiveOpacity(
+            cellOpacity: cell.opacity,
+            normalizedIntensity: cell.normalizedIntensity,
+            overlayOpacity: overlayOpacity,
+            lod: cell.lod
+        )
     }
 
     private func scaledPolygonCoordinates(for cell: HeatCell) -> [CLLocationCoordinate2D] {
@@ -628,13 +631,14 @@ enum HeatmapGridBuilder {
         let centerLat = (Double(key.lat) * step) + (step / 2.0)
         let centerLon = (Double(key.lon) * step) + (step / 2.0)
         let cellSpan = step * lod.tileSpanMultiplier
+        let displayIntensity = HeatmapVisualStyle.displayIntensity(for: normalized)
 
         return HeatCell(
             gridKey: key,
             coordinate: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             count: max(Int(count.rounded()), 1),
-            opacity: 0.12 + (normalized * 0.52),
-            color: HeatmapPalette.color(for: normalized),
+            opacity: 0.16 + (displayIntensity * 0.72),
+            color: HeatmapPalette.color(for: displayIntensity),
             lod: lod,
             normalizedIntensity: normalized,
             cellSpan: cellSpan
@@ -656,21 +660,90 @@ enum HeatmapGridBuilder {
 }
 
 enum HeatmapPalette {
-    nonisolated static func color(for normalized: Double) -> Color {
-        switch normalized {
-        case 0..<0.12:
-            return Color(red: 0.08, green: 0.22, blue: 0.58)
-        case 0.12..<0.28:
-            return Color(red: 0.05, green: 0.5, blue: 0.72)
-        case 0.28..<0.5:
-            return Color(red: 0.05, green: 0.68, blue: 0.56)
-        case 0.5..<0.72:
-            return Color(red: 0.54, green: 0.74, blue: 0.17)
-        case 0.72..<0.88:
-            return Color(red: 0.92, green: 0.63, blue: 0.12)
-        default:
-            return Color(red: 0.9, green: 0.23, blue: 0.18)
+    static let gradientStops: [(position: Double, color: HeatmapRGB)] = [
+        (0.0, HeatmapRGB(red: 0.02, green: 0.18, blue: 0.62)),
+        (0.18, HeatmapRGB(red: 0.0, green: 0.5, blue: 0.86)),
+        (0.4, HeatmapRGB(red: 0.06, green: 0.82, blue: 0.68)),
+        (0.62, HeatmapRGB(red: 0.96, green: 0.82, blue: 0.18)),
+        (0.82, HeatmapRGB(red: 0.98, green: 0.46, blue: 0.12)),
+        (1.0, HeatmapRGB(red: 0.94, green: 0.12, blue: 0.2)),
+    ]
+
+    nonisolated static func rgb(for normalized: Double) -> HeatmapRGB {
+        let clamped = min(max(normalized, 0.0), 1.0)
+        guard let first = gradientStops.first else {
+            return HeatmapRGB(red: 0.0, green: 0.4, blue: 0.8)
         }
+
+        if clamped <= first.position {
+            return first.color
+        }
+
+        for index in 1..<gradientStops.count {
+            let previous = gradientStops[index - 1]
+            let current = gradientStops[index]
+            guard clamped <= current.position else { continue }
+
+            let distance = current.position - previous.position
+            let fraction = distance > 0 ? (clamped - previous.position) / distance : 0
+            return previous.color.interpolated(to: current.color, fraction: fraction)
+        }
+
+        return gradientStops.last?.color ?? first.color
+    }
+
+    nonisolated static func color(for normalized: Double) -> Color {
+        rgb(for: normalized).color
+    }
+}
+
+struct HeatmapRGB: Equatable {
+    let red: Double
+    let green: Double
+    let blue: Double
+
+    var color: Color {
+        Color(red: red, green: green, blue: blue)
+    }
+
+    func interpolated(to other: HeatmapRGB, fraction: Double) -> HeatmapRGB {
+        let clamped = min(max(fraction, 0.0), 1.0)
+        return HeatmapRGB(
+            red: red + ((other.red - red) * clamped),
+            green: green + ((other.green - green) * clamped),
+            blue: blue + ((other.blue - blue) * clamped)
+        )
+    }
+}
+
+enum HeatmapVisualStyle {
+    nonisolated static func displayIntensity(for normalized: Double) -> Double {
+        let clamped = min(max(normalized, 0.0), 1.0)
+        let liftedMidtones = pow(clamped, 0.72)
+        let hotspotBoost = pow(clamped, 1.7)
+        let value = (liftedMidtones * 0.78) + (hotspotBoost * 0.3)
+        return min(max(value, 0.0), 1.0)
+    }
+
+    nonisolated static func remappedControlOpacity(_ overlayOpacity: Double) -> Double {
+        let clamped = min(max(overlayOpacity, 0.35), 1.0)
+        let normalized = (clamped - 0.35) / 0.65
+        let highEndBoost = pow(normalized, 0.58)
+        return 0.32 + (highEndBoost * 0.68)
+    }
+
+    nonisolated static func effectiveOpacity(
+        cellOpacity: Double,
+        normalizedIntensity: Double,
+        overlayOpacity: Double,
+        lod: HeatmapLOD
+    ) -> Double {
+        let displayIntensity = displayIntensity(for: normalizedIntensity)
+        let controlOpacity = remappedControlOpacity(overlayOpacity)
+        let hotspotBoost = pow(displayIntensity, 1.45)
+        let emphasis = 0.72 + (displayIntensity * 0.78) + (hotspotBoost * 0.28)
+        let value = cellOpacity * controlOpacity * lod.overlayOpacityMultiplier * emphasis
+        return min(max(value, 0.05), 0.92)
     }
 }
 

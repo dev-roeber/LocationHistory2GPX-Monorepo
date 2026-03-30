@@ -33,6 +33,46 @@ final class AppHeatmapRenderingTests: XCTestCase {
         XCTAssertTrue(visible.allSatisfy { abs($0.coordinate.longitude - 13.405) < 0.2 })
     }
 
+    func testDisplayIntensityLiftsMidAndHighDensity() {
+        let low = HeatmapVisualStyle.displayIntensity(for: 0.12)
+        let mid = HeatmapVisualStyle.displayIntensity(for: 0.5)
+        let high = HeatmapVisualStyle.displayIntensity(for: 0.9)
+
+        XCTAssertGreaterThan(low, 0.15)
+        XCTAssertGreaterThan(mid, 0.55)
+        XCTAssertGreaterThan(high, 0.9)
+        XCTAssertLessThan(low, mid)
+        XCTAssertLessThan(mid, high)
+    }
+
+    func testFullOpacityControlUsesStrongerHighEndMapping() {
+        let full = HeatmapVisualStyle.effectiveOpacity(
+            cellOpacity: 0.88,
+            normalizedIntensity: 0.95,
+            overlayOpacity: 1.0,
+            lod: .high
+        )
+        let reduced = HeatmapVisualStyle.effectiveOpacity(
+            cellOpacity: 0.88,
+            normalizedIntensity: 0.95,
+            overlayOpacity: 0.55,
+            lod: .high
+        )
+
+        XCTAssertGreaterThan(full, 0.8)
+        XCTAssertGreaterThan(full, reduced)
+    }
+
+    func testPaletteWarmsAsDensityIncreases() {
+        let low = HeatmapPalette.rgb(for: 0.12)
+        let mid = HeatmapPalette.rgb(for: 0.55)
+        let high = HeatmapPalette.rgb(for: 0.9)
+
+        XCTAssertGreaterThan(mid.green, low.green)
+        XCTAssertGreaterThan(high.red, mid.red)
+        XCTAssertLessThan(high.blue, mid.blue)
+    }
+
     private func clusteredPoints() -> [WeightedPoint] {
         var points: [WeightedPoint] = []
 

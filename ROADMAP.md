@@ -31,8 +31,9 @@ Historische Phasen weiter unten bleiben als Zeitstrahl stehen; wenn spaetere Com
   `AppHeatmapView` und das Heatmap-Sheet sind implementiert und jetzt dokumentiert.
   Heatmap UX Batch 1 hat die Darstellung auf mittleren/grossen Zoomstufen beruhigt und kleine lokale Controls fuer Deckkraft, Radius und `Auf Daten zoomen` hinzugefuegt.
   Heatmap Visual & Performance Batch 2 hat danach auf geglaettete aggregierte Polygon-Zellen, viewport-basierte Zellselektion, per-LOD begrenzte sichtbare Elemente und einen wiederverwendbaren Viewport-Cache umgestellt, um den sichtbaren Kreis-/Stempel-Look zu reduzieren und Pan/Zoom ruhiger zu machen.
-  Kleine dedizierte Heatmap-Regressionstests fuer Aggregation und viewport-begrenzte Zellselektion sind jetzt vorhanden.
-  Offen bleibt die visuelle/performance-seitige Apple-Verifikation dieses neuen Renderers auf echter Hardware.
+  Heatmap Color / Contrast / Opacity Batch 3 hat danach die Farbpalette von harten Stufen auf weich interpolierte Gradient-Stops umgestellt, mittlere/hohe Dichte per Intensitaets-Mapping sichtbar angehoben und die 100-%-Deckkraft ueber eine staerkere High-End-Kennlinie auf einen wirklich volleren Sichtbarkeitsmodus gemappt.
+  Kleine dedizierte Heatmap-Regressionstests fuer Aggregation, viewport-begrenzte Zellselektion und das neue Intensitaets-/Opacity-/Palette-Mapping sind jetzt vorhanden.
+  Offen bleibt die visuelle/performance-seitige Apple-Verifikation dieses neuen Renderers samt Batch-3-Farbwirkung auf echter Hardware.
 - **`Live`-Tab**
   Der dedizierte 5. Tab fuer compact iOS 17+ ist implementiert und jetzt dokumentiert.
   Offen bleiben echte iPhone-UX-/Device-Nachweise fuer diesen Pfad.
@@ -46,7 +47,7 @@ Historische Phasen weiter unten bleiben als Zeitstrahl stehen; wenn spaetere Com
   HTTPS-Upload, Bearer-Token, Retry-on-next-sample und Upload-Batching sind implementiert.
   Offen bleiben End-to-End-Device-Verifikation sowie finale Review-/Privacy-Einordnung auf Apple-Seite.
 - **Linux-/Apple-Teststatus**
-  Apple Stabilization Batch 2 (2026-03-30) und Heatmap Visual & Performance Batch 2: macOS-Build-Fehler bleiben behoben, `swift test` und `xcodebuild test` laufen auf macOS jetzt beide mit 224 Tests und 0 Failures durch.
+  Apple Stabilization Batch 2, Heatmap Visual & Performance Batch 2 und Heatmap Color / Contrast / Opacity Batch 3: macOS-Build-Fehler bleiben behoben, `swift test` und `xcodebuild test` laufen auf macOS jetzt beide mit 227 Tests und 0 Failures durch.
   Die 3 bekannten Problemfaelle sind als Test-Drift klassifiziert und behoben:
   `testAcceptedSamplesUploadToConfiguredServer` und `testFailedUploadRetriesWhenAnotherAcceptedSampleArrives` scheiterten an minimumBatchSize=5 (nicht Plattform), Tests auf minimumBatchSize=1 gesetzt;
   `testBackgroundPreferenceActivatesClientWhenAlwaysAuthorized` prueft jetzt korrektes Verhalten (Client-Config beim Recording-Start, nicht bei Preference-Aenderung).
@@ -65,7 +66,7 @@ Historische Phasen weiter unten bleiben als Zeitstrahl stehen; wenn spaetere Com
 
 ### Reihenfolge der naechsten offenen Bloecke
 
-1. kurzen echten iPhone-Heatmap-Check fuer den neuen Aggregations-/Polygon-Renderer fahren und visuelle/performance-seitige Befunde dokumentieren
+1. kurzen echten iPhone-Heatmap-Check fuer den neuen Aggregations-/Polygon-Renderer inklusive Batch-3-Farb-/Kontrast-Mapping fahren und visuelle/performance-seitige Befunde dokumentieren
 2. Background-Recording auf echtem iPhone verifizieren und im Runbook belegen
 3. Wrapper-Auto-Restore auf echtem iPhone erneut verifizieren und dokumentieren
 4. optionalen Server-Upload end-to-end auf Device pruefen; Apple-Review-/Privacy-Einordnung fuer den Upload-Pfad weiter klaeren
