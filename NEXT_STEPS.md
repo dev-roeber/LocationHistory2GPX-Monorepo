@@ -10,9 +10,11 @@ Status: **teilweise umgesetzt**
 Bereits drin:
 - `AppHeatmapView` ist implementiert und als eigenes Heatmap-Sheet verdrahtet
 - Heatmap ist jetzt in README, ROADMAP und Feature-Inventar repo-wahr dokumentiert
+- echter iPhone-15-Pro-Max-AX-Snapshot aus dem Wrapper zeigt `Heatmap` bei geladenem Import im Uebersichtsbildschirm sichtbar und erreichbar verdrahtet
 
 Fehlt noch:
 - dedizierte Testabdeckung fuer Heatmap-Modell/Logik
+- echtes Oeffnen des Heatmap-Sheets auf Apple-Hardware
 - visuelle Apple-Verifikation auf echter Apple-Hardware
 - Performance-Nachweis fuer groessere Imports auf Apple-Hardware
 
@@ -39,6 +41,7 @@ Bereits drin:
 - Background-Recording-Codepfad
 - `Always Allow`-Upgrade im Live-Location-Modell
 - Wrapper-Deklarationen fuer `NSLocationAlwaysAndWhenInUseUsageDescription` und `UIBackgroundModes=location`
+- echter iPhone-15-Pro-Max-Lauf bestaetigt stabilen Wrapper-Launch; der eigentliche Recording-/Background-Pfad wurde dabei noch nicht bedient
 
 Fehlt noch:
 - echte Device-Verifikation fuer Permission-Upgrade, laufende Aufnahme im Hintergrund und Stop-/Persistenzverhalten
@@ -52,9 +55,10 @@ Bereits drin:
 - Core-App-Shell haelt Auto-Restore bewusst geparkt
 - Wrapper ruft `restoreBookmarkedFile()` beim Start wieder auf
 - README und Runbooks beschreiben den Status jetzt repo-wahr
+- echter iPhone-15-Pro-Max-Lauf zeigte beim App-Start bereits wiederhergestellte Quelle `Imported file: location-history.zip`
 
 Fehlt noch:
-- frische Device-Verifikation fuer den seit 2026-03-20 wieder aktiven Restore-Pfad
+- kontrollierte Device-Verifikation fuer den seit 2026-03-20 wieder aktiven Restore-Pfad
 - dokumentierter Nachweis fuer positiven Restore, Datei-fehlt-Fallback und Clear-nach-Restore
 
 ## 5. Phase 19.55 – Server-Upload / Review / Privacy finalisieren

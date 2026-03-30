@@ -207,6 +207,13 @@ Stand 2026-03-17 wurde auf einer echten macOS-/Xcode-Maschine Folgendes real gep
   - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`: 222 Tests, 0 Failures
   - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'generic/platform=iOS' build`: BUILD SUCCEEDED
   - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=latest' -only-testing:LH2GPXWrapperTests test`: TEST SUCCEEDED
+- fuer den anschliessenden Device-End-to-End-Block am 2026-03-30 wurde zusaetzlich ein echtes iPhone verwendet:
+  - Geraet: `iPhone 15 Pro Max` (`iPhone16,2`), iOS `26.3 (23D127)`, via USB verfuegbar, entsperrt, Developer Mode aktiv
+  - `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -allowProvisioningUpdates -project /Users/sebastian/Code/LH2GPXWrapper/LH2GPXWrapper.xcodeproj -scheme LH2GPXWrapper -destination 'id=00008130-00163D0A0461401C' -only-testing:LH2GPXWrapperUITests`: echter Device-Lauf
+  - `LH2GPXWrapperUITestsLaunchTests.testLaunch` lief auf dem Geraet erfolgreich; der Wrapper startet auf aktueller Hardware stabil
+  - `LH2GPXWrapperUITests.testAppStoreScreenshots` scheiterte nicht an Launch oder Signing, sondern an einer inhaltlichen Erwartung: statt leerem Import-State war bereits eine wiederhergestellte `location-history.zip` aktiv, deshalb erschien kein `Demo Data`-Button
+  - der zugehoerige echte AX-Snapshot zeigte den Uebersichtsbildschirm mit aktiver importierter Quelle, sichtbarer `Heatmap`-Aktion und sichtbarem dediziertem `Live`-Tab
+  - damit sind Wrapper-Launch, sichtbarer Auto-Restore und die Praesenz von `Heatmap`/`Live` auf Device belegt; echtes Oeffnen des Heatmap-Sheets, Live-Recording, Background-Recording und Upload-End-to-End wurden in diesem Batch nicht erreicht
 - die 2 in Batch 1 noch offenen Test-vs-Code-Widersprueche sind in Batch 2 repo-wahr geklaert:
   - `AppPreferencesTests.testStoredValuesAreLoaded`: Test-Setup folgt jetzt dem Keychain-first-Produktpfad auf Apple
   - `DayDetailPresentationTests.testTimeRangeFormattingAvoidsRawISOStrings`: Test-Erwartung folgt jetzt der im Produktcode konsistent verwendeten Gedankenstrich-Formatierung
