@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "B0807560-8526-4249-A8BF-251C01333B0D",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:LH2GPXWrapper.xcodeproj",
+      "identifier" : "9E7516E82F69096F00E212A7",
+      "name" : "LH2GPXWrapper"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:LH2GPXWrapper.xcodeproj",
+        "identifier" : "9E7516F52F69097200E212A7",
+        "name" : "LH2GPXWrapperTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:LH2GPXWrapper.xcodeproj",
+        "identifier" : "9E7516FF2F69097200E212A7",
+        "name" : "LH2GPXWrapperUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -1,0 +1,20 @@
+# SwiftLint — minimal baseline for the Wrapper target.
+# Mirrors the Core repo config; keeps CI green while catching
+# genuinely dangerous patterns on new code.
+
+excluded:
+  - .build
+  - .swiftpm
+  - LH2GPXWrapperUITests  # UI test stubs; low value to lint
+
+disabled_rules:
+  - trailing_comma
+  - line_length
+  - identifier_name
+  - file_length
+  - type_body_length
+  - function_body_length
+  - function_parameter_count
+
+force_try:
+  severity: warning
