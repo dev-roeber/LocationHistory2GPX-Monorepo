@@ -2,6 +2,11 @@
 
 ## 2026-03-31
 
+### Monorepo Truth-Sync Docs
+
+- `AGENTS.md`: Zwei-Repo-Architektur-Block auf Monorepo-Architektur aktualisiert; veralteter SPM-Pfad `../../../Code/LocationHistory2GPX-iOS` entfernt; Core-Root und `wrapper/`-Verzeichnis als die zwei primaeren Bestandteile dokumentiert; historische Split-Repos als weiterbestehend eingeordnet
+- Split-Repos `LocationHistory2GPX-iOS` und `LH2GPXWrapper` erhalten Monorepo-Verweise in README und AGENTS.md
+
 ### Monorepo-Migration + Testendpunkt-Bereinigung
 
 - `wrapper/` via `git subtree` als Teil des Monorepos eingefuehrt; `LH2GPXWrapper` lebt jetzt unter `wrapper/` im Monorepo-Root
