@@ -39,20 +39,22 @@
 - unbekannte additive JSON-Felder tolerieren, aber unbekannte `schema_version` weiter ablehnen
 - Breaking Changes nur mit dokumentierter Contract-Version
 
-## Zwei-Repo-Architektur
+## Monorepo-Architektur
 
-- Dieses Repo (`LocationHistory2GPX-iOS`) ist das Core-/Consumer-Repo: Swift Package mit Decoder, Queries, AppSupport, DemoSupport.
-- `LH2GPXWrapper` ist das Wrapper-/App-Repo: Xcode-Projekt mit Bundle-Config, Signing, Assets und dem iOS-App-Target.
-- Das Wrapper-Repo referenziert dieses Repo als lokales Swift Package (`../../../Code/LocationHistory2GPX-iOS`).
-- Keine Business-Logik oder neue Fachtypen ins Wrapper-Repo schieben.
-- Keine Xcode-Projektdateien oder Bundle-Config in dieses Library-Repo ziehen.
+- Dieses Repo (`LocationHistory2GPX-Monorepo`) ist das primaere integrierte Repo fuer Core Swift Package und Wrapper.
+- Der Core Swift Package (Decoder, Queries, AppSupport, DemoSupport) liegt im Monorepo-Root (`Package.swift`).
+- Der Xcode-Wrapper liegt unter `wrapper/` im Monorepo-Root.
+- Das Xcode-Projekt referenziert den Core als lokales Swift Package per `relativePath = "../.."` (Monorepo-Root).
+- Die historischen Split-Repos `LocationHistory2GPX-iOS` und `LH2GPXWrapper` bestehen weiter, aber die primaere integrierte Weiterentwicklung findet im Monorepo statt.
+- Keine Business-Logik oder neue Fachtypen in den `wrapper/`-Bereich schieben.
+- Keine Xcode-Projektdateien oder Bundle-Config in den Core-Root schieben.
 
 ## Roadmap-Governance
 
 - `ROADMAP.md` enthaelt die verbindliche Delivery-Roadmap bis v1.0 einschliesslich Governance-Regeln.
 - Checkboxen nur abhaken wenn Umsetzung + Tests + Doku-Sync nachweisbar.
 - NEXT_STEPS darf nur offene, priorisierte naechste Arbeit enthalten.
-- Wrapper-Repo `LH2GPXWrapper` ist das separate Xcode-Projekt fuer die fertige iOS-App.
+- `wrapper/` im Monorepo-Root ist das Xcode-Projekt fuer die fertige iOS-App.
 
 ## Pflichtchecks
 
