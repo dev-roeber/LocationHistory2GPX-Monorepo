@@ -162,11 +162,14 @@ Present:
 - visible chart hints/labels for tap navigation, selected metric context and weekday averages
 - visible global time-range control reusing the shared app session filter
 - insights are built from decoded stats with day-level fallbacks where implemented
+- visible cross-filter drilldown from data-anchored insight elements into `Days` or `Export`
+- visible drilldown-state banners with reset action in the receiving `Days` and `Export` flows
+- visible share actions for the key insights sections backed by `ChartShareHelper`
 
 Not present:
 - custom chart density controls
-- export/share for charts
 - map-linked cross-filtering from insights
+- Linux-verifiable end-to-end Apple share-sheet proof
 
 ## 8. Optionen / Einstellungen
 
@@ -335,15 +338,16 @@ Present:
 - `InsightsDrilldownAction` (filterDays/filterDaysToDate/filterDaysToDateRange/prefillExportForDate/prefillExportForDateRange)
 - `InsightsDrilldownTarget` mit id/label/systemImage/action; Factory: `showDay`/`exportDay`/`showFavorites`/`showDaysWithRoutes`
 - `AppSessionState.activeDrilldownFilter: InsightsDrilldownAction?`
-
-Not yet wired in views:
-- Tappbare Targets in InsightsCardView; Handler in AppContentSplitView
+- `InsightsDrilldownBridge` trennt Days-/Export-Ziele, baut Datumsbereiche fuer Monate/Perioden und liefert sichtbare Drilldown-Beschreibungen
+- `AppInsightsContentView` zeigt jetzt sichtbare Drilldown-Aktionen fuer Highlights, `Top Days`, Distanz-Zeitreihe sowie Monats-/Periodenbereiche
+- `AppContentSplitView` und `AppExportView` wenden aktive Drilldowns jetzt sichtbar auf `Days` bzw. `Export` an und bieten Reset
 
 ### C2. Chart Share Helper
 Present:
 - `ChartShareHelper.payload(for:dateRange:) -> ChartSharePayload`
 - `InsightsCardType` mit allen 7 Karten-Typen
 - Dateiname-Format: `LocationHistory_Insights_<type>_[<range>_]<date>.png`
+- `AppInsightsContentView` rendert auf Apple-Hosts per `ImageRenderer` eine PNG-Datei und zeigt sichtbare Share-Aktionen fuer die wichtigsten Insights-Sektionen
 
 Not verifiable on Linux:
 - ImageRenderer-Integration und Share-Sheet-Interaktion nur auf Apple-Host verifizierbar

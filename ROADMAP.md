@@ -37,8 +37,8 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 - **Tage-Favoriten** (`DayFavoritesStore`): Stern-Marking, Persistenz, sichtbarer Toggle in Day-Liste und Day Detail, `DayListFilterChip.favorites`
 - **Days-Filterchips** (`DayListFilter`): Favorites / Has Visits / Has Routes / Has Distance / Exportable; sichtbar in `Days` und mit Suche kombinierbar
 - **Insights-Drilldown** (`InsightsDrilldown`): `filterDaysToDate`, `filterDaysToDateRange`, `prefillExportForDate`, `prefillExportForDateRange`; `activeDrilldownFilter` in `AppSessionState`
-- **Chart-Share-Payload** (`ChartShareHelper`): UI-freier Payload-Builder; Dateiname-Format; ImageRenderer-Integration auf Apple-Host (nicht auf Linux verifizierbar)
-- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export-, Days-/Day-Detail- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore, Days-Filterchips, Route-Export-Aktionen und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 350 tests, with 0 failures (0 unexpected)`)
+- **Chart-Share-Payload** (`ChartShareHelper`): UI-freier Payload-Builder; Dateiname-Format; sichtbare Share-Aktionen jetzt in den wichtigsten Insights-Sektionen verdrahtet; echte ImageRenderer-/Share-Sheet-Verifikation bleibt Apple-Host-Arbeit
+- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export-, Days-/Day-Detail- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore, Days-Filterchips, Route-Export-Aktionen und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 359 tests, with 0 failures (0 unexpected)`)
 
 ### Implementiert, aber noch nicht voll verifiziert
 
@@ -66,10 +66,11 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
   Offen bleiben End-to-End-Device-Verifikation sowie finale Review-/Privacy-Einordnung auf Apple-Seite.
 - **Insights / Days UX**
   Die Insights-Seite ist deutlich ausgebaut und `Days` ist jetzt repo-wahr `neu -> alt` sortiert.
-  Offen bleiben frische Apple-UI-Nachweise fuer die neue Informationsarchitektur, Chart-Lesbarkeit, den jetzt sichtbaren Zeitraumfilter in `Overview`/`Insights`/`Export`, die sichtbaren Days-Filterchips/Favoriten/per-route Actions und das aktualisierte Day-Navigationsverhalten auf echter Hardware.
+  Insights-Drilldown nach `Days`/`Export` und sichtbare Share-Aktionen fuer zentrale Insight-Sektionen sind jetzt UI-seitig verdrahtet.
+  Offen bleiben frische Apple-UI-Nachweise fuer die neue Informationsarchitektur, Chart-Lesbarkeit, den jetzt sichtbaren Zeitraumfilter in `Overview`/`Insights`/`Export`, die sichtbaren Days-Filterchips/Favoriten/per-route Actions, den neuen Insights-Drilldown sowie den echten Chart-Share-Flow auf Apple-Hardware.
 - **Linux-/Apple-Teststatus**
   Historische Apple-Nachweise vom 2026-03-30 bleiben dokumentiert, gelten aber nicht als frischer Gegenlauf fuer diesen Audit.
-  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
+  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
   Die 3 bekannten Problemfaelle sind als Test-Drift klassifiziert und behoben:
   `testAcceptedSamplesUploadToConfiguredServer` und `testFailedUploadRetriesWhenAnotherAcceptedSampleArrives` scheiterten an minimumBatchSize=5 (nicht Plattform), Tests auf minimumBatchSize=1 gesetzt;
   `testBackgroundPreferenceActivatesClientWhenAlwaysAuthorized` prueft jetzt korrektes Verhalten (Client-Config beim Recording-Start, nicht bei Preference-Aenderung).
@@ -81,7 +82,7 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 ### Noch nicht umgesetzt
 
 - KMZ-Export
-- weitere Insight-Arbeit: Cross-Filtering und Chart-Share-ImageRenderer-Integration auf Apple-Host noch offen
+- weitere Insight-Arbeit: Apple-Host-Verifikation fuer den jetzt verdrahteten Drilldown-/Chart-Share-Flow sowie optional spaeter map-linked Cross-Filtering
 - globale Zeitraumfilter-Verdrahtung fuer `Days` bleibt offen; aktuell sichtbar verdrahtet sind `Overview`, `Insights` und `Export`
 - breitere Lokalisierungsabdeckung und eine strengere Lokalisierungspruefung
 - Cloud-/Sync- oder Account-Features

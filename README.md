@@ -49,8 +49,8 @@ Integriertes Monorepo fuer Core Swift Package und Xcode Wrapper der `LocationHis
 - Favoriten direkt in Day-Liste und Day-Detail toggeln; Persistenz bleibt lokal in `UserDefaults`
 - Day-Detail zeigt sichtbare per-route Auswahl inklusive Reset auf implizit alle exportierbaren Routen
 - CSV als echtes Exportformat ueber den bestehenden `fileExporter`-Flow inkl. Dateiname, Disabled-Reasons und Selection-Summary
-- Insights-Drilldown: tappbare Targets in Karten navigieren direkt zur Day-Liste oder füllen den Export vor
-- Chart-Share-Payload für Insights-Karten (ImageRenderer auf Apple-Host, nicht auf Linux verifizierbar)
+- Insights-Drilldown: tappbare Highlights, `Top Days`, Distanz-/Monats-/Periodenbereiche koennen jetzt sichtbar nach `Days` cross-filtern oder den `Export` vorbefuellen
+- sichtbare Share-Aktionen fuer die wichtigsten Insights-Charts; die bestehende `ChartShareHelper`-Verdrahtung rendert auf Apple-Hosts per `ImageRenderer` in eine teilbare PNG-Datei
 - akzeptierte Live-Recording-Punkte optional an einen frei konfigurierbaren HTTP(S)-Endpunkt mit optionalem Bearer-Token senden
 - Shell-, Optionen-, Live-Recording- und zentrale Exportoberflaechen auf Deutsch oder Englisch anzeigen
 - eine minimale lokale SwiftUI-Demo-Shell mit fixer Golden-Fixture bereitstellen
@@ -212,6 +212,8 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - das Actions-Menue kann auf unterstuetzten Apple-Plattformen zusaetzlich ein eigenes Heatmap-Sheet fuer importierte History mit lokalen Darstellungsreglern, geglaettetem viewport-basiert aggregiertem Dichte-Rendering und verstaerktem Farb-/Kontrast-Mapping oeffnen
 - Heatmap-Detailzoom zeigt jetzt auch bei duennen Daten deutlich frueher Farbe, mehr Hue-Unterschiede im Low-/Mid-Bereich und weniger blasse Flaechen, ohne den bestehenden LOD-/Viewport-Ansatz aufzugeben
 - die Insights-Seite bietet jetzt segmentierte Oberflaechen (`Overview`, `Patterns`, `Breakdowns`) mit KPI-Karten, Highlight-Karten, `Top Days`, Monatstrends, Wochentags- und Aktivitaetsauswertungen; Wochentage und Perioden koennen belastbar zwischen Ereignissen, Routen und Distanz umgeschaltet werden
+- die Insights-Seite bietet jetzt sichtbaren Drilldown nach `Days` und `Export` fuer datenverankerte Highlights, Top-Days, Distanz-Balken sowie Monats-/Periodenbereiche; aktive Drilldowns bleiben in `Days` bzw. `Export` sichtbar und ruecksetzbar
+- die wichtigsten Insights-Sektionen tragen jetzt sichtbare Share-Aktionen; die Linux-Seite deckt nur Verdrahtung und Tests ab, die echte ImageRenderer-/Share-Sheet-Verifikation bleibt Apple-Host-Arbeit
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen Dateinamen passend zum aktiven Exportformat vor dem fileExporter-Dialog

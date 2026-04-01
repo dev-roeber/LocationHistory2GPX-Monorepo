@@ -2,6 +2,16 @@
 
 ## [Unreleased] – 2026-04-01
 
+### UI Wiring Phase 3 – Insights Drilldown / Chart Share
+
+- `AppInsightsContentView.swift`, `AppContentSplitView.swift`, `AppDayListView.swift`, `AppExportView.swift`, `InsightsDrilldownBridge.swift`: der vorhandene `InsightsDrilldown`-Unterbau ist jetzt sichtbar in der echten App-UI verdrahtet; datenverankerte Highlights, `Top Days`, Distanz-Zeitreihe sowie Monats-/Periodenbereiche bieten jetzt einen echten Drilldown nach `Days` oder `Export`, inklusive sichtbarem und ruecksetzbarem Drilldown-Zustand in den Zielansichten
+- `AppSessionState.swift`: aktiver Insights-Drilldown wird bei neuem Import, Start-Ladevorgang und `Clear` sauber zurueckgesetzt statt ueber Session-Wechsel zu leaken
+- `AppInsightsContentView.swift`: sichtbare Share-Aktionen fuer die wichtigsten Insight-Sektionen nutzen den vorhandenen `ChartShareHelper`; auf Apple-Hosts wird per `ImageRenderer` eine PNG-Datei fuer den System-Share-Flow erzeugt, waehrend Linux-seitig nur Verdrahtung und Tests verifizierbar sind
+- `InsightsChartSupport.swift`, `InsightsTopDaysPresentation.swift`: sichtbare Hinweistexte spiegeln jetzt korrekt den neuen Drilldown-Flow statt direkte Einzeltag-Navigation
+- `AppLanguageSupport.swift`: neue sichtbare UI-Texte fuer Drilldown-Banner, Reset, Share-Flow und Chart-Share-Failures auf Deutsch/Englisch lokalisiert
+- `Tests/LocationHistoryConsumerTests/InsightsDrilldownBridgeTests.swift`, `DemoSessionStateTests.swift`, `InsightsChartSupportTests.swift`, `InsightsTopDaysPresentationTests.swift`: neue und angepasste Tests decken Datumsbereichs-Mapping, Zieltrennung Days/Export, lokalisierte Drilldown-Beschreibung, Session-Reset sowie die neuen Drilldown-Hints ab
+- Linux-Nachweis fuer diesen Batch: `swift test` -> `Executed 359 tests, with 0 failures (0 unexpected)`
+
 ### UI Wiring Phase 2 – Days / Day Detail / CSV Export
 
 - `AppContentSplitView.swift`, `AppDayListView.swift`, `DayListPresentation.swift`, `AppDaySearch.swift`: der vorhandene `DayListFilter` ist jetzt sichtbar in der echten `Days`-Liste verdrahtet; Filterchips fuer `Favorites`, `Has Visits`, `Has Routes`, `Has Distance` und `Exportable` kombinieren sich sauber mit Suche und newest-first Sortierung, inklusive sauberem Empty-State bei 0 Treffern

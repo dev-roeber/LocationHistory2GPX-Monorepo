@@ -12,7 +12,7 @@ Bereits drin:
 - der dedizierte `Live`-Tab wurde visuell und funktional deutlich ausgebaut: klarere Map-/Recording-/Upload-/Library-Hierarchie, Status-Chips, Quick Actions und mehr Live-Metriken
 - der optionale Server-Upload zeigt Queue-, Failure- und Last-Success-Zustaende und unterstuetzt Pause/Resume sowie manuellen Queue-Flush
 - die Insights-Seite bietet segmentierte Oberflaechen (`Overview`, `Patterns`, `Breakdowns`) sowie KPI-Karten, Highlight-Karten, `Top Days`, Monatstrends und umschaltbare Distanz-/Route-/Event-Muster
-- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`
+- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
 
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer den neuen `Live`-Tab inklusive Upload-Zustaenden, Quick Actions und groesserem Stat-Set
@@ -88,7 +88,23 @@ Bereits drin:
 - Favoriten lassen sich in der Liste per Swipe/Kontextmenue und im Day Detail direkt toggeln; Persistenz bleibt lokal
 - Day Detail zeigt sichtbare per-route Auswahl einzelner exportierbarer Routen inklusive `Reset to All Routes`
 - `CSV` ist als echtes Dateiformat im bestehenden Export-Flow aktiv und respektiert Zeitraum, Day-Selection und explizite Route-Selektionen
-- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`
+- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
+
+## 7. Phase 19.59 – Insights Drilldown / Chart Share auf Apple verifizieren
+
+Status: **teilweise umgesetzt**
+
+Bereits drin:
+- datenverankerte Highlights, `Top Days`, Distanz-Zeitreihe sowie Monats-/Periodenbereiche in `Insights` koennen jetzt sichtbar nach `Days` drillen oder den `Export` vorbefuellen
+- `Days` und `Export` zeigen aktive Insights-Drilldowns sichtbar als Banner und bieten eine echte Reset-Aktion
+- sichtbare Share-Aktionen fuer die wichtigsten Insight-Sektionen sind verdrahtet und nutzen den vorhandenen `ChartShareHelper`
+- auf Apple-Hosts rendert die View-Schicht per `ImageRenderer` eine PNG-Datei fuer den System-Share-Flow; Linux-seitig ist diese Verdrahtung nur indirekt ueber Code und Tests absicherbar
+- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
+
+Fehlt noch:
+- frische Apple-UI-Verifikation fuer den Drilldown-Flow von `Insights` nach `Days`
+- frische Apple-UI-Verifikation fuer den Drilldown-Flow von `Insights` nach `Export`
+- echte Apple-Host-Verifikation fuer `ImageRenderer`-Rendering, PNG-Ausgabe und Share-Sheet-Interaktion
 
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer die Filterchip-Leiste und deren Zusammenspiel mit Suche und newest-first Sortierung
@@ -96,7 +112,7 @@ Fehlt noch:
 - frische Apple-UI-Verifikation fuer per-route Auswahl, Reset auf alle Routen und Export-Summary auf echter Apple-Hardware
 - frische Apple-UI-Verifikation fuer den sichtbaren CSV-Exportpfad inkl. Dateiname, Disabled-Reasons und `fileExporter`
 
-## 7. Phase 19.56 – Server-Upload / Review / Privacy finalisieren
+## 8. Phase 19.56 – Server-Upload / Review / Privacy finalisieren
 
 Status: **teilweise umgesetzt**
 
@@ -118,7 +134,7 @@ Fehlt noch:
 - Datenschutzrichtlinien-URL und Support-URL für App Store Connect (extern, Pflichtfelder)
 - Technische Basis ist dokumentiert in `docs/PRIVACY_MANIFEST_SCOPE.md`
 
-## 8. Phase 19.57 – Weiterer Insights-Ausbau + breitere Lokalisierung (teilweise umgesetzt)
+## 9. Phase 19.57 – Weiterer Insights-Ausbau + breitere Lokalisierung (teilweise umgesetzt)
 
 Status: **teilweise umgesetzt**
 
