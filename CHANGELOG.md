@@ -2,6 +2,16 @@
 
 ## [Unreleased] – 2026-04-01
 
+### UI Wiring Phase 2 – Days / Day Detail / CSV Export
+
+- `AppContentSplitView.swift`, `AppDayListView.swift`, `DayListPresentation.swift`, `AppDaySearch.swift`: der vorhandene `DayListFilter` ist jetzt sichtbar in der echten `Days`-Liste verdrahtet; Filterchips fuer `Favorites`, `Has Visits`, `Has Routes`, `Has Distance` und `Exportable` kombinieren sich sauber mit Suche und newest-first Sortierung, inklusive sauberem Empty-State bei 0 Treffern
+- `AppContentSplitView.swift`, `AppDayListView.swift`, `AppDayDetailView.swift`: `DayFavoritesStore` ist jetzt sichtbar in Liste und Day Detail angebunden; Favoriten koennen per Swipe, Kontextmenue und Day-Detail-Action umgeschaltet werden und bleiben lokal persistent
+- `AppDayDetailView.swift`, `ExportSelectionState.swift`, `ExportSelectionContent.swift`: die vorhandene per-route Auswahl ist jetzt real im Day Detail benutzbar; explizite Routen-Subsets bleiben rueckwaertskompatibel zu implizit allen exportierbaren Routen und fliessen in Export-Snapshot und Summary ein
+- `AppExportView.swift`, `GPXDocument.swift`: `CSV` ist jetzt als echtes sichtbares Exportformat im bestehenden `fileExporter`-Flow verdrahtet; Disabled-Reasons, Summary, Dateiname und Distanzsumme respektieren Zeitraum, Day-Selection und explizite Route-Selektionen korrekt
+- `AppLanguageSupport.swift`: neue sichtbare UI-Texte fuer Days-Filterchips, Favoriten, Route-Export und CSV-Hinweise auf Deutsch/Englisch lokalisiert
+- `Tests/LocationHistoryConsumerTests/DayListPresentationTests.swift`, `ExportSelectionRouteTests.swift`, `ExportSelectionContentTests.swift`, `ExportPresentationTests.swift`: neue und erweiterte Tests decken Day-Filter/Search/newest-first, Favoriten-/Chip-Zusammenspiel, per-route Exportprojektion und CSV-Export-Verdrahtung ab
+- Linux-Nachweis fuer diesen Batch: `swift test` -> `Executed 350 tests, with 0 failures (0 unexpected)`
+
 ### UI Wiring Phase 1 – Range / Recent Files / Auto-Restore
 
 - `AppContentSplitView.swift`, `AppInsightsContentView.swift`, `AppExportView.swift`, `AppHistoryDateRangeControl.swift`, `AppHistoryDateRangeQueryBridge.swift`: der vorhandene `HistoryDateRangeFilter` ist jetzt sichtbar in `Overview`, `Insights` und `Export` verdrahtet; Presets, Custom-Range-Sheet, lokalisierte Anzeige und Reset auf Gesamtzeitraum nutzen den bestehenden Unterbau statt neuer View-Logik

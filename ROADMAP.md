@@ -4,10 +4,10 @@
 
 ### Repo-Truth-Zusammenfassung
 Die letzte real belegte Apple-/Device-Verifikation bleibt der dokumentierte Apple-Stand vom 2026-03-17 beziehungsweise 2026-03-30; in diesem Audit wurde kein neuer Apple-Host-Lauf vorgetaeuscht.
-Der Audit-Block vom 2026-04-01 ist in dieser Revision eingearbeitet: sichtbare Zeitraumfilter-Verdrahtung, Recent Files, Auto-Restore, Heatmap-Teststabilisierung und Teststatus sind jetzt dokumentarisch an den aktuellen Code angeglichen.
+Der Audit-Block vom 2026-04-01 ist in dieser Revision eingearbeitet: sichtbare Zeitraumfilter-Verdrahtung, Recent Files, Auto-Restore, Days-Filterchips, Favoriten, per-route Auswahl, CSV-Export-Verdrahtung, Heatmap-Teststabilisierung und Teststatus sind jetzt dokumentarisch an den aktuellen Code angeglichen.
 Diese ROADMAP trennt ab hier explizit zwischen `fertig`, `implementiert aber noch nicht voll verifiziert` und `noch nicht umgesetzt`.
 Historische Phasen weiter unten bleiben als Zeitstrahl stehen; wenn spaetere Commits fruehere Zwischenstaende ueberholt haben, gilt der aktuelle Kopfblock als massgeblicher Repo-Truth.
-Der frische Host-Nachweis dieses Audits ist Linux-only: `swift test` lief am 2026-04-01 mit `Executed 343 tests, with 0 failures (0 unexpected)`, `git diff --check` ist sauber, und `xcodebuild` ist auf diesem Host nicht verfuegbar.
+Der frische Host-Nachweis dieses Audits ist Linux-only: `swift test` lief am 2026-04-01 mit `Executed 350 tests, with 0 failures (0 unexpected)`, `git diff --check` ist sauber, und `xcodebuild` ist auf diesem Host nicht verfuegbar.
 Der Live-/Upload-/Insights-/Days-Batch vom 2026-03-30 ist im Code umgesetzt und in dieser ROADMAP als repo-wahrer Produktstand eingearbeitet; fuer diesen Batch liegen auf Linux gezielte Teilnachweise vor, aber kein neuer Apple-UI-Nachweis.
 Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem die Heatmap-Detailsichtbarkeit sowie kleine visuelle Kanten in `Live`, `Insights` und `Days`; auf diesem Linux-Host liegen dazu nur nicht-Apple-Nachweise vor.
 
@@ -30,15 +30,15 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 - Waypoint-Export aus importierten Visits sowie Activity-Start/-End-Koordinaten
 - sichtbare Export-Vorschaukarte direkt auf der Export-Seite
 - lokale Export-Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon
-- **per-route Auswahl** innerhalb eines Tages (`ExportSelectionState.routeSelections`; implizit alle Routen wenn keine explizite Auswahl)
+- **per-route Auswahl** innerhalb eines Tages (`ExportSelectionState.routeSelections`; implizit alle Routen wenn keine explizite Auswahl), sichtbar im Day Detail mit Reset auf implizit alle exportierbaren Routen
 - **globaler Zeitraumfilter** (`HistoryDateRangeFilter`): Presets + Custom + Reset; sichtbar in `Overview`, `Insights` und `Export` verdrahtet
 - **Recent Files** (`RecentFilesStore`): bis zu 10 Eintraege, Stale-Pruefung, Reopen/Remove/Clear im import-first Startzustand
 - **Auto-Restore-Option** (`AppPreferences.autoRestoreLastImport`, Default `false`): sichtbarer Toggle plus opt-in Restore beim App-Start
-- **Tage-Favoriten** (`DayFavoritesStore`): Stern-Marking, Persistenz, `DayListFilterChip.favorites`
-- **Days-Filterchips** (`DayListFilter`): Favorites / Has Visits / Has Routes / Has Distance / Exportable; AND-Logik mit Suche kombinierbar
+- **Tage-Favoriten** (`DayFavoritesStore`): Stern-Marking, Persistenz, sichtbarer Toggle in Day-Liste und Day Detail, `DayListFilterChip.favorites`
+- **Days-Filterchips** (`DayListFilter`): Favorites / Has Visits / Has Routes / Has Distance / Exportable; sichtbar in `Days` und mit Suche kombinierbar
 - **Insights-Drilldown** (`InsightsDrilldown`): `filterDaysToDate`, `filterDaysToDateRange`, `prefillExportForDate`, `prefillExportForDateRange`; `activeDrilldownFilter` in `AppSessionState`
 - **Chart-Share-Payload** (`ChartShareHelper`): UI-freier Payload-Builder; Dateiname-Format; ImageRenderer-Integration auf Apple-Host (nicht auf Linux verifizierbar)
-- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 343 tests, with 0 failures (0 unexpected)`)
+- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export-, Days-/Day-Detail- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore, Days-Filterchips, Route-Export-Aktionen und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 350 tests, with 0 failures (0 unexpected)`)
 
 ### Implementiert, aber noch nicht voll verifiziert
 
@@ -66,10 +66,10 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
   Offen bleiben End-to-End-Device-Verifikation sowie finale Review-/Privacy-Einordnung auf Apple-Seite.
 - **Insights / Days UX**
   Die Insights-Seite ist deutlich ausgebaut und `Days` ist jetzt repo-wahr `neu -> alt` sortiert.
-  Offen bleiben frische Apple-UI-Nachweise fuer die neue Informationsarchitektur, Chart-Lesbarkeit, den jetzt sichtbaren Zeitraumfilter in `Overview`/`Insights`/`Export` und das aktualisierte Day-Navigationsverhalten auf echter Hardware.
+  Offen bleiben frische Apple-UI-Nachweise fuer die neue Informationsarchitektur, Chart-Lesbarkeit, den jetzt sichtbaren Zeitraumfilter in `Overview`/`Insights`/`Export`, die sichtbaren Days-Filterchips/Favoriten/per-route Actions und das aktualisierte Day-Navigationsverhalten auf echter Hardware.
 - **Linux-/Apple-Teststatus**
   Historische Apple-Nachweise vom 2026-03-30 bleiben dokumentiert, gelten aber nicht als frischer Gegenlauf fuer diesen Audit.
-  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 343 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
+  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
   Die 3 bekannten Problemfaelle sind als Test-Drift klassifiziert und behoben:
   `testAcceptedSamplesUploadToConfiguredServer` und `testFailedUploadRetriesWhenAnotherAcceptedSampleArrives` scheiterten an minimumBatchSize=5 (nicht Plattform), Tests auf minimumBatchSize=1 gesetzt;
   `testBackgroundPreferenceActivatesClientWhenAlwaysAuthorized` prueft jetzt korrektes Verhalten (Client-Config beim Recording-Start, nicht bei Preference-Aenderung).
@@ -92,8 +92,9 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 2. dedizierten iPhone-UI-Check fuer den deutlich umgebauten `Live`-Tab, die Upload-Zustaende und die neue `Days`-Default-Sortierung fahren und dokumentieren
 3. Background-Recording auf echtem iPhone verifizieren und im Runbook belegen
 4. Auto-Restore / Recent Files auf echtem iPhone erneut verifizieren und dokumentieren
-5. optionalen Server-Upload end-to-end auf Device pruefen; Apple-Review-/Privacy-Einordnung fuer den Upload-Pfad weiter klaeren
-6. erst danach weitere neue Feature-Arbeit (weiterer Insights-Ausbau, KMZ, `Days`-seitige Zeitraumsauswahl)
+5. `Days` / Day Detail / CSV-Export auf echter Apple-Hardware gegenpruefen und dokumentieren
+6. optionalen Server-Upload end-to-end auf Device pruefen; Apple-Review-/Privacy-Einordnung fuer den Upload-Pfad weiter klaeren
+7. erst danach weitere neue Feature-Arbeit (weiterer Insights-Ausbau, KMZ, `Days`-seitige Zeitraumsauswahl)
 
 Apple-/ASC-/TestFlight-/Release-Themen bleiben geparkt. iPad bleibt nachrangig. Phase 21 bleibt fuer spaetere Folgearbeit reserviert.
 

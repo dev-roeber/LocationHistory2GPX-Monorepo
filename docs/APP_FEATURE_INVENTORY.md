@@ -210,13 +210,13 @@ Present:
 - export summary card with selected source count, route/waypoint count, distance total and filename preview
 - disabled export button when nothing is selected or the active mode has no exportable content
 - explicit disabled-reason messaging and clearer marking of days without exportable route data
+- day-detail route subset selections flow into export summary, distance totals and exported imported-day content
 
 Bewusst deaktiviert, aber vorhanden:
-- export architecture can still grow beyond the active `GPX`/`KML`/`GeoJSON` formats
+- export architecture can still grow beyond the active `GPX`/`KML`/`GeoJSON`/`CSV` formats
 
 Not present:
 - KMZ export in the app UI
-- per-route selection inside a day
 - cloud sync or account-backed sharing
 
 ## 10. Fehlerzustände / Leerzustände / Status-UI
@@ -300,9 +300,9 @@ Present:
 - `effectiveRouteIndices(day:allCount:) -> IndexSet`
 - `hasExplicitRouteSelection`, `explicitRouteSelectionCount`
 - `clearAll()` räumt routeSelections mit auf
-
-Not yet wired in views:
-- Route-Checkboxen in DayDetailView; Clear-Button pro Tag
+- sichtbare Route-Selection im Day Detail fuer exportierbare Routen
+- Reset auf implizit alle exportierbaren Routen pro Tag
+- Export-Summary und Export-Snapshot respektieren explizite Routen-Subsets
 
 ### B2. CSV-Export
 Present:
@@ -310,23 +310,25 @@ Present:
 - `CSVBuilder.build(from:[Day]) -> String`: Header (16 Felder), visit/activity/route/empty-Rows; RFC 4180 Escaping
 - `CSVDocument` (SwiftUI FileDocument) für `.fileExporter`-Integration
 - CSV ist in `AppExportView` ueber den bestehenden fileExporter-Flow aktiv verdrahtet
+- CSV zeigt sichtbaren UI-Hinweis, dass Tabellenzeilen fuer Visits, Activities und Routes exportiert werden
+- Dateiname, Disabled-Reasons und Selection-Summary nutzen denselben sichtbaren Exportzustand wie die anderen Formate
 
 ### B3. Days-Filterchips
 Present:
 - `DayListFilterChip` (favorites/hasVisits/hasRoutes/hasDistance/exportable)
 - `DayListFilter` mit `activeChips: Set<DayListFilterChip>`, `toggle`, `clearAll`, `isActive`
 - `passes(summary:isFavorited:)` mit AND-Logik
-
-Not yet wired in views:
-- Chip-Leiste über DayListView; Empty-State "No days match your filters"
+- sichtbare Chip-Leiste in `Days`
+- Chip-Filter kombinieren sich mit Suche und newest-first Sortierung
+- eigener Filter-Empty-State bei 0 Treffern
 
 ### B4. Favoriten/Pinning
 Present:
 - `DayFavoritesStore` (enum): `add/remove/toggle/contains/clear` via UserDefaults
 - Key: `app.dayFavorites`
-
-Not yet wired in views:
-- Swipe-Action / Context-Menu in DayRow; Stern-Indikator in der Liste
+- Stern-Indikator in der Day-Liste
+- Favoriten-Toggle per Swipe und Kontextmenue in der Liste
+- zusaetzlicher Favoriten-Toggle im Day Detail
 
 ### C1. Insights-Drilldown
 Present:

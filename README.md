@@ -46,6 +46,9 @@ Integriertes Monorepo fuer Core Swift Package und Xcode Wrapper der `LocationHis
 - Auto-Restore der zuletzt importierten Datei beim Start (opt-in, Standard aus)
 - Tage als Favoriten markieren (Stern) und per Filterchip filtern
 - Days-Filterchips kombinierbar: Favorites, Has Visits, Has Routes, Has Distance, Exportable
+- Favoriten direkt in Day-Liste und Day-Detail toggeln; Persistenz bleibt lokal in `UserDefaults`
+- Day-Detail zeigt sichtbare per-route Auswahl inklusive Reset auf implizit alle exportierbaren Routen
+- CSV als echtes Exportformat ueber den bestehenden `fileExporter`-Flow inkl. Dateiname, Disabled-Reasons und Selection-Summary
 - Insights-Drilldown: tappbare Targets in Karten navigieren direkt zur Day-Liste oder füllen den Export vor
 - Chart-Share-Payload für Insights-Karten (ImageRenderer auf Apple-Host, nicht auf Linux verifizierbar)
 - akzeptierte Live-Recording-Punkte optional an einen frei konfigurierbaren HTTP(S)-Endpunkt mit optionalem Bearer-Token senden
@@ -67,7 +70,7 @@ Integriertes Monorepo fuer Core Swift Package und Xcode Wrapper der `LocationHis
 
 ## Bekannte offene Produktpunkte
 
-- `Sources/LocationHistoryConsumerAppSupport/LiveLocationServerUploader.swift` enthaelt aktuell weiter einen hart kodierten Testendpunkt (`defaultTestEndpointURLString`). Das ist ausdruecklich als offener Produktpunkt dokumentiert und noch nicht bereinigt.
+- fuer den optionalen Server-Upload ist aktuell bewusst kein Produkt-Default-Endpunkt konfiguriert (`defaultTestEndpointURLString = ""`); der Nutzer muss einen eigenen HTTPS-Endpunkt hinterlegen
 - Privacy-Manifest-/Upload-Scope fuer den optionalen Server-Upload ist noch nicht final geklaert.
 - Auf diesem Linux-Host ist nur der SwiftPM-/non-UI-Teil frisch verifizierbar; aktueller Apple-/Device-/Review-Endzustand bleibt offen.
 
@@ -183,12 +186,16 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - adaptives Layout: iPhone nutzt `TabView` (`Overview`, `Days`, `Insights`, `Export` und unter iOS 17+ `Live`), regular width nutzt `NavigationSplitView` mit Day-Liste und Detail-Pane
 - no-content-Tage bleiben in `Days` sichtbar, werden aber nicht mehr wie normale Detailziele behandelt
 - `Days` ist standardmaessig `neu -> alt` sortiert; initiale Auswahl und Fallbacks bevorzugen den neuesten inhaltshaltigen Tag
+- `Days` zeigt sichtbare Filterchips fuer Favorites, Has Visits, Has Routes, Has Distance und Exportable; Suche und Chip-Filter bleiben mit newest-first konsistent
 - Day-Liste fuehrt jetzt mit einem kleinen Export-Statusblock; exportmarkierte Tage tragen ein klares `Export`-Badge
+- Day-Zeilen zeigen Stern-Markierung fuer Favoriten; Favoriten koennen per Swipe, Kontextmenue oder Day-Detail-Action umgeschaltet werden
 - Such-Empty-States in `Days` verschweigen vorhandene GPX-Markierungen nicht mehr
+- Filter-Empty-States in `Days` unterscheiden jetzt sauber zwischen Suchtreffern und aktiven Chips ohne Treffer
 - Overview-Dashboard fuehrt mit Import-Status, optionalen Export-Filtern und einem kompakten `Go To`-Block fuer `Days`, `Insights` und `Export`
 - Overview-Dashboard mit klar als `Imported History` gerahmtem Statistik-Grid (Days, Visits, Activities, Paths)
 - Day-Detail mit strukturierten Sections, Cards und Quick-Stats
 - Day-Detail priorisiert importierte Tageshistorie, Kartenkontext und Timeline; lokale Live-Recording-/Track-Werkzeuge bleiben als sekundaerer Block getrennt
+- Day-Detail bietet zusaetzlich sichtbare Day-Actions fuer Favorit, Exportselektion und per-route Auswahl einzelner exportierbarer Routen
 - Insights-Tab zeigt jetzt Top-Level- und Section-Empty-States fuer no-days-, sparse- und no-chart-Faelle statt leerer Flaechen
 - Insights-Charts zeigen chart-spezifische Low-Data-Hinweise, robustere Day-Tap-Navigation und lesbarere Achsen
 - Insights-Distanzmetriken nutzen bevorzugt importierte Routendistanzen und fallen, wenn diese fehlen, kontrolliert auf vorhandene Pfad-/Trace-Geometrie statt auf `0 m` zurueck
@@ -208,9 +215,10 @@ Die Produkt-UI ist die primaere Inhaltsdarstellung dieses Repos:
 - startet mit lokalem JSON-/ZIP-Import als primaerem Einstieg
 - bietet Demo-Daten als sekundaeren Fallback
 - Export-Flow zeigt jetzt Auswahlstatus, Disabled-Gruende und den vorgeschlagenen Dateinamen passend zum aktiven Exportformat vor dem fileExporter-Dialog
-- Export-Flow zeigt jetzt eine sichtbare Vorschaukarte fuer Routen und Waypoints und schaltet `GPX`, `KML` und `GeoJSON` als aktive Dateiformate frei
+- Export-Flow zeigt jetzt eine sichtbare Vorschaukarte fuer Routen und Waypoints und schaltet `GPX`, `KML`, `GeoJSON` und `CSV` als aktive Dateiformate frei
 - Export-Flow bietet jetzt lokale Filter fuer importierte History nach Datumsfenster, maximaler Genauigkeit, erforderlichem Inhalt, Aktivitaetstyp sowie Bounding Box oder Polygon; zusaetzlich wird der aktive app-weite Zeitraum sichtbar angezeigt und vor lokalen Exportfiltern angewendet; gespeicherte Live-Tracks bleiben davon bewusst unberuehrt
 - Export-Flow bietet jetzt die Modi `Tracks`, `Waypoints` und `Both`; Waypoints werden aus importierten Visits sowie Activity-Start/-End-Koordinaten erzeugt
+- CSV nutzt sichtbar denselben Export-Flow, projiziert immer die sichtbaren Tabellenzeilen und zeigt explizite Route-Selektionen in Summary und Distanzsumme korrekt an
 - Import-Persistenz-Code (Security-Scoped Bookmark) ist vorhanden; die App-Shell fuehrt eine sichtbare Recent-Files-Liste, speichert den letzten erfolgreichen Import und kann ihn beim Start optional automatisch wiederherstellen; fehlende oder stale Dateien werden dabei ohne rohe Nutzerfehler uebersprungen
 - Live-Track-Persistenz separat in einem dedizierten Recorded-Track-Store; kein Draft-Resume
 - bleibt standardmaessig lokal/offline-first; optionaler Server-Upload betrifft nur akzeptierte Live-Recording-Punkte und bleibt klar vom Import-/Query-Layer getrennt
@@ -242,7 +250,7 @@ Historisch belegt fuer einen Apple-Host am 2026-03-30:
 - ein manueller Xcode-Start auf dem verbundenen iPhone bleibt fuer diesen Batch ein positiver Teilbefund, ist aber bewusst getrennt von den CLI-Build-/Test-Ergebnissen zu lesen
 
 Frisch auf diesem Linux-Host verifiziert (2026-04-01):
-- `swift test`: Executed 343 tests, with 0 failures (0 unexpected)
+- `swift test`: Executed 350 tests, with 0 failures (0 unexpected)
 - `git diff --check`: sauber
 - `xcodebuild`: auf diesem Host nicht verfuegbar, deshalb kein neuer Apple-CLI-Rerun
 

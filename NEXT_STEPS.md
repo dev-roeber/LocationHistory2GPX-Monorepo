@@ -12,7 +12,7 @@ Bereits drin:
 - der dedizierte `Live`-Tab wurde visuell und funktional deutlich ausgebaut: klarere Map-/Recording-/Upload-/Library-Hierarchie, Status-Chips, Quick Actions und mehr Live-Metriken
 - der optionale Server-Upload zeigt Queue-, Failure- und Last-Success-Zustaende und unterstuetzt Pause/Resume sowie manuellen Queue-Flush
 - die Insights-Seite bietet segmentierte Oberflaechen (`Overview`, `Patterns`, `Breakdowns`) sowie KPI-Karten, Highlight-Karten, `Top Days`, Monatstrends und umschaltbare Distanz-/Route-/Event-Muster
-- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 343 tests, with 0 failures (0 unexpected)`
+- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`
 
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer den neuen `Live`-Tab inklusive Upload-Zustaenden, Quick Actions und groesserem Stat-Set
@@ -43,7 +43,7 @@ Status: **offen**
 
 Bereits drin:
 - historische Apple-CLI-Nachweise fuer 2026-03-30 sind dokumentiert
-- der frische Linux-Mindestnachweis auf diesem Host ist `swift test`: `Executed 343 tests, with 0 failures (0 unexpected)`
+- der frische Linux-Mindestnachweis auf diesem Host ist `swift test`: `Executed 350 tests, with 0 failures (0 unexpected)`
 - Apple-only Heatmap-Renderingstests sind fuer non-Apple-Plattformen korrekt gegated und blockieren den Linux-Lauf nicht
 - die frueheren Test-vs-Code-Drifts (`minimumBatchSize`, Keychain-first, Gedankenstrich-Formatierung) sind repo-wahr bereinigt
 
@@ -79,7 +79,24 @@ Fehlt noch:
 - kontrollierte Device-Verifikation fuer positiven Restore, Datei-fehlt-Fallback, Reopen aus Recent Files und `Clear History`
 - dokumentierter Nachweis fuer den kompletten Startpfad auf echter Apple-Hardware
 
-## 6. Phase 19.56 – Server-Upload / Review / Privacy finalisieren
+## 6. Phase 19.58 – Days / Day Detail / CSV auf Apple verifizieren
+
+Status: **teilweise umgesetzt**
+
+Bereits drin:
+- `Days` zeigt sichtbare Filterchips fuer `Favorites`, `Has Visits`, `Has Routes`, `Has Distance` und `Exportable`
+- Favoriten lassen sich in der Liste per Swipe/Kontextmenue und im Day Detail direkt toggeln; Persistenz bleibt lokal
+- Day Detail zeigt sichtbare per-route Auswahl einzelner exportierbarer Routen inklusive `Reset to All Routes`
+- `CSV` ist als echtes Dateiformat im bestehenden Export-Flow aktiv und respektiert Zeitraum, Day-Selection und explizite Route-Selektionen
+- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 350 tests, with 0 failures (0 unexpected)`
+
+Fehlt noch:
+- frische Apple-UI-Verifikation fuer die Filterchip-Leiste und deren Zusammenspiel mit Suche und newest-first Sortierung
+- frische Apple-UI-Verifikation fuer Favoriten-Toggle in Liste und Day Detail
+- frische Apple-UI-Verifikation fuer per-route Auswahl, Reset auf alle Routen und Export-Summary auf echter Apple-Hardware
+- frische Apple-UI-Verifikation fuer den sichtbaren CSV-Exportpfad inkl. Dateiname, Disabled-Reasons und `fileExporter`
+
+## 7. Phase 19.56 – Server-Upload / Review / Privacy finalisieren
 
 Status: **teilweise umgesetzt**
 
@@ -101,7 +118,7 @@ Fehlt noch:
 - Datenschutzrichtlinien-URL und Support-URL für App Store Connect (extern, Pflichtfelder)
 - Technische Basis ist dokumentiert in `docs/PRIVACY_MANIFEST_SCOPE.md`
 
-## 7. Phase 19.57 – Weiterer Insights-Ausbau + breitere Lokalisierung (teilweise umgesetzt)
+## 8. Phase 19.57 – Weiterer Insights-Ausbau + breitere Lokalisierung (teilweise umgesetzt)
 
 Status: **teilweise umgesetzt**
 
@@ -128,7 +145,7 @@ Bereits drin (2026-04-01 InsightsChartSupport rangeNote-Lokalisierung):
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer Range-Picker, Custom-Datumsbereich-Sheet und Overlap-Karte auf echtem iPhone
 - vollstaendige Lokalisierungsabdeckung aller verbleibenden EN-Strings (Rest-Abdeckung)
-- weitere View-seitige Verdrahtung offener State-Felder ausserhalb dieses Batches: Favoriten-Swipe-Action in `DayRow`, Chart-Share-Button in `InsightsCardView`
+- weitere View-seitige Verdrahtung offener State-Felder ausserhalb dieses Batches: Chart-Share-Button in `InsightsCardView`
 - Chart-Share per ImageRenderer auf Apple-Host verifizieren
 - KMZ-Export
 
