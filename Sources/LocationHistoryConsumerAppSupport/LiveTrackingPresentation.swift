@@ -4,36 +4,32 @@ import LocationHistoryConsumer
 struct LiveTrackingMetricSnapshot: Equatable {
     let totalDistanceM: Double
     let currentSpeedKMH: Double?
-    let averageSpeedKMH: Double?
     let lastSegmentDistanceM: Double?
     let lastSampleDate: Date?
-    let lastUpdateAge: TimeInterval?
+
+    static let empty = LiveTrackingMetricSnapshot(
+        totalDistanceM: 0,
+        currentSpeedKMH: nil,
+        lastSegmentDistanceM: nil,
+        lastSampleDate: nil
+    )
 }
 
 enum LiveTrackingPresentation {
     static func metrics(
         points: [RecordedTrackPoint],
-        currentLocation: LiveLocationSample?,
-        referenceDate: Date,
-        recordingDuration: TimeInterval
+        currentLocation: LiveLocationSample?
     ) -> LiveTrackingMetricSnapshot {
         let totalDistanceM = totalDistance(points: points)
         let currentSpeedKMH = currentSpeed(points: points)
-        let averageSpeedKMH = averageSpeed(
-            distanceM: totalDistanceM,
-            duration: recordingDuration
-        )
         let lastSegmentDistanceM = segmentDistance(points: points.suffix(2))
         let lastSampleDate = latestSampleDate(points: points, currentLocation: currentLocation)
-        let lastUpdateAge = lastSampleDate.map { max(0, referenceDate.timeIntervalSince($0)) }
 
         return LiveTrackingMetricSnapshot(
             totalDistanceM: totalDistanceM,
             currentSpeedKMH: currentSpeedKMH,
-            averageSpeedKMH: averageSpeedKMH,
             lastSegmentDistanceM: lastSegmentDistanceM,
-            lastSampleDate: lastSampleDate,
-            lastUpdateAge: lastUpdateAge
+            lastSampleDate: lastSampleDate
         )
     }
 
@@ -54,11 +50,6 @@ enum LiveTrackingPresentation {
         }
         let duration = latestPoints[1].timestamp.timeIntervalSince(latestPoints[0].timestamp)
         guard duration > 0 else { return nil }
-        return (distanceM / duration) * 3.6
-    }
-
-    private static func averageSpeed(distanceM: Double, duration: TimeInterval) -> Double? {
-        guard duration > 0, distanceM > 0 else { return nil }
         return (distanceM / duration) * 3.6
     }
 

@@ -27,8 +27,9 @@ public final class LiveLocationFeatureModel: ObservableObject {
     private let uploader: LiveLocationServerUploading
     private var recorder: LiveTrackRecorder
     private var serverUploadConfiguration = LiveLocationServerUploadConfiguration()
-    private var pendingUploadPoints: [LiveLocationUploadPoint] = []
+    private var pendingUploadQueue = PendingLiveLocationUploadQueue()
     private var currentRecordingSessionID = UUID()
+    private var uploadTask: Task<Void, Never>?
 
     public init() {
         self.client = makeDefaultLiveLocationClient()
@@ -108,7 +109,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
     }
 
     public var canFlushPendingUploads: Bool {
-        hasValidServerUploadConfiguration && !pendingUploadPoints.isEmpty && !isUploadingToServer
+        hasValidServerUploadConfiguration && !pendingUploadQueue.isEmpty && !isUploadingToServer
     }
 
     public var canPauseUploads: Bool {
@@ -151,14 +152,14 @@ public final class LiveLocationFeatureModel: ObservableObject {
             return "Server upload is enabled, but the URL is invalid."
         }
         if isUploadPaused {
-            return pendingUploadPoints.isEmpty
+            return pendingUploadQueue.isEmpty
                 ? "Uploads are paused until you resume them."
                 : "Uploads are paused. Resume or flush manually to send queued points."
         }
         if consecutiveUploadFailures > 0 {
             return "Retry runs on the next accepted point, or you can flush the queue manually."
         }
-        if pendingUploadPoints.isEmpty {
+        if pendingUploadQueue.isEmpty {
             return hasBearerTokenConfigured
                 ? "Server upload is ready."
                 : "Server upload is ready. No bearer token is configured."
@@ -266,23 +267,28 @@ public final class LiveLocationFeatureModel: ObservableObject {
     }
 
     public func setServerUploadConfiguration(_ configuration: LiveLocationServerUploadConfiguration) {
+        let previousConfiguration = serverUploadConfiguration
         serverUploadConfiguration = configuration
 
+        if previousConfiguration != configuration {
+            cancelInFlightUpload(reason: nil)
+        }
+
         if !configuration.isEnabled {
-            pendingUploadPoints = []
+            pendingUploadQueue.removeAll()
             pendingUploadPointCount = 0
-            isUploadingToServer = false
             isUploadPaused = false
             serverUploadStatusMessage = nil
             return
         }
 
         guard configuration.endpointURL != nil else {
+            isUploadingToServer = false
             serverUploadStatusMessage = "Server upload is enabled, but the URL is invalid."
             return
         }
 
-        if pendingUploadPoints.isEmpty {
+        if pendingUploadQueue.isEmpty {
             serverUploadStatusMessage = "Server upload ready for \(configuration.endpointDisplayName)."
         }
         schedulePendingUploadIfNeeded()
@@ -296,10 +302,11 @@ public final class LiveLocationFeatureModel: ObservableObject {
             return
         }
 
-        if pendingUploadPoints.isEmpty {
+        if pendingUploadQueue.isEmpty {
             serverUploadStatusMessage = "Server upload ready for \(serverUploadConfiguration.endpointDisplayName)."
         } else {
-            serverUploadStatusMessage = "Upload resumed with \(pendingUploadPoints.count) queued point\(pendingUploadPoints.count == 1 ? "" : "s")."
+            let queuedPointCount = pendingUploadQueue.count
+            serverUploadStatusMessage = "Upload resumed with \(queuedPointCount) queued point\(queuedPointCount == 1 ? "" : "s")."
             schedulePendingUploadIfNeeded()
         }
     }
@@ -310,7 +317,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
             serverUploadStatusMessage = "Server upload is enabled, but the URL is invalid."
             return
         }
-        guard !pendingUploadPoints.isEmpty else {
+        guard !pendingUploadQueue.isEmpty else {
             serverUploadStatusMessage = "No queued points to upload."
             return
         }
@@ -322,7 +329,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
     private func startRecordingFlow() {
         persistenceErrorMessage = nil
         currentRecordingSessionID = UUID()
-        pendingUploadPoints = []
+        pendingUploadQueue.removeAll()
         pendingUploadPointCount = 0
         if serverUploadConfiguration.isEnabled, serverUploadConfiguration.endpointURL != nil {
             serverUploadStatusMessage = "Server upload ready for \(serverUploadConfiguration.endpointDisplayName)."
@@ -359,7 +366,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         client?.stopUpdatingLocation()
         currentLocation = nil
         schedulePendingUploadIfNeeded()
-        pendingUploadPointCount = pendingUploadPoints.count
+        pendingUploadPointCount = pendingUploadQueue.count
 
         let finishedTrack = recorder.stop()
         liveTrackPoints = []
@@ -452,7 +459,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
             return
         }
 
-        pendingUploadPoints.append(contentsOf: points.map {
+        pendingUploadQueue.enqueue(contentsOf: points.map {
             LiveLocationUploadPoint(
                 latitude: $0.latitude,
                 longitude: $0.longitude,
@@ -460,13 +467,8 @@ public final class LiveLocationFeatureModel: ObservableObject {
                 horizontalAccuracyM: $0.horizontalAccuracyM
             )
         })
-
-        if pendingUploadPoints.count > uploadQueueLimit {
-            let overflow = pendingUploadPoints.count - uploadQueueLimit
-            pendingUploadPoints.removeFirst(overflow)
-        }
-
-        pendingUploadPointCount = pendingUploadPoints.count
+        pendingUploadQueue.trimToLast(uploadQueueLimit)
+        pendingUploadPointCount = pendingUploadQueue.count
         schedulePendingUploadIfNeeded()
     }
 
@@ -474,7 +476,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         force: Bool = false,
         endpointOverride: URL? = nil
     ) {
-        guard !isUploadingToServer else {
+        guard !isUploadingToServer, uploadTask == nil else {
             return
         }
         guard serverUploadConfiguration.isEnabled else {
@@ -487,15 +489,15 @@ public final class LiveLocationFeatureModel: ObservableObject {
         guard force || !isUploadPaused else {
             return
         }
-        guard !pendingUploadPoints.isEmpty else {
+        guard !pendingUploadQueue.isEmpty else {
             return
         }
-        guard force || pendingUploadPoints.count >= serverUploadConfiguration.minimumBatchSize || !isRecording else {
+        guard force || pendingUploadQueue.count >= serverUploadConfiguration.minimumBatchSize || !isRecording else {
             return
         }
 
         isUploadingToServer = true
-        let points = Array(pendingUploadPoints)
+        let points = pendingUploadQueue.snapshot()
         let request = LiveLocationUploadRequest(
             source: "LocationHistory2GPX-iOS",
             sessionID: currentRecordingSessionID,
@@ -507,7 +509,7 @@ public final class LiveLocationFeatureModel: ObservableObject {
         let bearerToken = serverUploadConfiguration.trimmedBearerToken
         serverUploadStatusMessage = "Uploading \(points.count) point\(points.count == 1 ? "" : "s") to \(endpointDisplayName)."
 
-        Task { @MainActor [weak self] in
+        uploadTask = Task { @MainActor [weak self] in
             guard let self else {
                 return
             }
@@ -518,7 +520,10 @@ public final class LiveLocationFeatureModel: ObservableObject {
                     to: endpoint,
                     bearerToken: bearerToken
                 )
+                try Task.checkCancellation()
                 self.handleUploadSuccess(sentPointCount: points.count, endpointDisplayName: endpointDisplayName)
+            } catch is CancellationError {
+                self.handleUploadCancellation()
             } catch {
                 self.handleUploadFailure(error)
             }
@@ -526,33 +531,121 @@ public final class LiveLocationFeatureModel: ObservableObject {
     }
 
     private func handleUploadSuccess(sentPointCount: Int, endpointDisplayName: String) {
-        if sentPointCount <= pendingUploadPoints.count {
-            pendingUploadPoints.removeFirst(sentPointCount)
-        } else {
-            pendingUploadPoints.removeAll()
-        }
-        pendingUploadPointCount = pendingUploadPoints.count
-
+        uploadTask = nil
+        pendingUploadQueue.dropFirst(sentPointCount)
+        pendingUploadPointCount = pendingUploadQueue.count
         isUploadingToServer = false
         lastSuccessfulUploadAt = Date()
         lastSuccessfulUploadPointCount = sentPointCount
         consecutiveUploadFailures = 0
         serverUploadStatusMessage = "Last upload sent \(sentPointCount) point\(sentPointCount == 1 ? "" : "s") to \(endpointDisplayName)."
 
-        if !pendingUploadPoints.isEmpty {
+        if !pendingUploadQueue.isEmpty {
             schedulePendingUploadIfNeeded()
         }
     }
 
     private func handleUploadFailure(_ error: Error) {
+        uploadTask = nil
         isUploadingToServer = false
         lastFailedUploadAt = Date()
         consecutiveUploadFailures += 1
         serverUploadStatusMessage = "Server upload failed: \(error.localizedDescription)"
     }
 
+    private func handleUploadCancellation() {
+        uploadTask = nil
+        isUploadingToServer = false
+        if serverUploadConfiguration.isEnabled, serverUploadConfiguration.endpointURL != nil {
+            if pendingUploadQueue.isEmpty {
+                serverUploadStatusMessage = "Server upload ready for \(serverUploadConfiguration.endpointDisplayName)."
+            } else if isUploadPaused {
+                serverUploadStatusMessage = "Server upload paused."
+            } else {
+                serverUploadStatusMessage = "Upload cancelled. Queued points stay ready for retry."
+            }
+        }
+    }
+
+    private func cancelInFlightUpload(reason: String?) {
+        uploadTask?.cancel()
+        uploadTask = nil
+        isUploadingToServer = false
+        if let reason {
+            serverUploadStatusMessage = reason
+        }
+    }
+
     private var activeCaptureMode: RecordedTrackCaptureMode {
         isBackgroundTrackingActive ? .backgroundAlways : .foregroundWhileInUse
+    }
+}
+
+private struct PendingLiveLocationUploadQueue {
+    private var storage: [LiveLocationUploadPoint] = []
+    private var headIndex = 0
+
+    var count: Int {
+        max(0, storage.count - headIndex)
+    }
+
+    var isEmpty: Bool {
+        count == 0
+    }
+
+    mutating func enqueue(contentsOf points: [LiveLocationUploadPoint]) {
+        guard !points.isEmpty else {
+            return
+        }
+        storage.append(contentsOf: points)
+    }
+
+    mutating func dropFirst(_ count: Int) {
+        guard count > 0, !isEmpty else {
+            return
+        }
+
+        if count >= self.count {
+            removeAll()
+            return
+        }
+
+        headIndex += count
+        compactIfNeeded()
+    }
+
+    mutating func trimToLast(_ limit: Int) {
+        guard limit >= 0 else {
+            return
+        }
+
+        let overflow = count - limit
+        guard overflow > 0 else {
+            return
+        }
+
+        dropFirst(overflow)
+    }
+
+    func snapshot() -> [LiveLocationUploadPoint] {
+        guard headIndex < storage.count else {
+            return []
+        }
+        return Array(storage[headIndex...])
+    }
+
+    mutating func removeAll() {
+        storage.removeAll(keepingCapacity: true)
+        headIndex = 0
+    }
+
+    private mutating func compactIfNeeded() {
+        guard headIndex > 1024, headIndex * 2 >= storage.count else {
+            return
+        }
+
+        storage.removeFirst(headIndex)
+        headIndex = 0
     }
 }
 

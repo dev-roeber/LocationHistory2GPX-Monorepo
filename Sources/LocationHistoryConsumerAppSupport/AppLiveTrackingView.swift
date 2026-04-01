@@ -5,6 +5,12 @@ import LocationHistoryConsumer
 
 @available(iOS 17.0, macOS 14.0, *)
 public struct AppLiveTrackingView: View {
+    private struct LiveTrackRenderSignature: Equatable {
+        let count: Int
+        let firstTimestamp: Date?
+        let lastTimestamp: Date?
+    }
+
     @EnvironmentObject private var preferences: AppPreferences
     @ObservedObject private var liveLocation: LiveLocationFeatureModel
     @State private var mapPosition: MapCameraPosition = .automatic
@@ -13,6 +19,8 @@ public struct AppLiveTrackingView: View {
     @State private var dashboardTimer: Timer?
     @State private var recordingStartDate: Date?
     @State private var now = Date()
+    @State private var metricSnapshot = LiveTrackingMetricSnapshot.empty
+    @State private var polylineCoordinates: [CLLocationCoordinate2D] = []
 
     private let onOpenSavedTracksLibrary: (() -> Void)?
 
@@ -26,6 +34,14 @@ public struct AppLiveTrackingView: View {
 
     private func t(_ english: String) -> String {
         preferences.localized(english)
+    }
+
+    private var liveTrackSignature: LiveTrackRenderSignature {
+        LiveTrackRenderSignature(
+            count: liveLocation.liveTrackPoints.count,
+            firstTimestamp: liveLocation.liveTrackPoints.first?.timestamp,
+            lastTimestamp: liveLocation.liveTrackPoints.last?.timestamp
+        )
     }
 
     public var body: some View {
@@ -45,6 +61,7 @@ public struct AppLiveTrackingView: View {
         .navigationTitle(t("Live Tracking"))
         .task {
             liveLocation.refreshAuthorization()
+            refreshTrackPresentationState()
             syncTimerState()
         }
         .onDisappear {
@@ -52,21 +69,16 @@ public struct AppLiveTrackingView: View {
             dashboardTimer = nil
         }
         .onChange(of: liveLocation.currentLocation?.timestamp) { _, _ in
+            refreshMetricSnapshot()
             guard !hasSeededMap else { return }
             centerOnCurrentLocation()
+        }
+        .onChange(of: liveTrackSignature) { _, _ in
+            refreshTrackPresentationState()
         }
         .onChange(of: liveLocation.isRecording) { _, _ in
             syncTimerState()
         }
-    }
-
-    private var metricSnapshot: LiveTrackingMetricSnapshot {
-        LiveTrackingPresentation.metrics(
-            points: liveLocation.liveTrackPoints,
-            currentLocation: liveLocation.currentLocation,
-            referenceDate: now,
-            recordingDuration: recordingDuration
-        )
     }
 
     private var shouldShowUploadSection: Bool {
@@ -147,9 +159,7 @@ public struct AppLiveTrackingView: View {
                             }
                         }
                         if liveLocation.liveTrackShouldRender {
-                            MapPolyline(coordinates: liveLocation.liveTrackPoints.map {
-                                CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
-                            })
+                            MapPolyline(coordinates: polylineCoordinates)
                             .stroke(.red, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
                         }
                     }
@@ -589,7 +599,8 @@ public struct AppLiveTrackingView: View {
     }
 
     private var averageSpeedText: String {
-        guard let speed = metricSnapshot.averageSpeedKMH else { return "–" }
+        guard recordingDuration > 0, metricSnapshot.totalDistanceM > 0 else { return "–" }
+        let speed = (metricSnapshot.totalDistanceM / recordingDuration) * 3.6
         return formatSpeed(speed, unit: preferences.distanceUnit)
     }
 
@@ -599,7 +610,8 @@ public struct AppLiveTrackingView: View {
     }
 
     private var updateAgeText: String {
-        guard let age = metricSnapshot.lastUpdateAge else { return "–" }
+        guard let lastSampleDate = metricSnapshot.lastSampleDate else { return "–" }
+        let age = max(0, now.timeIntervalSince(lastSampleDate))
         if age < 60 {
             return preferences.appLanguage.isGerman ? String(format: "%.0f Sek.", age) : String(format: "%.0f s", age)
         }
@@ -640,9 +652,29 @@ public struct AppLiveTrackingView: View {
         )
     }
 
+    private func refreshMetricSnapshot() {
+        metricSnapshot = LiveTrackingPresentation.metrics(
+            points: liveLocation.liveTrackPoints,
+            currentLocation: liveLocation.currentLocation
+        )
+    }
+
+    private func refreshTrackPresentationState() {
+        polylineCoordinates = liveLocation.liveTrackPoints.map {
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        }
+        if liveLocation.isRecording {
+            recordingStartDate = liveLocation.liveTrackPoints.first?.timestamp ?? recordingStartDate ?? Date()
+        } else if liveLocation.liveTrackPoints.isEmpty {
+            recordingStartDate = nil
+        }
+        refreshMetricSnapshot()
+    }
+
     private func syncTimerState() {
         dashboardTimer?.invalidate()
         now = Date()
+        refreshMetricSnapshot()
 
         if liveLocation.isRecording {
             if recordingStartDate == nil {

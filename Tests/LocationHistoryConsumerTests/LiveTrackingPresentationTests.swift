@@ -2,7 +2,7 @@ import XCTest
 @testable import LocationHistoryConsumerAppSupport
 
 final class LiveTrackingPresentationTests: XCTestCase {
-    func testMetricsCalculateDistanceSpeedAndUpdateAge() {
+    func testMetricsCalculateDistanceSpeedAndLatestSampleDate() {
         let start = Date(timeIntervalSince1970: 1_710_000_000)
         let points = [
             RecordedTrackPoint(latitude: 52.52, longitude: 13.40, timestamp: start, horizontalAccuracyM: 6),
@@ -17,33 +17,24 @@ final class LiveTrackingPresentationTests: XCTestCase {
 
         let snapshot = LiveTrackingPresentation.metrics(
             points: points,
-            currentLocation: currentLocation,
-            referenceDate: start.addingTimeInterval(120),
-            recordingDuration: 120
+            currentLocation: currentLocation
         )
 
         XCTAssertGreaterThan(snapshot.totalDistanceM, 600)
         XCTAssertNotNil(snapshot.currentSpeedKMH)
-        XCTAssertNotNil(snapshot.averageSpeedKMH)
         XCTAssertNotNil(snapshot.lastSegmentDistanceM)
         XCTAssertEqual(snapshot.lastSampleDate, currentLocation.timestamp)
-        XCTAssertEqual(snapshot.lastUpdateAge ?? -1, 30, accuracy: 0.001)
     }
 
     func testMetricsStayGracefulWithoutAcceptedPoints() {
-        let now = Date(timeIntervalSince1970: 1_710_000_000)
         let snapshot = LiveTrackingPresentation.metrics(
             points: [],
-            currentLocation: nil,
-            referenceDate: now,
-            recordingDuration: 0
+            currentLocation: nil
         )
 
         XCTAssertEqual(snapshot.totalDistanceM, 0)
         XCTAssertNil(snapshot.currentSpeedKMH)
-        XCTAssertNil(snapshot.averageSpeedKMH)
         XCTAssertNil(snapshot.lastSegmentDistanceM)
         XCTAssertNil(snapshot.lastSampleDate)
-        XCTAssertNil(snapshot.lastUpdateAge)
     }
 }

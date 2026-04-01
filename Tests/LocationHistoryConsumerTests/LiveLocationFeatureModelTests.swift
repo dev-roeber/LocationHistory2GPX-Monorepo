@@ -406,6 +406,55 @@ final class LiveLocationFeatureModelTests: XCTestCase {
         XCTAssertEqual(uploader.requests.first?.request.points.count, 2)
     }
 
+    func testDisablingServerUploadCancelsInFlightUploadAndClearsQueue() async {
+        let client = await MainActor.run { TestLiveLocationClient(authorization: .authorizedWhenInUse) }
+        let store = InMemoryRecordedTrackStore()
+        let uploader = BlockingLiveLocationServerUploader()
+        let started = expectation(description: "upload started")
+        let cancelled = expectation(description: "upload cancelled")
+        uploader.onUploadStarted = { started.fulfill() }
+        uploader.onUploadCancelled = { cancelled.fulfill() }
+
+        let model = await MainActor.run { () -> LiveLocationFeatureModel in
+            let model = LiveLocationFeatureModel(client: client, store: store, uploader: uploader)
+            model.setServerUploadConfiguration(
+                LiveLocationServerUploadConfiguration(
+                    isEnabled: true,
+                    endpointURLString: "https://example.invalid/live",
+                    bearerToken: "",
+                    minimumBatchSize: 1
+                )
+            )
+            model.setRecordingEnabled(true)
+            client.emit(samples: [
+                sample(offsetSeconds: 0, latitude: 52.52, longitude: 13.40, accuracy: 6),
+            ])
+            return model
+        }
+
+        XCTAssertEqual(XCTWaiter.wait(for: [started], timeout: 1.0), .completed)
+
+        await MainActor.run {
+            model.setServerUploadConfiguration(
+                LiveLocationServerUploadConfiguration(
+                    isEnabled: false,
+                    endpointURLString: "",
+                    bearerToken: "",
+                    minimumBatchSize: 1
+                )
+            )
+        }
+
+        XCTAssertEqual(XCTWaiter.wait(for: [cancelled], timeout: 1.0), .completed)
+
+        await MainActor.run {
+            XCTAssertFalse(model.isUploadingToServer)
+            XCTAssertEqual(model.pendingUploadPointCount, 0)
+            XCTAssertNil(model.serverUploadStatusMessage)
+        }
+        XCTAssertTrue(uploader.wasCancelled)
+    }
+
     private func sample(offsetSeconds: TimeInterval, latitude: Double, longitude: Double, accuracy: Double) -> LiveLocationSample {
         LiveLocationSample(
             latitude: latitude,
@@ -525,6 +574,28 @@ private final class TestLiveLocationServerUploader: LiveLocationServerUploading 
         onUpload?()
         if let error {
             throw error
+        }
+    }
+}
+
+private final class BlockingLiveLocationServerUploader: LiveLocationServerUploading {
+    private(set) var wasCancelled = false
+    var onUploadStarted: (() -> Void)?
+    var onUploadCancelled: (() -> Void)?
+
+    func upload(
+        request: LiveLocationUploadRequest,
+        to endpoint: URL,
+        bearerToken: String?
+    ) async throws {
+        onUploadStarted?()
+
+        do {
+            try await Task.sleep(nanoseconds: 5_000_000_000)
+        } catch is CancellationError {
+            wasCancelled = true
+            onUploadCancelled?()
+            throw CancellationError()
         }
     }
 }

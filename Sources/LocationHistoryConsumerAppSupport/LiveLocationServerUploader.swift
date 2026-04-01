@@ -109,29 +109,12 @@ public final class HTTPSLiveLocationServerUploader: LiveLocationServerUploading 
         }
         urlRequest.httpBody = try encoder.encode(request)
 
-        let (_, response) = try await data(for: urlRequest)
+        let (_, response) = try await session.data(for: urlRequest)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw LiveLocationServerUploadError.invalidResponse
         }
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw LiveLocationServerUploadError.unsuccessfulStatusCode(httpResponse.statusCode)
-        }
-    }
-
-    private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        try await withCheckedThrowingContinuation { continuation in
-            let task = session.dataTask(with: request) { data, response, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                guard let data, let response else {
-                    continuation.resume(throwing: LiveLocationServerUploadError.invalidResponse)
-                    return
-                }
-                continuation.resume(returning: (data, response))
-            }
-            task.resume()
         }
     }
 }
