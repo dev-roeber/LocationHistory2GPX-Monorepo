@@ -84,17 +84,21 @@ Status: **teilweise umgesetzt**
 
 Bereits drin:
 - HTTPS-Endpunktvalidierung
-- optionaler Bearer-Token
+- optionaler Bearer-Token (im Keychain gespeichert)
 - Retry-on-next-sample
 - Upload-Batching
 - Pause/Resume, manueller Flush sowie Queue-/Failure-/Last-Success-Status
 - repo-wahre Review-/Runbook-Wording-Basis ohne finale Apple-Freigabeclaims
-- hart kodierte Test-Server-IP entfernt: `defaultTestEndpointURLString` ist jetzt `""`, kein sslip.io-Default mehr
+- hart kodierter Test-Server-Endpunkt entfernt: `defaultTestEndpointURLString = ""`
+- PrivacyInfo.xcprivacy vorhanden unter `wrapper/LH2GPXWrapper/PrivacyInfo.xcprivacy`: `NSPrivacyTracking: false`, UserDefaults CA92.1 deklariert
+- `NSPrivacyCollectedDataTypes` in PrivacyInfo.xcprivacy ist derzeit leer
 
 Fehlt noch:
 - End-to-End-Device-Verifikation mit echtem HTTPS-Endpunkt
-- Apple-Review-/Privacy-Einordnung fuer den optionalen Upload-Pfad ueber die jetzt korrigierten lokalen Texte hinaus
-- Entscheidung, ob Privacy-Dokumentation ueber den aktuellen Manifest-/Runbook-Stand hinaus erweitert werden muss
+- Apple-seitige Scope-/Review-Entscheidung: muss `NSPrivacyCollectedDataTypes` für den optionalen Standort-Upload (Lat/Lon/Timestamp/Accuracy) in PrivacyInfo.xcprivacy ergänzt werden? Benötigt Apple-Hardware und ggf. Store-Review-Feedback
+- Prüfen ob ZIPFoundation-Abhängigkeit file-timestamp-Zugriffe deklarieren muss (`NSPrivacyAccessedAPICategoryFileTimestamp` in PrivacyInfo.xcprivacy) — auf Apple-Host mit `xcodebuild` prüfen
+- Datenschutzrichtlinien-URL und Support-URL für App Store Connect (extern, Pflichtfelder)
+- Technische Basis ist dokumentiert in `docs/PRIVACY_MANIFEST_SCOPE.md`
 
 ## 7. Phase 19.57 – Weiterer Insights-Ausbau + breitere Lokalisierung (teilweise umgesetzt)
 

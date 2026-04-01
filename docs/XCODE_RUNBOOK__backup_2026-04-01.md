@@ -2,9 +2,7 @@
 
 ## Zweck
 
-Dieses Runbook beschreibt den kleinsten reproduzierbaren Xcode-Laufweg fuer das Swift-Package im Monorepo `LocationHistory2GPX-Monorepo`.
-
-**Wichtig:** Dieses Runbook bezieht sich auf das Monorepo (`LocationHistory2GPX-Monorepo`), nicht auf das historische Split-Repo `LocationHistory2GPX-iOS`. Der Monorepo-Root enthält `Package.swift`; der Xcode-Wrapper liegt unter `wrapper/LH2GPXWrapper.xcodeproj`.
+Dieses Runbook beschreibt den kleinsten reproduzierbaren Xcode-Laufweg fuer das Swift-Package `LocationHistory2GPX-iOS`.
 Es fokussiert bewusst nur den bestehenden Consumer-Scope:
 
 - `LocationHistoryConsumer` bleibt der app_export-Consumer-Core
@@ -41,7 +39,7 @@ oder den aktiven Developer Directory lokal auf Xcode umstellen.
 Der vorgesehene Einstieg bleibt das Swift Package, nicht ein separates `.xcodeproj`.
 
 ```bash
-cd ~/repos/LocationHistory2GPX-Monorepo
+cd /pfad/zu/LocationHistory2GPX-iOS
 open Package.swift
 ```
 
@@ -185,7 +183,7 @@ Das ersetzt die fruehere ad-hoc-Methode, das gebaute Binary manuell in eine temp
 Die Xcode-IDE bleibt der bevorzugte manuelle Weg. Fuer reproduzierbare CLI-Pruefung koennen dieselben Schemes ueber das echte Xcode gebaut werden:
 
 ```bash
-cd ~/repos/LocationHistory2GPX-Monorepo
+cd /pfad/zu/LocationHistory2GPX-iOS
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -list
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme LocationHistoryConsumerApp -destination 'platform=macOS' build
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test

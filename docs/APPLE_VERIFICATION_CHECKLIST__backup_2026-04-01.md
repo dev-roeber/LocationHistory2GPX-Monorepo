@@ -9,50 +9,6 @@ Diese Checkliste trennt klar zwischen:
 
 Sie gilt fuer die produktnahe App-Shell `LocationHistoryConsumerApp`.
 
-## Statusstand 2026-04-01
-
-### Repo-Verifikation (Linux-only, ohne Apple-Hardware)
-
-Dieser Audit-Block basiert ausschließlich auf Quellcode- und Dokumentationsanalyse auf dem Linux-Host. `xcodebuild` ist hier nicht verfügbar.
-
-#### ✅ repo-verifiziert (Stand 2026-04-01)
-
-- Info.plist im Wrapper enthält `NSLocationWhenInUseUsageDescription` mit App-Store-tauglichem Text
-- Info.plist im Wrapper enthält `NSLocationAlwaysAndWhenInUseUsageDescription` mit App-Store-tauglichem Text
-- `UIBackgroundModes=location` ist in Info.plist deklariert
-- PrivacyInfo.xcprivacy ist unter `wrapper/LH2GPXWrapper/PrivacyInfo.xcprivacy` vorhanden
-- PrivacyInfo.xcprivacy erklärt `NSPrivacyTracking: false` und leere `NSPrivacyTrackingDomains`
-- PrivacyInfo.xcprivacy erklärt `NSPrivacyAccessedAPITypes: [UserDefaults CA92.1]`
-- Server-Upload ist standardmäßig deaktiviert (`isEnabled: false` in `LiveLocationServerUploadConfiguration`)
-- Server-Upload erfordert explizite Nutzerkonfiguration: URL muss eingetragen werden
-- HTTPS wird für nicht-localhost-Endpunkte im Code erzwungen (`endpointURL`-Getter)
-- Bearer-Token wird im Keychain gespeichert, nicht in UserDefaults
-- `defaultTestEndpointURLString = ""` — kein hart kodierter Testendpunkt im Code
-- Nur akzeptierte Live-Recording-Punkte (Lat/Lon/Timestamp/Accuracy) werden übertragen
-- Keine Analytics, kein Ad-Tracking, kein Cloud-Sync für importierte History
-- `swift test`: 228 Tests, 2 Skips, 0 Failures (Linux-Host, 2026-03-31)
-
-#### ⚠️ benötigt Apple-Hardware/Xcode
-
-- Frischer `xcodebuild archive` und `xcodebuild test` für den aktuellen konsolidierten Repo-Stand
-- Verifikation, ob `NSPrivacyCollectedDataTypes` in PrivacyInfo.xcprivacy für den optionalen Server-Upload ergänzt werden muss (Apple Review-Entscheidung)
-- Verifikation ob ZIPFoundation-Abhängigkeit eigene Privacy-Manifest-Anforderungen mitbringt (file-timestamp-Zugriffe)
-- Live-Location-Permission-Flow auf echtem Gerät oder Simulator (WhenInUse → AlwaysAllow)
-- Background-Recording-Verifikation (Permission-Upgrade, Aufnahme im Hintergrund, Stop/Persistenz)
-- Heatmap-Sheet öffnen und visuell/performanceseitig verifizieren
-- Neuer `Live`-Tab mit Status-Chips, Quick Actions und Upload-Zuständen funktional durchbedienen
-- Neue `Insights`-Segmente auf echtem Gerät auf Lesbarkeit prüfen
-- Wrapper-Auto-Restore kontrolliert verifizieren (Positiv-, Datei-fehlt-, Clear-Pfad)
-- Upload-End-to-End mit echtem HTTPS-Endpunkt auf Gerät prüfen
-
-#### ❌ offen (Apple-Review / Store-Policy)
-
-- Apple-seitige Scope-/Review-Einordnung für den optionalen Server-Upload: Apple entscheidet, ob das Datentypen-Deklaration in `NSPrivacyCollectedDataTypes` erfordert
-- Datenschutzrichtlinien-URL für App Store Connect (Pflichtfeld, noch nicht eingetragen)
-- Support-URL für App Store Connect (noch nicht eingetragen)
-- TestFlight-Upload und Beta-Verifikation (erfordert App Store Connect-Zugang)
-- Finaler App Store Review (kann nicht lokal simuliert werden)
-
 ## Statusstand 2026-03-31
 
 ### Wichtige Einschraenkung
