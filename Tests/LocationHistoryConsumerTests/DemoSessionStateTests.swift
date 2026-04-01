@@ -78,6 +78,22 @@ final class AppSessionStateTests: XCTestCase {
         XCTAssertNil(excludedDetail)
     }
 
+    func testSessionContentProvidesCachedMapDataForVisibleDayVariants() throws {
+        let content = try loadDemoContent(
+            fixtureName: "golden_app_export_sample_small.json",
+            source: .importedFile(filename: "imported_app_export.json")
+        )
+        let filter = AppExportQueryFilter(fromDate: "2024-05-02", toDate: "2024-05-02")
+
+        let visibleMapData = try XCTUnwrap(content.mapData(for: "2024-05-02", applying: filter))
+        let hiddenMapData = content.mapData(for: "2024-05-01", applying: filter)
+
+        XCTAssertTrue(visibleMapData.hasMapContent)
+        XCTAssertFalse(visibleMapData.pathOverlays.isEmpty)
+        XCTAssertNotNil(visibleMapData.fittedRegion)
+        XCTAssertNil(hiddenMapData)
+    }
+
     func testSelectDayForDisplayClearsEmptyDaySelection() throws {
         var state = AppSessionState()
         state.show(content: makeContent(exportWith(days: """

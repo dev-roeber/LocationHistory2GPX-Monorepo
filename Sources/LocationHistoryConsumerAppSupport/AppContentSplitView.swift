@@ -221,6 +221,7 @@ public struct AppContentSplitView: View {
                         ScrollView {
                             AppDayDetailView(
                                 detail: session.content?.detail(for: date),
+                                mapData: session.content?.mapData(for: date),
                                 hasDays: true,
                                 exportSelection: $session.exportSelection,
                                 isFavorited: favoritedDayIDs.contains(date),
@@ -876,6 +877,7 @@ public struct AppContentSplitView: View {
 
                     AppDayDetailView(
                         detail: detail,
+                        mapData: session.content?.mapData(for: detail.date),
                         hasDays: true,
                         onBackToOverview: { session.selectDay(nil) },
                         exportSelection: $session.exportSelection,

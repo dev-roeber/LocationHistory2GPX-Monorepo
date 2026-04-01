@@ -71,6 +71,7 @@ public final class AppSessionContent {
     private var filteredDaySummariesCache: [ProjectionCacheKey: [DaySummary]] = [:]
     private var filteredInsightsCache: [ProjectionCacheKey: ExportInsights] = [:]
     private var dayDetailCache: [DayDetailCacheKey: DayDetailViewState] = [:]
+    private var dayMapDataCache: [DayDetailCacheKey: DayMapData] = [:]
 
     public init(export: AppExport, source: AppContentSource) {
         self.export = export
@@ -145,6 +146,25 @@ public final class AppSessionContent {
 
         dayDetailCache[key] = detail
         return detail
+    }
+
+    public func mapData(for date: String?, applying filter: AppExportQueryFilter? = nil) -> DayMapData? {
+        guard let date else {
+            return nil
+        }
+
+        let key = DayDetailCacheKey(date: date, filter: filter)
+        if let cached = dayMapDataCache[key] {
+            return cached
+        }
+
+        guard let detail = detail(for: date, applying: filter) else {
+            return nil
+        }
+
+        let mapData = DayMapDataExtractor.mapData(from: detail)
+        dayMapDataCache[key] = mapData
+        return mapData
     }
 }
 

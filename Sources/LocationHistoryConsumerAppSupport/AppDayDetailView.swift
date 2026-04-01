@@ -10,6 +10,7 @@ import MapKit
 public struct AppDayDetailView: View {
     @EnvironmentObject private var preferences: AppPreferences
     let detail: DayDetailViewState?
+    let mapData: DayMapData?
     let hasDays: Bool
     let onBackToOverview: (() -> Void)?
     @Binding private var exportSelection: ExportSelectionState
@@ -20,6 +21,7 @@ public struct AppDayDetailView: View {
 
     public init(
         detail: DayDetailViewState?,
+        mapData: DayMapData? = nil,
         hasDays: Bool,
         onBackToOverview: (() -> Void)? = nil,
         exportSelection: Binding<ExportSelectionState> = .constant(ExportSelectionState()),
@@ -29,6 +31,7 @@ public struct AppDayDetailView: View {
         onOpenSavedTracks: (() -> Void)? = nil
     ) {
         self.detail = detail
+        self.mapData = mapData
         self.hasDays = hasDays
         self.onBackToOverview = onBackToOverview
         self._exportSelection = exportSelection
@@ -40,6 +43,7 @@ public struct AppDayDetailView: View {
 
     init(detail: DayDetailViewState) {
         self.detail = detail
+        self.mapData = nil
         self.hasDays = true
         self.onBackToOverview = nil
         self._exportSelection = .constant(ExportSelectionState())
@@ -75,6 +79,8 @@ public struct AppDayDetailView: View {
 
     @ViewBuilder
     private func contentView(_ detail: DayDetailViewState) -> some View {
+        let resolvedMapData = mapData ?? DayMapDataExtractor.mapData(from: detail)
+
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppDateDisplay.weekday(detail.date))
@@ -104,7 +110,7 @@ public struct AppDayDetailView: View {
 
             #if canImport(MapKit)
             if #available(iOS 17.0, macOS 14.0, *) {
-                AppDayMapView(mapData: DayMapDataExtractor.mapData(from: detail))
+                AppDayMapView(mapData: resolvedMapData)
             } else {
                 Label(t("Map view requires iOS 17 or later."), systemImage: "map")
                     .font(.caption)
