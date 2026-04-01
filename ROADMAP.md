@@ -4,10 +4,10 @@
 
 ### Repo-Truth-Zusammenfassung
 Die letzte real belegte Apple-/Device-Verifikation bleibt der dokumentierte Apple-Stand vom 2026-03-17 beziehungsweise 2026-03-30; in diesem Audit wurde kein neuer Apple-Host-Lauf vorgetaeuscht.
-Der Audit-Block vom 2026-04-01 ist in dieser Revision eingearbeitet: sichtbare Zeitraumfilter-Verdrahtung, Recent Files, Auto-Restore, Days-Filterchips, Favoriten, per-route Auswahl, CSV-Export-Verdrahtung, Heatmap-Teststabilisierung und Teststatus sind jetzt dokumentarisch an den aktuellen Code angeglichen.
+Der Audit-Block vom 2026-04-01 ist in dieser Revision eingearbeitet: sichtbare Zeitraumfilter-Verdrahtung, Recent Files, Auto-Restore, Days-Filterchips, Favoriten, per-route Auswahl, CSV-Export-Verdrahtung, Heatmap-Teststabilisierung, spaetere Live-/Projektions-Entschaerfung und der aktuelle Teststatus sind jetzt dokumentarisch an den aktuellen Code angeglichen.
 Diese ROADMAP trennt ab hier explizit zwischen `fertig`, `implementiert aber noch nicht voll verifiziert` und `noch nicht umgesetzt`.
 Historische Phasen weiter unten bleiben als Zeitstrahl stehen; wenn spaetere Commits fruehere Zwischenstaende ueberholt haben, gilt der aktuelle Kopfblock als massgeblicher Repo-Truth.
-Der frische Host-Nachweis dieses Audits ist Linux-only: `swift test` lief am 2026-04-01 mit `Executed 350 tests, with 0 failures (0 unexpected)`, `git diff --check` ist sauber, und `xcodebuild` ist auf diesem Host nicht verfuegbar.
+Der frische Host-Nachweis dieses Audits ist Linux-only: `swift test` lief am 2026-04-01 mit `Executed 363 tests, with 0 failures (0 unexpected)`, `git diff --check` ist sauber, und `xcodebuild` ist auf diesem Host nicht verfuegbar.
 Der Live-/Upload-/Insights-/Days-Batch vom 2026-03-30 ist im Code umgesetzt und in dieser ROADMAP als repo-wahrer Produktstand eingearbeitet; fuer diesen Batch liegen auf Linux gezielte Teilnachweise vor, aber kein neuer Apple-UI-Nachweis.
 Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem die Heatmap-Detailsichtbarkeit sowie kleine visuelle Kanten in `Live`, `Insights` und `Days`; auf diesem Linux-Host liegen dazu nur nicht-Apple-Nachweise vor.
 
@@ -38,7 +38,10 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 - **Days-Filterchips** (`DayListFilter`): Favorites / Has Visits / Has Routes / Has Distance / Exportable; sichtbar in `Days` und mit Suche kombinierbar
 - **Insights-Drilldown** (`InsightsDrilldown`): `filterDaysToDate`, `filterDaysToDateRange`, `prefillExportForDate`, `prefillExportForDateRange`; `activeDrilldownFilter` in `AppSessionState`
 - **Chart-Share-Payload** (`ChartShareHelper`): UI-freier Payload-Builder; Dateiname-Format; sichtbare Share-Aktionen jetzt in den wichtigsten Insights-Sektionen verdrahtet; echte ImageRenderer-/Share-Sheet-Verifikation bleibt Apple-Host-Arbeit
-- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export-, Days-/Day-Detail- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore, Days-Filterchips, Route-Export-Aktionen und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 359 tests, with 0 failures (0 unexpected)`)
+- zentrale filter-key-basierte Session-Projektionsschicht fuer `Overview`, `Days`, `Insights`, `Export` und Day-Detail-Map-Daten; wiederholte Export-/Day-Projektionen laufen nicht mehr breit im UI-Renderpfad
+- Live-Stabilitaet: geringerer Timer-bedingter Voll-Refresh, sauberere Upload-Cancellation/Serialisierung und entschärfte Queue-Mutationen fuer den optionalen Server-Upload
+- Heatmap-/Map-Restoptimierung: vorbereitete Route-Tracks, lazy Density-LOD-Aufbau, gecachte `DayMapData` und stabile Renderdaten fuer Day-/Export-Maps reduzieren First-Open- und Re-Render-Arbeit ohne Semantikaenderung
+- Sprachwahl `English` / `Deutsch` in den Optionen; breite DE-Abdeckung fuer Shell-, Optionen-, Live-Recording-, Import-Entry-, Export-, Days-/Day-Detail- und Analytics/Insights/Overview-Oberflaechen inkl. Format-Strings, Monatsnamen, rangeDescription-Singular/Plural, Custom-Date-Range-Sheet, Overlap-Map, Recent Files, Auto-Restore, Days-Filterchips, Route-Export-Aktionen und InsightsChartSupport-Hints (Stand 2026-04-01: `swift test` -> `Executed 363 tests, with 0 failures (0 unexpected)`)
 
 ### Implementiert, aber noch nicht voll verifiziert
 
@@ -48,6 +51,7 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
   Heatmap Visual & Performance Batch 2 hat danach auf geglaettete aggregierte Polygon-Zellen, viewport-basierte Zellselektion, per-LOD begrenzte sichtbare Elemente und einen wiederverwendbaren Viewport-Cache umgestellt, um den sichtbaren Kreis-/Stempel-Look zu reduzieren und Pan/Zoom ruhiger zu machen.
   Heatmap Color / Contrast / Opacity Batch 3 hat danach die Farbpalette von harten Stufen auf weich interpolierte Gradient-Stops umgestellt, mittlere/hohe Dichte per Intensitaets-Mapping sichtbar angehoben und die 100-%-Deckkraft ueber eine staerkere High-End-Kennlinie auf einen wirklich volleren Sichtbarkeitsmodus gemappt.
   Der UI-Polish-/Heatmap-Detail-Batch hat danach die Detailsichtbarkeit weiter angehoben: niedrigere Detailschwellen, fruehere Farbe bei duennen Daten, mehr sichtbare Low-/Mid-Density im Detailzoom und etwas klarere Legenden-/Opacity-Abstimmung.
+  Der Phase-3-Restbatch vom 2026-04-01 baut Route-Grids und vorbereitete Route-Tracks jetzt einmalig vor, verschiebt Dichte-LOD-Aufbau auf echten Bedarf im Density-Modus und reduziert wiederholte Export-Traversierung bei Viewport-Wechseln auf groesseren Kartenflaechen.
   Kleine dedizierte Heatmap-Regressionstests fuer Aggregation, viewport-begrenzte Zellselektion und das neue Intensitaets-/Opacity-/Palette-Mapping sind jetzt vorhanden.
   Offen bleibt die visuelle/performance-seitige Apple-Verifikation dieses neuen Renderers samt Batch-3-Farbwirkung auf echter Hardware.
 - **`Live`-Tab**
@@ -67,10 +71,11 @@ Der spaetere UI-Polish-/Heatmap-Detail-Batch vom 2026-03-30 staerkt vor allem di
 - **Insights / Days UX**
   Die Insights-Seite ist deutlich ausgebaut und `Days` ist jetzt repo-wahr `neu -> alt` sortiert.
   Insights-Drilldown nach `Days`/`Export` und sichtbare Share-Aktionen fuer zentrale Insight-Sektionen sind jetzt UI-seitig verdrahtet.
+  Day-Detail nutzt jetzt gecachte `DayMapData`, und Day-/Export-Karten halten stabile Renderdaten fuer Marker, Polylines und Regionen statt wiederholter Koordinaten-Neuaufbereitung pro Render.
   Offen bleiben frische Apple-UI-Nachweise fuer die neue Informationsarchitektur, Chart-Lesbarkeit, den jetzt sichtbaren Zeitraumfilter in `Overview`/`Insights`/`Export`, die sichtbaren Days-Filterchips/Favoriten/per-route Actions, den neuen Insights-Drilldown sowie den echten Chart-Share-Flow auf Apple-Hardware.
 - **Linux-/Apple-Teststatus**
   Historische Apple-Nachweise vom 2026-03-30 bleiben dokumentiert, gelten aber nicht als frischer Gegenlauf fuer diesen Audit.
-  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
+  Der aktuelle Linux-Mindestnachweis dieses Audits ist `swift test` mit `Executed 363 tests, with 0 failures (0 unexpected)`; `git diff --check` ist sauber.
   Die 3 bekannten Problemfaelle sind als Test-Drift klassifiziert und behoben:
   `testAcceptedSamplesUploadToConfiguredServer` und `testFailedUploadRetriesWhenAnotherAcceptedSampleArrives` scheiterten an minimumBatchSize=5 (nicht Plattform), Tests auf minimumBatchSize=1 gesetzt;
   `testBackgroundPreferenceActivatesClientWhenAlwaysAuthorized` prueft jetzt korrektes Verhalten (Client-Config beim Recording-Start, nicht bei Preference-Aenderung).

@@ -12,7 +12,7 @@ Bereits drin:
 - der dedizierte `Live`-Tab wurde visuell und funktional deutlich ausgebaut: klarere Map-/Recording-/Upload-/Library-Hierarchie, Status-Chips, Quick Actions und mehr Live-Metriken
 - der optionale Server-Upload zeigt Queue-, Failure- und Last-Success-Zustaende und unterstuetzt Pause/Resume sowie manuellen Queue-Flush
 - die Insights-Seite bietet segmentierte Oberflaechen (`Overview`, `Patterns`, `Breakdowns`) sowie KPI-Karten, Highlight-Karten, `Top Days`, Monatstrends und umschaltbare Distanz-/Route-/Event-Muster
-- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
+- gezielte Linux-Teilverifikation fuer diese Bereiche liegt vor; der frische Gesamtlauf auf diesem Host ist `swift test` mit `Executed 363 tests, with 0 failures (0 unexpected)`
 
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer den neuen `Live`-Tab inklusive Upload-Zustaenden, Quick Actions und groesserem Stat-Set
@@ -28,6 +28,9 @@ Bereits drin:
 - `AppHeatmapView` ist implementiert und als eigenes Heatmap-Sheet verdrahtet
 - das Heatmap-Sheet bietet lokale Display-Controls fuer Deckkraft, Radius-Presets, `Auf Daten zoomen` und eine kleine Dichte-Legende
 - der Renderer nutzt geglaettete aggregierte Polygon-Zellen, viewport-basierte Zellselektion und wiederverwendbares LOD-/Viewport-Caching
+- Route-Grids und vorbereitete Route-Tracks werden jetzt vorgezogen aufgebaut; wiederholte Viewport-Wechsel traversieren nicht mehr jedes Mal den kompletten Export
+- Dichte-LODs werden jetzt lazy erst bei echtem Wechsel in den Dichte-Modus aufgebaut statt schon beim ersten Oeffnen des Sheets pauschal komplett vorzurechnen
+- Day-Detail- und Export-Karten nutzen jetzt stabile Renderdaten fuer Marker, Polylines und Regionen statt wiederholter `CLLocationCoordinate2D`-Neuaufbereitung pro Render
 - die spaeteren Detail-Visibility-Polishes machen niedrige und mittlere Dichte frueher sichtbar und farbiger, ohne die LOD-/Viewport-Architektur aufzugeben
 - kleine dedizierte Heatmap-Regressionstests fuer LOD-Aggregation, viewport-begrenzte Zellselektion sowie Intensitaets-/Opacity-/Palette-Mapping sind vorhanden
 - ein echter iPhone-15-Pro-Max-AX-Snapshot aus dem Wrapper zeigt `Heatmap` bei geladenem Import sichtbar verdrahtet
@@ -37,13 +40,25 @@ Fehlt noch:
 - visuelle Apple-Verifikation des neuen Polygon-/Aggregations-Renderers inklusive der spaeteren Detail-Visibility-Polishes auf echter Apple-Hardware
 - Performance-Nachweis fuer groessere Imports auf Apple-Hardware
 
+## 2a. Phase 19.52b – Restprofiling fuer Map / Day Detail nur nach Apple-Nachweis
+
+Status: **offen, aber nachrangig**
+
+Bereits drin:
+- Day-Detail nutzt jetzt gecachte `DayMapData` aus der Session-Projektionsschicht statt wiederholter Neuableitung im View
+- Day- und Export-Maps bauen stabile Renderdaten fuer Marker, Polylines und Regionen nur noch bei echten Input-Aenderungen
+
+Fehlt noch:
+- nur falls Apple-Device-Profiling danach noch Spitzen zeigt: gezieltes Restprofiling fuer Day-Detail-Map, Export-Preview-Map oder weitere Map-Pfade
+- keine weitere Map-/Day-Detail-Arbeit ohne belegten Apple-Hotspot
+
 ## 3. Phase 19.53 – Frischen Apple-CLI-Gegenlauf fuer den aktuellen Stand nachziehen
 
 Status: **offen**
 
 Bereits drin:
 - historische Apple-CLI-Nachweise fuer 2026-03-30 sind dokumentiert
-- der frische Linux-Mindestnachweis auf diesem Host ist `swift test`: `Executed 350 tests, with 0 failures (0 unexpected)`
+- der frische Linux-Mindestnachweis auf diesem Host ist `swift test`: `Executed 363 tests, with 0 failures (0 unexpected)`
 - Apple-only Heatmap-Renderingstests sind fuer non-Apple-Plattformen korrekt gegated und blockieren den Linux-Lauf nicht
 - die frueheren Test-vs-Code-Drifts (`minimumBatchSize`, Keychain-first, Gedankenstrich-Formatierung) sind repo-wahr bereinigt
 
@@ -88,7 +103,7 @@ Bereits drin:
 - Favoriten lassen sich in der Liste per Swipe/Kontextmenue und im Day Detail direkt toggeln; Persistenz bleibt lokal
 - Day Detail zeigt sichtbare per-route Auswahl einzelner exportierbarer Routen inklusive `Reset to All Routes`
 - `CSV` ist als echtes Dateiformat im bestehenden Export-Flow aktiv und respektiert Zeitraum, Day-Selection und explizite Route-Selektionen
-- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
+- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 363 tests, with 0 failures (0 unexpected)`
 
 ## 7. Phase 19.59 – Insights Drilldown / Chart Share auf Apple verifizieren
 
@@ -99,7 +114,7 @@ Bereits drin:
 - `Days` und `Export` zeigen aktive Insights-Drilldowns sichtbar als Banner und bieten eine echte Reset-Aktion
 - sichtbare Share-Aktionen fuer die wichtigsten Insight-Sektionen sind verdrahtet und nutzen den vorhandenen `ChartShareHelper`
 - auf Apple-Hosts rendert die View-Schicht per `ImageRenderer` eine PNG-Datei fuer den System-Share-Flow; Linux-seitig ist diese Verdrahtung nur indirekt ueber Code und Tests absicherbar
-- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 359 tests, with 0 failures (0 unexpected)`
+- Linux-Nachweis fuer diesen Batch liegt im frischen Gesamtlauf vor: `swift test` mit `Executed 363 tests, with 0 failures (0 unexpected)`
 
 Fehlt noch:
 - frische Apple-UI-Verifikation fuer den Drilldown-Flow von `Insights` nach `Days`

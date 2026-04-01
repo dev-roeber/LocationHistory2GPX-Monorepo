@@ -2,6 +2,15 @@
 
 ## [Unreleased] – 2026-04-01
 
+### Performance / Stability Phase 3 – Heatmap / Map / Day Detail / Truth Sync
+
+- `AppHeatmapView.swift`: Heatmap-First-Open weiter entschärft; Route-Grids und vorbereitete Route-Tracks werden jetzt einmalig vorgezogen, waehrend Dichte-LODs erst bei echtem Wechsel in den Dichte-Modus lazy nachgerechnet werden statt immer schon beim Oeffnen des Sheets
+- `AppHeatmapView.swift`: Route-Viewport-Wechsel traversieren nicht mehr jedes Mal den kompletten `AppExport`; vorbereitete Route-Tracks mit Bounding Box, Render-Koordinaten und gesampelten Midpoints reduzieren wiederholte Materialisierung und Scoring-Arbeit fuer grosse Kartenflaechen
+- `AppSessionState.swift`, `AppContentSplitView.swift`, `AppDayDetailView.swift`: Day-Detail nutzt jetzt gecachte `DayMapData` aus der Session-Projektionsschicht statt die Kartenbasis bei jedem Render erneut aus dem Day-Detail-Modell aufzubauen
+- `AppDayMapView.swift`, `AppExportPreviewMapView.swift`: Day- und Export-Maps halten stabile Renderdaten fuer Marker, Polylines und Regionen und bauen `CLLocationCoordinate2D`-Arrays nur noch bei echten Input-Aenderungen statt pro Body-Render neu auf
+- `Tests/LocationHistoryConsumerTests/AppHeatmapRenderingTests.swift`, `DemoSessionStateTests.swift`: neue Regressionen decken vorbereitete Heatmap-Route-Tracks sowie gecachte Day-Map-Projektion ab
+- Linux-Nachweis fuer diesen Batch: `swift test` -> `Executed 363 tests, with 0 failures (0 unexpected)`; `git diff --check` sauber
+
 ### UI Wiring Phase 3 – Insights Drilldown / Chart Share
 
 - `AppInsightsContentView.swift`, `AppContentSplitView.swift`, `AppDayListView.swift`, `AppExportView.swift`, `InsightsDrilldownBridge.swift`: der vorhandene `InsightsDrilldown`-Unterbau ist jetzt sichtbar in der echten App-UI verdrahtet; datenverankerte Highlights, `Top Days`, Distanz-Zeitreihe sowie Monats-/Periodenbereiche bieten jetzt einen echten Drilldown nach `Days` oder `Export`, inklusive sichtbarem und ruecksetzbarem Drilldown-Zustand in den Zielansichten
