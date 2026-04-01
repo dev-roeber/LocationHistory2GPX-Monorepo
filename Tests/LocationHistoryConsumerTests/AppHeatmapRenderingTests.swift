@@ -223,10 +223,23 @@ final class AppHeatmapRenderingTests: XCTestCase {
         XCTAssertGreaterThan(densityLow.blue, densityLow.red)
     }
 
+    func testPreparedRouteTrackBuilderProducesViewportReadyTracks() {
+        let tracks = PreparedRouteTrackBuilder.build(from: makeExportWithPaths())
+
+        let track = try? XCTUnwrap(tracks.first)
+        XCTAssertEqual(tracks.count, 1)
+        XCTAssertNotNil(track)
+        XCTAssertFalse(track?.renderCoordinates.isEmpty ?? true)
+        XCTAssertFalse(track?.sampleMidpoints.isEmpty ?? true)
+        XCTAssertLessThanOrEqual(track?.renderCoordinates.count ?? 0, 500)
+        XCTAssertLessThanOrEqual(track?.sampleMidpoints.count ?? 0, 31)
+    }
+
     // MARK: - RoutePathExtractor
 
     func testRoutePathExtractorProducesConnectedSequencesFromPaths() {
         let export = makeExportWithPaths()
+        let tracks = PreparedRouteTrackBuilder.build(from: export)
         let step = HeatmapLOD.high.routeSegmentStep
         let grid = RouteGridBuilder.computeGrid(for: export, step: step)
         let region = MKCoordinateRegion(
@@ -236,7 +249,7 @@ final class AppHeatmapRenderingTests: XCTestCase {
         let viewportKey = RouteViewportKey(region: region, lod: .high)
 
         let paths = RoutePathExtractor.extract(
-            from: export,
+            from: tracks,
             grid: grid,
             step: step,
             lod: .high,
@@ -251,6 +264,7 @@ final class AppHeatmapRenderingTests: XCTestCase {
 
     func testRoutePathExtractorGlowWidthIsThreeCoreWidth() {
         let export = makeExportWithPaths()
+        let tracks = PreparedRouteTrackBuilder.build(from: export)
         let step = HeatmapLOD.medium.routeSegmentStep
         let grid = RouteGridBuilder.computeGrid(for: export, step: step)
         let region = MKCoordinateRegion(
@@ -260,7 +274,7 @@ final class AppHeatmapRenderingTests: XCTestCase {
         let viewportKey = RouteViewportKey(region: region, lod: .medium)
 
         let paths = RoutePathExtractor.extract(
-            from: export,
+            from: tracks,
             grid: grid,
             step: step,
             lod: .medium,

@@ -43,6 +43,7 @@ public struct AppHeatmapView: View {
         .animation(.easeInOut(duration: 0.25), value: model.visibleRoutePaths.count)
         .onAppear {
             if isFirstLoad {
+                model.updateMode(heatmapMode)
                 model.startPrecomputation()
                 isFirstLoad = false
             }
@@ -53,9 +54,7 @@ public struct AppHeatmapView: View {
             }
         }
         .onChange(of: heatmapMode) { _, _ in
-            if let region = model.lastRegion {
-                model.updateForRegion(region)
-            }
+            model.updateMode(heatmapMode)
         }
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -482,18 +481,148 @@ struct RoutePath: Identifiable {
     let color: Color
 }
 
+struct PreparedRouteTrack {
+    struct BoundingBox {
+        let minLat: Double
+        let maxLat: Double
+        let minLon: Double
+        let maxLon: Double
+
+        func intersects(
+            minLat viewportMinLat: Double,
+            maxLat viewportMaxLat: Double,
+            minLon viewportMinLon: Double,
+            maxLon viewportMaxLon: Double
+        ) -> Bool {
+            maxLat >= viewportMinLat &&
+            minLat <= viewportMaxLat &&
+            maxLon >= viewportMinLon &&
+            minLon <= viewportMaxLon
+        }
+    }
+
+    let renderCoordinates: [CLLocationCoordinate2D]
+    let sampleMidpoints: [CLLocationCoordinate2D]
+    let boundingBox: BoundingBox
+}
+
+enum PreparedRouteTrackBuilder {
+    private static let maxPolylinePoints = 500
+
+    nonisolated static func build(from export: AppExport) -> [PreparedRouteTrack] {
+        var tracks: [PreparedRouteTrack] = []
+
+        func appendTrack(from coordinates: [CLLocationCoordinate2D]) {
+            guard let track = makeTrack(from: coordinates) else {
+                return
+            }
+            tracks.append(track)
+        }
+
+        for day in export.data.days {
+            for path in day.paths {
+                if let flats = path.flatCoordinates, flats.count >= 4 {
+                    appendTrack(from: flatToCoords(flats))
+                } else if path.points.count >= 2 {
+                    appendTrack(from: path.points.map {
+                        CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon)
+                    })
+                }
+            }
+            for activity in day.activities {
+                if let flats = activity.flatCoordinates, flats.count >= 4 {
+                    appendTrack(from: flatToCoords(flats))
+                }
+            }
+        }
+
+        return tracks
+    }
+
+    nonisolated private static func makeTrack(from coordinates: [CLLocationCoordinate2D]) -> PreparedRouteTrack? {
+        guard coordinates.count >= 2 else {
+            return nil
+        }
+
+        var minLat = coordinates[0].latitude
+        var maxLat = coordinates[0].latitude
+        var minLon = coordinates[0].longitude
+        var maxLon = coordinates[0].longitude
+
+        for coordinate in coordinates.dropFirst() {
+            minLat = min(minLat, coordinate.latitude)
+            maxLat = max(maxLat, coordinate.latitude)
+            minLon = min(minLon, coordinate.longitude)
+            maxLon = max(maxLon, coordinate.longitude)
+        }
+
+        let segmentCount = coordinates.count - 1
+        let sampleStep = max(1, segmentCount / 30)
+        var sampleMidpoints: [CLLocationCoordinate2D] = []
+        sampleMidpoints.reserveCapacity(min(segmentCount, 31))
+
+        var index = 0
+        while index < segmentCount {
+            let first = coordinates[index]
+            let second = coordinates[index + 1]
+            sampleMidpoints.append(
+                CLLocationCoordinate2D(
+                    latitude: (first.latitude + second.latitude) / 2.0,
+                    longitude: (first.longitude + second.longitude) / 2.0
+                )
+            )
+            index += sampleStep
+        }
+
+        let renderCoordinates: [CLLocationCoordinate2D]
+        if coordinates.count > maxPolylinePoints {
+            let decimation = max(1, coordinates.count / maxPolylinePoints)
+            var sampled: [CLLocationCoordinate2D] = []
+            sampled.reserveCapacity(maxPolylinePoints + 2)
+            var renderIndex = 0
+            while renderIndex < coordinates.count - 1 {
+                sampled.append(coordinates[renderIndex])
+                renderIndex += decimation
+            }
+            sampled.append(coordinates[coordinates.count - 1])
+            renderCoordinates = sampled
+        } else {
+            renderCoordinates = coordinates
+        }
+
+        return PreparedRouteTrack(
+            renderCoordinates: renderCoordinates,
+            sampleMidpoints: sampleMidpoints,
+            boundingBox: PreparedRouteTrack.BoundingBox(
+                minLat: minLat,
+                maxLat: maxLat,
+                minLon: minLon,
+                maxLon: maxLon
+            )
+        )
+    }
+
+    nonisolated private static func flatToCoords(_ flats: [Double]) -> [CLLocationCoordinate2D] {
+        var coords: [CLLocationCoordinate2D] = []
+        coords.reserveCapacity(flats.count / 2)
+        var index = 0
+        while index + 1 < flats.count {
+            coords.append(CLLocationCoordinate2D(latitude: flats[index], longitude: flats[index + 1]))
+            index += 2
+        }
+        return coords
+    }
+}
+
 // MARK: - Route Path Extractor
 
 /// Reconstructs connected polyline sequences from AppExport path/activity data.
 /// Each GPS track is processed as a whole (no chunking) and scored by sampling
 /// multiple grid bins along the track. Frequent routes appear brighter and wider.
 enum RoutePathExtractor {
-    /// Maximum rendered points per polyline after downsampling.
-    private static let maxPolylinePoints = 500
-
-    /// Extract RoutePaths from the export using the provided intensity grid for scoring.
+    /// Extract RoutePaths from prepared tracks using the provided intensity grid for scoring.
     nonisolated static func extract(
-        from export: AppExport,
+        from tracks: [PreparedRouteTrack],
         grid: [RouteGridBuilder.SegBin: Int],
         step: Double,
         lod: HeatmapLOD,
@@ -509,71 +638,38 @@ enum RoutePathExtractor {
         var result: [RoutePath] = []
         var pathID = 0
 
-        func processTrack(_ allCoords: [CLLocationCoordinate2D]) {
-            guard allCoords.count >= 2 else { return }
+        func processTrack(_ track: PreparedRouteTrack) {
+            guard track.boundingBox.intersects(
+                minLat: minLat,
+                maxLat: maxLat,
+                minLon: minLon,
+                maxLon: maxLon
+            ) else { return }
 
-            // Bounding-box viewport cull
-            var tMinLat = allCoords[0].latitude
-            var tMaxLat = allCoords[0].latitude
-            var tMinLon = allCoords[0].longitude
-            var tMaxLon = allCoords[0].longitude
-            for c in allCoords.dropFirst() {
-                if c.latitude < tMinLat { tMinLat = c.latitude }
-                if c.latitude > tMaxLat { tMaxLat = c.latitude }
-                if c.longitude < tMinLon { tMinLon = c.longitude }
-                if c.longitude > tMaxLon { tMaxLon = c.longitude }
-            }
-            guard tMaxLat >= minLat, tMinLat <= maxLat,
-                  tMaxLon >= minLon, tMinLon <= maxLon else { return }
-
-            // Score the whole track by sampling up to 30 bins along its length.
+            // Score the whole track by sampling precomputed midpoints along its length.
             // Blend max and average to reward frequently-used corridors robustly.
-            let segmentCount = allCoords.count - 1
-            let sampleStep = max(1, segmentCount / 30)
             var maxBinCount = 0
             var totalBinCount = 0
-            var samplesTaken = 0
-            var idx = 0
-            while idx < segmentCount {
-                let c1 = allCoords[idx]
-                let c2 = allCoords[idx + 1]
+            for sample in track.sampleMidpoints {
                 let bin = RouteGridBuilder.SegBin(
-                    lat: Int32(floor(((c1.latitude + c2.latitude) / 2.0) / step)),
-                    lon: Int32(floor(((c1.longitude + c2.longitude) / 2.0) / step))
+                    lat: Int32(floor(sample.latitude / step)),
+                    lon: Int32(floor(sample.longitude / step))
                 )
                 let count = grid[bin] ?? 0
                 if count > maxBinCount { maxBinCount = count }
                 totalBinCount += count
-                samplesTaken += 1
-                idx += sampleStep
             }
+            let samplesTaken = track.sampleMidpoints.count
             let avgCount = samplesTaken > 0 ? Double(totalBinCount) / Double(samplesTaken) : 0
             let blended = Double(maxBinCount) * 0.6 + avgCount * 0.4
             let normalized = min(blended / Double(maxCount), 1.0)
             guard normalized >= 0.02 else { return }
 
-            // Downsample long tracks to limit polyline complexity
-            let coords: [CLLocationCoordinate2D]
-            if allCoords.count > Self.maxPolylinePoints {
-                let decimation = allCoords.count / Self.maxPolylinePoints
-                var sampled: [CLLocationCoordinate2D] = []
-                sampled.reserveCapacity(Self.maxPolylinePoints + 2)
-                var i = 0
-                while i < allCoords.count - 1 {
-                    sampled.append(allCoords[i])
-                    i += decimation
-                }
-                sampled.append(allCoords[allCoords.count - 1])
-                coords = sampled
-            } else {
-                coords = allCoords
-            }
-
             let displayI = pow(normalized, 0.50)
             let lineWidth = 1.5 + displayI * 6.5
             result.append(RoutePath(
                 id: pathID,
-                coordinates: coords,
+                coordinates: track.renderCoordinates,
                 normalizedIntensity: normalized,
                 coreLineWidth: lineWidth,
                 color: RoutePalette.color(for: displayI)
@@ -581,32 +677,8 @@ enum RoutePathExtractor {
             pathID += 1
         }
 
-        func flatToCoords(_ flats: [Double]) -> [CLLocationCoordinate2D] {
-            var coords: [CLLocationCoordinate2D] = []
-            coords.reserveCapacity(flats.count / 2)
-            var i = 0
-            while i + 1 < flats.count {
-                coords.append(CLLocationCoordinate2D(latitude: flats[i], longitude: flats[i + 1]))
-                i += 2
-            }
-            return coords
-        }
-
-        for day in export.data.days {
-            for path in day.paths {
-                if let flats = path.flatCoordinates, flats.count >= 4 {
-                    processTrack(flatToCoords(flats))
-                } else if path.points.count >= 2 {
-                    processTrack(path.points.map {
-                        CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon)
-                    })
-                }
-            }
-            for activity in day.activities {
-                if let flats = activity.flatCoordinates, flats.count >= 4 {
-                    processTrack(flatToCoords(flats))
-                }
-            }
+        for track in tracks {
+            processTrack(track)
         }
 
         // Keep the most-frequent tracks; render low-to-high so frequent routes draw on top
@@ -716,6 +788,9 @@ final class AppHeatmapModel {
     private(set) var lastRegion: MKCoordinateRegion?
 
     private let export: AppExport
+    private var activeMode: HeatmapMode = .route
+    private var densityPoints: [WeightedPoint] = []
+    private var preparedRouteTracks: [PreparedRouteTrack] = []
     private var lodGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
     private var routeGrids: [HeatmapLOD: [RouteGridBuilder.SegBin: Int]] = [:]
     private var viewportCache: [HeatmapViewportKey: [HeatCell]] = [:]
@@ -723,18 +798,18 @@ final class AppHeatmapModel {
     private var routePathCache: [RouteViewportKey: [RoutePath]] = [:]
 
     private var updateTask: Task<Void, Never>?
+    private var densityPrecomputationTask: Task<Void, Never>?
 
     init(export: AppExport) {
         self.export = export
     }
 
     func startPrecomputation() {
-        guard lodGrids.isEmpty, !isCalculating else { return }
+        guard routeGrids.isEmpty, !isCalculating else { return }
         isCalculating = true
         let snapshot = export
 
         Task.detached(priority: .userInitiated) {
-            // --- Density points ---
             var points: [WeightedPoint] = []
             for day in snapshot.data.days {
                 for visit in day.visits {
@@ -767,12 +842,7 @@ final class AppHeatmapModel {
                 }
             }
 
-            var generatedGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
-            for lod in HeatmapLOD.allCases {
-                generatedGrids[lod] = HeatmapGridBuilder.computeGrid(for: points, lod: lod)
-            }
-
-            // --- Route grids ---
+            let preparedRouteTracks = PreparedRouteTrackBuilder.build(from: snapshot)
             var generatedRouteGrids: [HeatmapLOD: [RouteGridBuilder.SegBin: Int]] = [:]
             for lod in HeatmapLOD.allCases {
                 generatedRouteGrids[lod] = RouteGridBuilder.computeGrid(
@@ -781,19 +851,18 @@ final class AppHeatmapModel {
                 )
             }
 
-            let centerCoord: CLLocationCoordinate2D?
-            if let mediumGrid = generatedGrids[.medium],
-               let denseCell = mediumGrid.values.max(by: { $0.count < $1.count }) {
-                centerCoord = denseCell.coordinate
-            } else if let first = points.first {
-                centerCoord = CLLocationCoordinate2D(latitude: first.lat, longitude: first.lon)
-            } else {
-                centerCoord = nil
-            }
-
             let dataRegion = Self.regionThatFits(points: points)
-            let completedGrids = generatedGrids
             let completedRouteGrids = generatedRouteGrids
+            let completedPoints = points
+            let completedRouteTracks = preparedRouteTracks
+            let centerCoord = dataRegion.map { region in
+                CLLocationCoordinate2D(
+                    latitude: region.center.latitude,
+                    longitude: region.center.longitude
+                )
+            } ?? points.first.map {
+                CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon)
+            }
             let fallbackRegion = centerCoord.map {
                 MKCoordinateRegion(
                     center: $0,
@@ -802,7 +871,9 @@ final class AppHeatmapModel {
             }
 
             await MainActor.run {
-                self.lodGrids = completedGrids
+                self.densityPoints = completedPoints
+                self.preparedRouteTracks = completedRouteTracks
+                self.lodGrids = [:]
                 self.routeGrids = completedRouteGrids
                 self.viewportCache = [:]
                 self.routeViewportCache = [:]
@@ -814,9 +885,26 @@ final class AppHeatmapModel {
                 let region = self.lastRegion ?? dataRegion ?? fallbackRegion
 
                 if let region {
-                    self.performCulling(region: region)
+                    if self.activeMode == .density {
+                        self.ensureDensityPrecomputation(for: region)
+                    } else {
+                        self.performCulling(region: region)
+                    }
                 }
             }
+        }
+    }
+
+    func updateMode(_ mode: HeatmapMode) {
+        guard activeMode != mode else { return }
+        activeMode = mode
+
+        guard let region = lastRegion ?? dataRegion else { return }
+        switch mode {
+        case .route:
+            performCulling(region: region)
+        case .density:
+            ensureDensityPrecomputation(for: region)
         }
     }
 
@@ -837,11 +925,20 @@ final class AppHeatmapModel {
     }
 
     private func performCulling(region: MKCoordinateRegion) {
-        guard !lodGrids.isEmpty else { return }
+        guard !routeGrids.isEmpty || !lodGrids.isEmpty else { return }
         let lod = HeatmapLOD.optimalLOD(for: region.span.latitudeDelta)
 
-        // Density
-        if let fullGrid = lodGrids[lod] {
+        switch activeMode {
+        case .density:
+            visibleRouteSegments = []
+            visibleRoutePaths = []
+
+            guard let fullGrid = lodGrids[lod] else {
+                visibleCells = []
+                ensureDensityPrecomputation(for: region)
+                return
+            }
+
             let viewportKey = HeatmapViewportKey(region: region, lod: lod)
             if let cached = viewportCache[viewportKey] {
                 visibleCells = cached
@@ -850,13 +947,17 @@ final class AppHeatmapModel {
                 viewportCache[viewportKey] = culled
                 visibleCells = culled
             }
-        }
+        case .route:
+            visibleCells = []
 
-        // Route
-        if let routeGrid = routeGrids[lod] {
+            guard let routeGrid = routeGrids[lod] else {
+                visibleRouteSegments = []
+                visibleRoutePaths = []
+                return
+            }
+
             let routeKey = RouteViewportKey(region: region, lod: lod)
 
-            // Legacy segment cache (kept for existing RouteGridBuilder path)
             if let cached = routeViewportCache[routeKey] {
                 visibleRouteSegments = cached
             } else {
@@ -870,12 +971,11 @@ final class AppHeatmapModel {
                 visibleRouteSegments = segs
             }
 
-            // Connected path cache (new glow-rendering pipeline)
             if let cachedPaths = routePathCache[routeKey] {
                 visibleRoutePaths = cachedPaths
             } else {
                 let paths = RoutePathExtractor.extract(
-                    from: export,
+                    from: preparedRouteTracks,
                     grid: routeGrid,
                     step: lod.routeSegmentStep,
                     lod: lod,
@@ -883,6 +983,43 @@ final class AppHeatmapModel {
                 )
                 routePathCache[routeKey] = paths
                 visibleRoutePaths = paths
+            }
+        }
+    }
+
+    private func ensureDensityPrecomputation(for region: MKCoordinateRegion) {
+        lastRegion = region
+
+        if !lodGrids.isEmpty {
+            performCulling(region: region)
+            return
+        }
+
+        guard !densityPoints.isEmpty else {
+            visibleCells = []
+            return
+        }
+
+        guard densityPrecomputationTask == nil else { return }
+        isCalculating = true
+        let points = densityPoints
+
+        densityPrecomputationTask = Task.detached(priority: .utility) {
+            var generatedGrids: [HeatmapLOD: [GridKey: HeatCell]] = [:]
+            for lod in HeatmapLOD.allCases {
+                generatedGrids[lod] = HeatmapGridBuilder.computeGrid(for: points, lod: lod)
+            }
+            let completedGrids = generatedGrids
+
+            await MainActor.run {
+                self.lodGrids = completedGrids
+                self.viewportCache = [:]
+                self.densityPrecomputationTask = nil
+                self.isCalculating = false
+
+                if self.activeMode == .density {
+                    self.performCulling(region: self.lastRegion ?? region)
+                }
             }
         }
     }
