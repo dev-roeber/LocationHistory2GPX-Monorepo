@@ -38,13 +38,11 @@ Alternativ kann das Verzeichnis in Xcode geoeffnet werden. Die produktnahe App-S
 
 ## Was bewusst noch nicht vorbereitet ist
 
-- kein `.xcodeproj` im Core-Package-Root (der Wrapper unter `wrapper/LH2GPXWrapper.xcodeproj` hat sein eigenes Xcode-Projekt mit Info.plist, Bundle-Config, App-Icon und PrivacyInfo.xcprivacy)
-- kein signierter Apple-App-Build direkt aus dem Core-Package
-- keine `Info.plist`-/Bundle-/Icon-/Entitlement-Ausarbeitung im Core-Package-Root (diese liegen alle im `wrapper/`)
+- kein `.xcodeproj`
+- kein signierter Apple-App-Build
+- keine `Info.plist`-/Bundle-/Icon-/Entitlement-Ausarbeitung
 - kein Cloud-/Account-Sync fuer importierte History; optionaler Server-Upload ist separat, standardmaessig deaktiviert und in diesem Audit nicht neu auf Apple-Hardware verifiziert
 - keine hardware-verifizierte Background-Recording-Session oder Auto-Resume laufender Live-Tracks
-
-**Hinweis Wrapper:** Der Xcode-Wrapper unter `wrapper/LH2GPXWrapper.xcodeproj` ist bereits vollständig mit Info.plist, Bundle-Identifier `de.roeber.LH2GPXWrapper`, App-Icon, Signing-Team `XAGR3K7XDJ`, Deployment Target iOS 26.2 und `wrapper/LH2GPXWrapper/PrivacyInfo.xcprivacy` ausgestattet. Die Aussage "kein `.xcodeproj`" gilt nur für den Core-Package-Root, nicht für das Monorepo insgesamt.
 
 ## Lokale Verifikation
 
