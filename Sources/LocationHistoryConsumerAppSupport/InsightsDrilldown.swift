@@ -69,4 +69,9 @@ public struct InsightsDrilldownTarget: Identifiable {
             action: .filterDays(DayListFilter(activeChips: [.hasRoutes]))
         )
     }
+
+    /// Convenience pair: navigate to a date in the day list + pre-fill export for that date.
+    public static func drilldownTargets(for date: String) -> [InsightsDrilldownTarget] {
+        [showDay(date), exportDay(date)]
+    }
 }
