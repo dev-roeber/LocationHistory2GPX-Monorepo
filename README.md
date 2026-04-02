@@ -71,8 +71,8 @@ Integriertes Monorepo fuer Core Swift Package und Xcode Wrapper der `LocationHis
 ## Bekannte offene Produktpunkte
 
 - fuer den optionalen Server-Upload ist aktuell bewusst kein Produkt-Default-Endpunkt konfiguriert (`defaultTestEndpointURLString = ""`); der Nutzer muss einen eigenen HTTPS-Endpunkt hinterlegen
-- Privacy-Manifest-/Upload-Scope fuer den optionalen Server-Upload ist noch nicht final geklaert.
-- Auf diesem Linux-Host ist nur der SwiftPM-/non-UI-Teil frisch verifizierbar; aktueller Apple-/Device-/Review-Endzustand bleibt offen.
+- Privacy-Manifest-/Upload-Scope fuer den optionalen Server-Upload: Upload-E2E ist auf echtem Gerät verifiziert (2026-04-02); `NSPrivacyCollectedDataTypes`-Entscheidung (ob Live-Recording-Standortdaten deklariert werden müssen) bleibt eine Apple-Review-Entscheidung und ist bewusst verschoben
+- Auf diesem Linux-Host ist nur der SwiftPM-/non-UI-Teil frisch verifizierbar; aktueller Apple-/Device-/Review-Endzustand: Background-Recording und Upload-E2E sind auf echtem Gerät verifiziert; TestFlight/App Store Connect bewusst verschoben
 
 ## Struktur
 
@@ -265,8 +265,7 @@ Historisch belegt auf diesem Linux-Server fuer den Live-/Upload-/Insights-/Days-
 
 Offen bleibt auf dem aktuellen Repo-Stand:
 - ein separat protokollierter foreground-Lauf exakt ueber `Product > Run` in Xcode, falls genau dieser IDE-spezifische Weg regressionskritisch wird
-- Live-Location-/Permission-Flow inklusive optionaler `Always Allow`-Erweiterung fuer Background-Recording in einer separat dokumentierten Apple-UI-Session (Simulator oder echtes iPhone)
-- Heatmap-Sheet inklusive des spaeter nachgezogenen geglaetteten Aggregations-Renderers, des Batch-3-Farb-/Kontrast-Mappings und der lokalen Darstellungsregler, dedizierter `Live`-Tab sowie Upload-Batching/Upload-Status sind auf Apple-Hardware noch nicht separat verifiziert
+- Heatmap-Sheet inklusive des spaeter nachgezogenen geglaetteten Aggregations-Renderers, des Batch-3-Farb-/Kontrast-Mappings und der lokalen Darstellungsregler sowie der dedizierte `Live`-Tab sind auf Apple-Hardware visuell und in kontrollierten Nicht-Automationsszenarien noch nicht vollstaendig separat verifiziert
 
 Die zuletzt 2 roten SwiftPM-/macOS-Tests sind auf dem aktuellen Repo-Stand in Batch 2 geklaert:
 - `AppPreferencesTests.testStoredValuesAreLoaded`: gruen; Test-Setup folgt jetzt dem Keychain-first-Produktverhalten
