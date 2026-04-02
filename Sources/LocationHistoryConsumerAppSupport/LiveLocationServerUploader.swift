@@ -109,7 +109,24 @@ public final class HTTPSLiveLocationServerUploader: LiveLocationServerUploading 
         }
         urlRequest.httpBody = try encoder.encode(request)
 
+        #if canImport(FoundationNetworking)
+        // FoundationNetworking on Linux (Swift 5.9) does not expose the async
+        // URLSession.data(for:) overload. Bridge the completion-handler API via
+        // a checked continuation so the behaviour stays identical.
+        let (_, response): (Data, URLResponse) = try await withCheckedThrowingContinuation { continuation in
+            session.dataTask(with: urlRequest) { data, response, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if let data, let response {
+                    continuation.resume(returning: (data, response))
+                } else {
+                    continuation.resume(throwing: LiveLocationServerUploadError.invalidResponse)
+                }
+            }.resume()
+        }
+        #else
         let (_, response) = try await session.data(for: urlRequest)
+        #endif
         guard let httpResponse = response as? HTTPURLResponse else {
             throw LiveLocationServerUploadError.invalidResponse
         }

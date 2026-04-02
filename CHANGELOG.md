@@ -2,6 +2,13 @@
 
 ## [Unreleased] – 2026-04-02
 
+### Linux URLSession Build Fix + UIWiringTests WIP Integration
+
+- `LiveLocationServerUploader.swift`: `HTTPSLiveLocationServerUploader.upload(request:to:bearerToken:)` nutzte `URLSession.data(for:)` (async overload), der auf Linux (Swift 5.9 / FoundationNetworking) nicht verfuegbar ist; ersetzt durch `withCheckedThrowingContinuation` ueber `dataTask(with:completionHandler:)` hinter `#if canImport(FoundationNetworking)`, sodass Apple-Plattformen weiterhin den nativen async-Pfad verwenden
+- `InsightsDrilldown.swift`: fehlende statische Factory `drilldownTargets(for:)` ergaenzt; liefert `[showDay(date), exportDay(date)]` und vervollstaendigt damit den vorhandenen Factory-Satz fuer datenverankerte Drilldown-Targets
+- `UIWiringTests.swift` (bisher untracked WIP): Testerwartungen fuer `ExportSelectionState.toggleRoute` korrigiert; die einfache Ueberladung (ohne `availableRouteIndices`) verwendet ein Inklusionsmodell (erster Aufruf fuegt den Index explizit hinzu, zweiter entfernt ihn); `testEffectiveRouteIndicesReturnsSubsetAfterToggle` nutzt jetzt korrekt die `availableRouteIndices`-Ueberladung fuer Deselektions-Semantik; UIWiringTests.swift ist ab diesem Commit in der versionierten Testliste enthalten
+- Linux-Nachweis: `swift test` → `Executed 359 tests, with 2 tests skipped and 0 failures (0 unexpected)`; `git diff --check` sauber
+
 ### Device Runtime Verification – Background-Recording + Upload E2E
 
 - **Background-Recording auf echtem iPhone verifiziert**: Permission-Upgrade auf `Always Allow`, Aufnahme im Hintergrund und Stop-/Persistenzverhalten auf iPhone 15 Pro Max real geprüft und bestätigt (2026-04-02); Feature ist funktional vollständig verifiziert auf echtem Gerät
