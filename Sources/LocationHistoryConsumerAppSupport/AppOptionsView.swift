@@ -101,21 +101,27 @@ public struct AppOptionsView: View {
 
                 Toggle(t("Allow Background Recording"), isOn: $preferences.allowsBackgroundLiveTracking)
 
-                Stepper(
-                    "\(t("Recording Interval")): \(preferences.recordingInterval.value) \(t(preferences.recordingInterval.value == 1 ? preferences.recordingInterval.unit.singularDisplayName : preferences.recordingInterval.unit.displayName))",
-                    value: Binding(
-                        get: { preferences.recordingInterval.value },
-                        set: { preferences.recordingInterval = .validated(value: $0, unit: preferences.recordingInterval.unit) }
-                    ),
-                    in: 1...preferences.recordingInterval.unit.maximumValue
-                )
-
-                Picker(t("Interval Unit"), selection: Binding(
-                    get: { preferences.recordingInterval.unit },
-                    set: { preferences.recordingInterval = .validated(value: preferences.recordingInterval.value, unit: $0) }
-                )) {
-                    ForEach(RecordingIntervalUnit.allCases) { unit in
-                        Text(t(unit.displayName)).tag(unit)
+                LabeledContent(t("Recording Interval")) {
+                    HStack(spacing: 4) {
+                        Text("\(t("Every")) \(preferences.recordingInterval.value)")
+                            .monospacedDigit()
+                        Picker("", selection: Binding(
+                            get: { preferences.recordingInterval.unit },
+                            set: { preferences.recordingInterval = .validated(value: preferences.recordingInterval.value, unit: $0) }
+                        )) {
+                            ForEach(RecordingIntervalUnit.allCases) { unit in
+                                Text(t(unit.displayName)).tag(unit)
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        Stepper(
+                            value: Binding(
+                                get: { preferences.recordingInterval.value },
+                                set: { preferences.recordingInterval = .validated(value: $0, unit: preferences.recordingInterval.unit) }
+                            ),
+                            in: 1...preferences.recordingInterval.unit.maximumValue
+                        ) { EmptyView() }
                     }
                 }
 
