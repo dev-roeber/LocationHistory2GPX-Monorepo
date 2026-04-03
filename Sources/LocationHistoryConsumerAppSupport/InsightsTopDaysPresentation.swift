@@ -78,6 +78,10 @@ enum InsightsTopDaysPresentation {
         return basis
     }
 
+    static func emptyRangeMessage() -> String {
+        "No days with recorded routes in the selected range."
+    }
+
     static func score(for summary: DaySummary, metric: InsightsTopDayMetric) -> Double {
         switch metric {
         case .events:
