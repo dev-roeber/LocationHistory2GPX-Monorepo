@@ -2,6 +2,13 @@
 
 ## [Unreleased] – 2026-04-03
 
+### Polish: Insights Presentation States
+
+- Period Comparison: explicit `allTimeMessage()` when All-Time range selected (`"Period comparison is not available for All Time…"`); new `noDataMessage()` for empty periods
+- Streak: clearer empty state via `noDataMessage()` — now actionable (`"No activity streak yet. Start recording to build your streak."`)
+- TopDays: new `emptyRangeMessage()` for ranges with no recorded routes (`"No days with recorded routes in the selected range."`)
+- AppLanguageSupport: DE translations for all three new state strings
+
 ### Fix: UX-/Text-Fix für Live-Recording-Settings
 
 - `RecordingIntervalPreference.displayString`: Singular/Plural korrekt und lowercase (`1 second`, `2 seconds`, `1 minute`, `2 Stunden` via DE-Lokalisierung, etc.)
