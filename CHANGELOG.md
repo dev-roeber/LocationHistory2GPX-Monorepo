@@ -2,6 +2,16 @@
 
 ## [Unreleased] – 2026-04-03
 
+### Polish: Overview + Insights UX
+
+- Summary card order: Active Days and Total Distance promoted to top; Days Loaded moved below
+- Summary card subtitles: "Route distance with trace fallback" → "Total route distance"; "Across visible days" → "Daily average"; "Months with visible day entries" → "Months with activity"
+- Header description shortened: "Overview, Patterns and Breakdowns for your imported history."
+- Overview section order: Top Days (drilldown-capable) moved before Activity Streak (aggregated)
+- Period Comparison at All-Time: explicit "All Time Selected" empty state card with `allTimeMessage()`; previously showed generic "No Range Active"
+- Drilldown indicators unified: `ellipsis.circle` replaced with `chevron.right` in monthly-trend and period-breakdown rows — now matches highlight and top-day cards
+- AppLanguageSupport: DE translations for "Total route distance", "Daily average", "Months with activity", "Overview, Patterns…", "All Time Selected", and period comparison messages
+
 ### Polish: Insights Presentation States
 
 - Period Comparison: explicit `allTimeMessage()` when All-Time range selected (`"Period comparison is not available for All Time…"`); new `noDataMessage()` for empty periods
