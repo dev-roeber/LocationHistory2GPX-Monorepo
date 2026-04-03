@@ -2,6 +2,14 @@
 
 ## [Unreleased] – 2026-04-03
 
+### Fix: UX-/Text-Fix für Live-Recording-Settings
+
+- `RecordingIntervalPreference.displayString`: Singular/Plural korrekt und lowercase (`1 second`, `2 seconds`, `1 minute`, `2 Stunden` via DE-Lokalisierung, etc.)
+- `RecordingIntervalUnit.singularKey`: neues Property (`"second"` / `"minute"` / `"hour"`) für lowercase-Lokalisierungskeys
+- `AppOptionsView` Stepper-Label: kompakteres Format `"Every 5 seconds"` / `"Alle 5 Sekunden"` statt `"Recording Interval: 5 Seconds"`
+- `AppLanguageSupport`: neue Keys `"Every"` → `"Alle"` sowie lowercase-Keys `"second"/"seconds"` → `"Sekunde"/"Sekunden"`, `"minute"/"minutes"`, `"hour"/"hours"` (DE)
+- `RecordingIntervalPreferenceTests`: displayString-Tests auf lowercase aktualisiert, auf camelCase-Naming umgestellt; neuer Test `testUnitSingularKey`
+
 ### Fix: Live-Recording-Settings UX
 
 - `RecordingIntervalPreference.displayString`: korrekte Singular/Plural (1 Second / 2 Seconds etc.) — war bereits implementiert, Verhalten bestätigt
