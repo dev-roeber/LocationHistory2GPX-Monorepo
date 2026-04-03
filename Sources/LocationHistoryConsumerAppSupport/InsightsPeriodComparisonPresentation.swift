@@ -90,8 +90,19 @@ enum InsightsPeriodComparisonPresentation {
         "Comparing the active date range to the equal-length period immediately before it."
     }
 
+    /// Shown when no date range is active but a specific range can still be selected.
     static func noRangeMessage() -> String {
-        "Activate a date range filter to compare the current period against the one before it."
+        "Select Last 7 Days, Last 30 Days or a custom range to enable the comparison."
+    }
+
+    /// Shown when the user has explicitly selected All Time, making comparison impossible.
+    static func allTimeMessage() -> String {
+        "Period comparison is not available for All Time. Select a specific date range to compare periods."
+    }
+
+    /// Shown when the selected period contains no data to compare.
+    static func noDataMessage() -> String {
+        "No data available for this period."
     }
 
     // MARK: - Private

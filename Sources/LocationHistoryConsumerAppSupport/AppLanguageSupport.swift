@@ -536,6 +536,16 @@ enum AppGermanTranslations {
         "Local recordings stay separate from imported history until you open them for editing or export.": "Lokale Aufzeichnungen bleiben von der importierten Historie getrennt, bis du sie zum Bearbeiten oder Exportieren öffnest.",
         "Permission state, background preference and local capture rules remain visible here.": "Berechtigungsstatus, Hintergrundpräferenz und lokale Aufnahme-Regeln bleiben hier sichtbar.",
         "No saved tracks yet": "Noch keine gespeicherten Tracks",
-        "Open Track Library": "Track-Mediathek öffnen"
+        "Open Track Library": "Track-Mediathek öffnen",
+        // Overview + Insights polish strings
+        "Overview, Patterns and Breakdowns for your imported history.": "Übersicht, Muster und Aufschlüsselungen für deine importierte Historie.",
+        "Total route distance": "Gesamte Routendistanz",
+        "Daily average": "Tagesschnitt",
+        "Months with activity": "Monate mit Aktivität",
+        "All Time Selected": "Gesamter Zeitraum ausgewählt",
+        "Period comparison is not available for All Time. Select a specific date range to compare periods.": "Periodenvergleich ist für den gesamten Zeitraum nicht verfügbar. Wähle einen bestimmten Datumsbereich, um Perioden zu vergleichen.",
+        "Select Last 7 Days, Last 30 Days or a custom range to enable the comparison.": "Wähle Letzte 7 Tage, Letzte 30 Tage oder einen eigenen Bereich, um den Vergleich zu aktivieren.",
+        "At least 2 days are needed for a streak.": "Mindestens 2 Tage werden für eine Streak benötigt.",
+        "No days with activity found in the selected range.": "Keine Tage mit Aktivität im ausgewählten Bereich gefunden."
     ]
 }

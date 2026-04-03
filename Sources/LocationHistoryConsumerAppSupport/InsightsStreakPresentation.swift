@@ -99,10 +99,10 @@ enum InsightsStreakPresentation {
     }
 
     static func sectionHint(dayCount: Int) -> String? {
-        dayCount < 2 ? "Need at least 2 days to compute a meaningful streak." : nil
+        dayCount < 2 ? "At least 2 days are needed for a streak." : nil
     }
 
     static func noDataMessage() -> String {
-        "No days with tracked activity found in the visible range."
+        "No activity streak yet. Start recording to build your streak."
     }
 }
