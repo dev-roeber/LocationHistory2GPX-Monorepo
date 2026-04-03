@@ -291,14 +291,8 @@ struct AppInsightsContentView: View {
 
     private func buildSummaryCards(trendItemCount: Int) -> [InsightsSummaryCard] {
         let activeDays = daySummaries.filter(\.hasContent).count
+        // Most important metrics first: active engagement before metadata.
         return [
-            InsightsSummaryCard(
-                title: t("Days Loaded"),
-                value: "\(daySummaries.count)",
-                subtitle: insights.dateRange.map { "\(AppDateDisplay.mediumDate($0.firstDate)) – \(AppDateDisplay.mediumDate($0.lastDate))" },
-                icon: "calendar",
-                color: .blue
-            ),
             InsightsSummaryCard(
                 title: t("Active Days"),
                 value: daySummaries.isEmpty ? "0" : "\(activeDays) / \(daySummaries.count)",
@@ -309,21 +303,28 @@ struct AppInsightsContentView: View {
             InsightsSummaryCard(
                 title: t("Total Distance"),
                 value: formatDistance(insights.totalDistanceM, unit: preferences.distanceUnit),
-                subtitle: t("Route distance with trace fallback"),
+                subtitle: t("Total route distance"),
                 icon: "road.lanes",
                 color: .purple
             ),
             InsightsSummaryCard(
                 title: t("Average Distance / Day"),
                 value: formatDistance(insights.averagesPerDay.avgDistancePerDayM, unit: preferences.distanceUnit),
-                subtitle: t("Across visible days"),
+                subtitle: t("Daily average"),
                 icon: "chart.line.uptrend.xyaxis",
                 color: .indigo
             ),
             InsightsSummaryCard(
+                title: t("Days Loaded"),
+                value: "\(daySummaries.count)",
+                subtitle: insights.dateRange.map { "\(AppDateDisplay.mediumDate($0.firstDate)) – \(AppDateDisplay.mediumDate($0.lastDate))" },
+                icon: "calendar",
+                color: .blue
+            ),
+            InsightsSummaryCard(
                 title: t("Active Months"),
                 value: "\(trendItemCount)",
-                subtitle: t("Months with visible day entries"),
+                subtitle: t("Months with activity"),
                 icon: "calendar.badge.clock",
                 color: .orange
             ),
@@ -394,7 +395,7 @@ struct AppInsightsContentView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(t("Insights Overview"))
                     .font(.title2.weight(.semibold))
-                Text(t("Switch between a concise overview, recurring patterns and deeper breakdowns without leaving the current import."))
+                Text(t("Overview, Patterns and Breakdowns for your imported history."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -453,9 +454,9 @@ struct AppInsightsContentView: View {
             }
         }
 
-        streakSection
-
         topDaysSection
+
+        streakSection
     }
 
     @ViewBuilder
@@ -673,6 +674,13 @@ struct AppInsightsContentView: View {
             if let comparison = periodComparisonStat {
                 periodComparisonRows(comparison)
                 sectionHint(t(InsightsPeriodComparisonPresentation.sectionHint()))
+            } else if !rangeFilter.isActive {
+                // All Time is selected — period comparison requires a bounded range.
+                insightsEmptyCard(
+                    title: t("All Time Selected"),
+                    message: t(InsightsPeriodComparisonPresentation.allTimeMessage()),
+                    systemImage: "calendar.badge.minus"
+                )
             } else {
                 insightsEmptyCard(
                     title: t("No Range Active"),
@@ -1075,8 +1083,8 @@ struct AppInsightsContentView: View {
                     .font(.subheadline.weight(.medium))
                 Spacer()
                 if isInteractive {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.caption)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -1098,8 +1106,8 @@ struct AppInsightsContentView: View {
                     .font(.subheadline.weight(.medium))
                 Spacer()
                 if isInteractive {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.caption)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
