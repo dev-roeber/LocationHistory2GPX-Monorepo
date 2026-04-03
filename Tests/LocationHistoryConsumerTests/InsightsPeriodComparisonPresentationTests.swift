@@ -19,30 +19,26 @@ final class InsightsPeriodComparisonPresentationTests: XCTestCase {
     // MARK: - Active range produces comparison
 
     func testActiveLast7DaysRangeProducesComparison() {
-        // Range: last 7 days. Prior: 7 days before that.
-        let filter = HistoryDateRangeFilter(preset: .last7Days)
-        guard filter.isActive, let effectiveRange = filter.effectiveRange else {
-            XCTFail("Expected last7Days to produce an active range")
+        // Use a fixed custom date range so the test is timezone-independent.
+        // Current range: 2025-04-01 to 2025-04-07 (7 days, all with content)
+        // Prior range (equal-length preceding period): 2025-03-25 to 2025-03-31
+        let customStart = DateComponents(calendar: Calendar(identifier: .gregorian), timeZone: TimeZone(secondsFromGMT: 0), year: 2025, month: 4, day: 1).date!
+        let customEnd = DateComponents(calendar: Calendar(identifier: .gregorian), timeZone: TimeZone(secondsFromGMT: 0), year: 2025, month: 4, day: 7, hour: 23, minute: 59).date!
+        let filter = HistoryDateRangeFilter(preset: .custom, customStart: customStart, customEnd: customEnd)
+        guard filter.isActive, filter.effectiveRange != nil else {
+            XCTFail("Expected custom range to produce an active range")
             return
         }
 
-        // Build summaries in the current range (some with content)
-        let calendar = Calendar(identifier: .gregorian)
-        let currentDates = (0..<7).compactMap { calendar.date(byAdding: .day, value: -$0, to: effectiveRange.upperBound) }
-        let currentSummaries = currentDates.compactMap { date -> DaySummary? in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            return DaySummary(date: formatter.string(from: date), visitCount: 1, activityCount: 0, pathCount: 0, totalPathPointCount: 0, totalPathDistanceM: 500, hasContent: true)
+        // 7 current summaries (all with content, 500 m each)
+        let currentSummaries = (1...7).map { day in
+            let dateStr = String(format: "2025-04-%02d", day)
+            return DaySummary(date: dateStr, visitCount: 1, activityCount: 0, pathCount: 0, totalPathPointCount: 0, totalPathDistanceM: 500, hasContent: true)
         }
 
-        // Build summaries in the prior range
-        let priorDates = (0..<7).compactMap { calendar.date(byAdding: .day, value: -7 - $0, to: effectiveRange.upperBound) }
-        let priorSummaries = priorDates.prefix(3).compactMap { date -> DaySummary? in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            return DaySummary(date: formatter.string(from: date), visitCount: 1, activityCount: 0, pathCount: 0, totalPathPointCount: 0, totalPathDistanceM: 200, hasContent: true)
+        // 3 prior summaries in the preceding 7-day window (200 m each)
+        let priorSummaries = ["2025-03-29", "2025-03-30", "2025-03-31"].map { dateStr in
+            DaySummary(date: dateStr, visitCount: 1, activityCount: 0, pathCount: 0, totalPathPointCount: 0, totalPathDistanceM: 200, hasContent: true)
         }
 
         let allSummaries = currentSummaries + priorSummaries

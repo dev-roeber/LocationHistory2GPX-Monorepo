@@ -108,6 +108,7 @@ public struct HistoryDateRangePickerSheet: View {
                     .disabled(!canApply)
                 }
                 if filter.isActive {
+                    #if os(iOS)
                     ToolbarItem(placement: .bottomBar) {
                         Button(role: .destructive) {
                             filter.reset()
@@ -116,6 +117,16 @@ public struct HistoryDateRangePickerSheet: View {
                             Label(t("Clear Date Range"), systemImage: "xmark.circle")
                         }
                     }
+                    #else
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .destructive) {
+                            filter.reset()
+                            dismiss()
+                        } label: {
+                            Label(t("Clear Date Range"), systemImage: "xmark.circle")
+                        }
+                    }
+                    #endif
                 }
             }
         }

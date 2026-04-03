@@ -12,7 +12,7 @@
 - `RecordingIntervalPreferenceTests.swift` (neu): 21 Tests — Default, `totalSeconds` für alle Einheiten, Validation/Clamping, Codable-Roundtrip, Equality, `CaseIterable`, `Identifiable`, `displayString` Singular/Plural
 - `LiveTrackRecorderTests.swift`: 3 neue Tests für `minimumRecordingIntervalS`-Gate (rejects early, accepts after interval, zero disables gate)
 - `AppPreferencesTests.swift`: Default- und StoredValues-Tests prüfen `recordingInterval` und `minimumRecordingIntervalS`; Reset prüft Rückkehr auf `.default`
-- Linux-Nachweis: `swift test` → alle neuen und geänderten Tests grün; 2 bestehende `InsightsPeriodComparisonPresentationTests`-Failures sind datums-sensitiv und pre-existing
+- Linux-Nachweis: `swift test` → `Executed 447 tests, with 0 failures (0 unexpected)` ✅; `xcodebuild test` → `Executed 447 tests, with 0 failures (0 unexpected)` ✅
 
 
 
