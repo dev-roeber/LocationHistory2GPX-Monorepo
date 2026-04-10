@@ -35,13 +35,6 @@ public enum RecordingIntervalUnit: String, Codable, CaseIterable, Identifiable, 
         }
     }
 
-    public var maximumValue: Int {
-        switch self {
-        case .seconds: return 3600
-        case .minutes: return 60
-        case .hours: return 24
-        }
-    }
 }
 
 // MARK: - Preference
@@ -49,6 +42,9 @@ public enum RecordingIntervalUnit: String, Codable, CaseIterable, Identifiable, 
 public struct RecordingIntervalPreference: Codable, Equatable, Sendable {
     public let unit: RecordingIntervalUnit
     public let value: Int
+
+    public static let minimumValue = 0
+    public static let unlimitedDisplayString = "Unlimited"
 
     /// 5 seconds – matches the rough cadence of a balanced live recording session.
     public static let `default` = RecordingIntervalPreference(value: 5, unit: .seconds)
@@ -58,20 +54,19 @@ public struct RecordingIntervalPreference: Codable, Equatable, Sendable {
         self.unit = unit
     }
 
-    /// Returns a clamped, valid instance. Out-of-range values are clipped to the
-    /// unit's allowed range (seconds: 1–3600, minutes: 1–60, hours: 1–24).
+    /// Returns a valid instance. Values below 0 are clipped to 0 (`No minimum`).
+    /// There is intentionally no upper clamp: the UI treats the maximum gap as unlimited.
     public static func validated(value: Int, unit: RecordingIntervalUnit) -> RecordingIntervalPreference {
-        let clamped: Int
-        switch unit {
-        case .seconds: clamped = max(1, min(3600, value))
-        case .minutes: clamped = max(1, min(60, value))
-        case .hours:   clamped = max(1, min(24, value))
-        }
-        return RecordingIntervalPreference(value: clamped, unit: unit)
+        RecordingIntervalPreference(value: max(minimumValue, value), unit: unit)
+    }
+
+    public var hasNoMinimum: Bool {
+        value == Self.minimumValue
     }
 
     /// Total interval expressed in seconds.
     public var totalSeconds: TimeInterval {
+        guard value > 0 else { return 0 }
         switch unit {
         case .seconds: return TimeInterval(value)
         case .minutes: return TimeInterval(value) * 60
@@ -82,6 +77,9 @@ public struct RecordingIntervalPreference: Codable, Equatable, Sendable {
     /// Plain English display string for the interval, e.g. "5 seconds", "1 minute".
     /// For a localised variant, build the string from `value` and a localised `unit.singularKey`/`unit.rawValue`.
     public var displayString: String {
+        guard !hasNoMinimum else {
+            return "No minimum"
+        }
         switch unit {
         case .seconds: return value == 1 ? "1 second"  : "\(value) seconds"
         case .minutes: return value == 1 ? "1 minute"  : "\(value) minutes"

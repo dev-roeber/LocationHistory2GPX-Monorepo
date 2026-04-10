@@ -133,7 +133,7 @@ Present:
 - quick actions for centering the live map, pausing/resuming uploads, manually flushing the upload queue and opening the saved-track library
 - live stats include accuracy, duration, points, distance, current speed, average speed, last segment and update age
 - live-recording options can change accepted accuracy and capture density for the local recorder
-- live-recording interval is configurable (seconds/minutes/hours) via Options; sets a hard floor on how often a GPS point is accepted regardless of movement distance
+- live-recording minimum time gap is configurable (seconds/minutes/hours) via Options; `0` disables the hard floor (`No minimum`) and the setting has no numeric upper clamp (`Maximum Time Gap: Unlimited`)
 - background live recording can be enabled in local settings and becomes active when the app has `Always Allow` authorization
 - accepted live-recording points can optionally be sent to a user-configured HTTP(S) endpoint with an optional bearer token
 - permission/status card and record toggle inside day detail
@@ -184,7 +184,7 @@ Present:
 - toggle for showing technical import details
 - live-recording accuracy filter preference
 - live-recording detail preference for movement/time capture density
-- live-recording interval preference (seconds/minutes/hours) for minimum time between accepted points
+- live-recording minimum-time-gap preference (seconds/minutes/hours) with `0 = No minimum` and no upper clamp
 - toggle for allowing background live recording
 - app-language preference with `English` / `Deutsch`
 - broad UI localization across shell, options, status UI, day list/detail, saved-track library/editor, live-recording and large parts of export/insights

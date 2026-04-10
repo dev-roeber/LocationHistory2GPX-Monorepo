@@ -92,6 +92,45 @@ final class AppPreferencesTests: XCTestCase {
         }
     }
 
+    func testStoredZeroRecordingIntervalDisablesMinimumGap() {
+        if let data = try? JSONEncoder().encode(RecordingIntervalPreference(value: 0, unit: .hours)) {
+            defaults.set(data, forKey: "app.preferences.recordingInterval")
+        }
+
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+
+            XCTAssertEqual(preferences.recordingInterval, RecordingIntervalPreference(value: 0, unit: .hours))
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumRecordingIntervalS, 0)
+        }
+    }
+
+    func testStoredLargeRecordingIntervalKeepsUnlimitedUpperBound() {
+        if let data = try? JSONEncoder().encode(RecordingIntervalPreference(value: 999, unit: .hours)) {
+            defaults.set(data, forKey: "app.preferences.recordingInterval")
+        }
+
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+
+            XCTAssertEqual(preferences.recordingInterval, RecordingIntervalPreference(value: 999, unit: .hours))
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumRecordingIntervalS, 999 * 3600)
+        }
+    }
+
+    func testStoredNegativeRecordingIntervalIsValidatedToZero() {
+        if let data = try? JSONEncoder().encode(RecordingIntervalPreference(value: -5, unit: .minutes)) {
+            defaults.set(data, forKey: "app.preferences.recordingInterval")
+        }
+
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+
+            XCTAssertEqual(preferences.recordingInterval, RecordingIntervalPreference(value: 0, unit: .minutes))
+            XCTAssertEqual(preferences.liveTrackRecorderConfiguration.minimumRecordingIntervalS, 0)
+        }
+    }
+
     func testResetRestoresDefaults() {
         MainActor.assumeIsolated {
             let preferences = AppPreferences(userDefaults: defaults)
@@ -160,6 +199,16 @@ final class AppPreferencesTests: XCTestCase {
 
             XCTAssertEqual(preferences.localized("Options"), "Optionen")
             XCTAssertEqual(preferences.localized("Open location history file"), "Standortverlauf-Datei öffnen")
+        }
+    }
+
+    func testGermanLocalizationTranslatesGapStateStrings() {
+        MainActor.assumeIsolated {
+            let preferences = AppPreferences(userDefaults: defaults)
+            preferences.appLanguage = .german
+
+            XCTAssertEqual(preferences.localized("No minimum"), "Kein Minimum")
+            XCTAssertEqual(preferences.localized("Unlimited"), "Unbegrenzt")
         }
     }
 }

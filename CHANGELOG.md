@@ -2,6 +2,18 @@
 
 ## [Unreleased] – 2026-04-03
 
+### Fix: Live-Settings Time Gap Bounds
+
+- `RecordingIntervalPreference`: Untergrenze jetzt `0` statt `1`; `0` wird als `No minimum` modelliert und deaktiviert das harte Zeit-Gate sauber
+- `RecordingIntervalPreference`: keine obere Clamp mehr; große Werte bleiben erhalten und die UI behandelt die Obergrenze explizit als `Unlimited`
+- `AppOptionsView`: Live-Settings zeigen jetzt `Minimum Time Gap` als editierbare Einstellung mit `No minimum`-Anzeige für `0` plus separater `Maximum Time Gap: Unlimited`-Zeile
+- `AppOptionsView`: die missverständliche Read-only-Zeile `Minimum Time Gap (from Detail)` entfällt; Footer erklärt jetzt klar die Rollen von Mindestabstand, unbegrenzter Obergrenze und `Recording Detail`
+- `AppLanguageSupport`: neue DE-Texte für `Maximum Time Gap`, `No minimum`, `Unlimited` und die überarbeitete Live-Settings-Erklärung
+- `RecordingIntervalPreferenceTests`: Grenzwert- und Anzeige-Tests auf `0`/`Unlimited` umgestellt; große Werte werden nicht mehr numerisch begrenzt
+- `AppPreferences`: geladene `recordingInterval`-Werte werden beim Start jetzt validiert, damit ungültige persistierte Altwerte keine negativen Mindestabstände einschleusen
+- `AppPreferencesTests`: Persistenz für `0` (`No minimum`), negative Altwerte und große Werte ohne obere Begrenzung ergänzt
+- Recorder-/Upload-Semantik bleibt stabil: `minimumRecordingIntervalS == 0` deaktiviert weiter nur das harte Intervall-Gate; Upload-, Persistenz- und Qualitätslogik bleiben ansonsten unverändert
+
 ### Fix: Linux URLSession Test Coverage
 
 - `LiveLocationServerUploaderTests.swift` (neu): 9 Tests für `HTTPSLiveLocationServerUploader` — fehlende Unit-Test-Abdeckung des Linux-spezifischen `dataTask`-Continuation-Pfades nachgeliefert

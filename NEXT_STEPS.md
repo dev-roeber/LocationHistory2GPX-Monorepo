@@ -15,6 +15,7 @@ Umgesetzt:
 - DE-Lokalisierung aller neuen Strings
 - 21 neue Tests in `RecordingIntervalPreferenceTests`, 3 neue Tests in `LiveTrackRecorderTests`, erweiterte `AppPreferencesTests`
 - Linux-Nachweis: alle neuen und geänderten Tests grün
+- Follow-up 2026-04-10: Mindestabstand jetzt auch `0` (`No minimum`), keine obere Clamp mehr (`Maximum Time Gap: Unlimited`), Persistenz + Tests für `0` und große Werte ergänzt
 
 Noch offen (bewusst nachgelagert):
 - **Apple-Device-Verifikation** des Aufnahmeintervalls unter realen GPS-Bedingungen (iPhone); kein bekanntes Problem, aber noch nicht auf Gerät geprüft

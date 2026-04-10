@@ -366,7 +366,7 @@ public final class AppPreferences: ObservableObject {
         ) ?? .small
         if let data = userDefaults.data(forKey: Keys.recordingInterval),
            let decoded = try? JSONDecoder().decode(RecordingIntervalPreference.self, from: data) {
-            self.recordingInterval = decoded
+            self.recordingInterval = .validated(value: decoded.value, unit: decoded.unit)
         } else {
             self.recordingInterval = .default
         }

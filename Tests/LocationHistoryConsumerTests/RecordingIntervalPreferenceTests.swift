@@ -30,35 +30,35 @@ final class RecordingIntervalPreferenceTests: XCTestCase {
 
     // MARK: - Validation / clamping
 
-    func testValidation_clampsBelowMin_seconds() {
+    func testValidation_allowsZero_seconds() {
         let clamped = RecordingIntervalPreference.validated(value: 0, unit: .seconds)
-        XCTAssertEqual(clamped.value, 1)
+        XCTAssertEqual(clamped.value, 0)
         XCTAssertEqual(clamped.unit, .seconds)
     }
 
-    func testValidation_clampsAboveMax_seconds() {
-        let clamped = RecordingIntervalPreference.validated(value: 9999, unit: .seconds)
-        XCTAssertEqual(clamped.value, 3600)
+    func testValidation_clampsNegative_secondsToZero() {
+        let clamped = RecordingIntervalPreference.validated(value: -1, unit: .seconds)
+        XCTAssertEqual(clamped.value, 0)
     }
 
-    func testValidation_clampsBelowMin_minutes() {
+    func testValidation_allowsZero_minutes() {
         let clamped = RecordingIntervalPreference.validated(value: 0, unit: .minutes)
-        XCTAssertEqual(clamped.value, 1)
+        XCTAssertEqual(clamped.value, 0)
     }
 
-    func testValidation_clampsAboveMax_minutes() {
+    func testValidation_preservesLarge_minutes() {
         let clamped = RecordingIntervalPreference.validated(value: 999, unit: .minutes)
-        XCTAssertEqual(clamped.value, 60)
+        XCTAssertEqual(clamped.value, 999)
     }
 
-    func testValidation_clampsBelowMin_hours() {
+    func testValidation_allowsZero_hours() {
         let clamped = RecordingIntervalPreference.validated(value: 0, unit: .hours)
-        XCTAssertEqual(clamped.value, 1)
+        XCTAssertEqual(clamped.value, 0)
     }
 
-    func testValidation_clampsAboveMax_hours() {
+    func testValidation_preservesLarge_hours() {
         let clamped = RecordingIntervalPreference.validated(value: 25, unit: .hours)
-        XCTAssertEqual(clamped.value, 24)
+        XCTAssertEqual(clamped.value, 25)
     }
 
     // MARK: - Codable round-trip
@@ -74,6 +74,13 @@ final class RecordingIntervalPreferenceTests: XCTestCase {
         let data = try JSONEncoder().encode(RecordingIntervalPreference.default)
         let decoded = try JSONDecoder().decode(RecordingIntervalPreference.self, from: data)
         XCTAssertEqual(decoded, .default)
+    }
+
+    func testCodable_zero() throws {
+        let original = RecordingIntervalPreference(value: 0, unit: .hours)
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(RecordingIntervalPreference.self, from: data)
+        XCTAssertEqual(decoded, original)
     }
 
     // MARK: - Equality
@@ -126,6 +133,10 @@ final class RecordingIntervalPreferenceTests: XCTestCase {
         XCTAssertEqual(RecordingIntervalPreference(value: 1, unit: .seconds).displayString, "1 second")
     }
 
+    func testDisplayString_noMinimum() {
+        XCTAssertEqual(RecordingIntervalPreference(value: 0, unit: .seconds).displayString, "No minimum")
+    }
+
     func testDisplayString_pluralSeconds() {
         XCTAssertEqual(RecordingIntervalPreference(value: 5, unit: .seconds).displayString, "5 seconds")
     }
@@ -144,5 +155,9 @@ final class RecordingIntervalPreferenceTests: XCTestCase {
 
     func testDisplayString_pluralHours() {
         XCTAssertEqual(RecordingIntervalPreference(value: 2, unit: .hours).displayString, "2 hours")
+    }
+
+    func testUnlimitedDisplayString() {
+        XCTAssertEqual(RecordingIntervalPreference.unlimitedDisplayString, "Unlimited")
     }
 }

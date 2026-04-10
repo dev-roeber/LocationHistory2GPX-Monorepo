@@ -101,9 +101,9 @@ public struct AppOptionsView: View {
 
                 Toggle(t("Allow Background Recording"), isOn: $preferences.allowsBackgroundLiveTracking)
 
-                LabeledContent(t("Recording Interval")) {
+                LabeledContent(t("Minimum Time Gap")) {
                     HStack(spacing: 4) {
-                        Text("\(t("Every")) \(preferences.recordingInterval.value)")
+                        Text(localizedMinimumTimeGapDescription)
                             .monospacedDigit()
                         Picker("", selection: Binding(
                             get: { preferences.recordingInterval.unit },
@@ -116,22 +116,19 @@ public struct AppOptionsView: View {
                         .labelsHidden()
                         .fixedSize()
                         Stepper(
-                            value: Binding(
-                                get: { preferences.recordingInterval.value },
-                                set: { preferences.recordingInterval = .validated(value: $0, unit: preferences.recordingInterval.unit) }
-                            ),
-                            in: 1...preferences.recordingInterval.unit.maximumValue
+                            onIncrement: incrementMinimumTimeGap,
+                            onDecrement: decrementMinimumTimeGap
                         ) { EmptyView() }
                     }
                 }
 
+                LabeledContent(t("Maximum Time Gap"), value: t(RecordingIntervalPreference.unlimitedDisplayString))
                 LabeledContent(t("Accepted Accuracy"), value: "\(Int(preferences.liveTrackRecorderConfiguration.maximumAcceptedAccuracyM)) m")
                 LabeledContent(t("Minimum Movement"), value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumDistanceDeltaM)) m")
-                LabeledContent(t("Minimum Time Gap (from Detail)"), value: "\(Int(preferences.liveTrackRecorderConfiguration.minimumTimeDeltaS)) s")
             } header: {
                 Text(t("Live Recording"))
             } footer: {
-                Text("\(t(preferences.liveTrackingAccuracy.detail)) \(t(preferences.liveTrackingDetail.detail)) \(t("Recording Interval sets a hard floor on how often a point is accepted – larger values reduce point count, battery use and upload frequency.")) \(t("Minimum Time Gap is derived from the Recording Detail setting, not from the Recording Interval.")) \(t("Background recording requires Always Allow permission and only affects local live-track recording."))")
+                Text("\(t(preferences.liveTrackingAccuracy.detail)) \(t(preferences.liveTrackingDetail.detail)) \(t("Minimum Time Gap controls the shortest allowed delay between accepted points. Set it to No minimum to disable the hard floor.")) \(t("Larger minimum gaps reduce point count, battery use and upload frequency.")) \(t("Maximum Time Gap is unlimited.")) \(t("Recording Detail still tunes the movement-sensitive quality gate.")) \(t("Background recording requires Always Allow permission and only affects local live-track recording."))")
             }
 
             Section {
@@ -163,6 +160,26 @@ public struct AppOptionsView: View {
         return preferences.liveLocationServerUploadConfiguration.endpointURL == nil
             ? t("Enabled (invalid URL)")
             : t("Enabled")
+    }
+
+    private var localizedMinimumTimeGapDescription: String {
+        let interval = preferences.recordingInterval
+        guard !interval.hasNoMinimum else {
+            return t(interval.displayString)
+        }
+        let unitKey = interval.value == 1 ? interval.unit.singularKey : interval.unit.rawValue
+        return "\(interval.value) \(t(unitKey))"
+    }
+
+    private func incrementMinimumTimeGap() {
+        let current = preferences.recordingInterval
+        let nextValue = current.value == Int.max ? Int.max : current.value + 1
+        preferences.recordingInterval = .validated(value: nextValue, unit: current.unit)
+    }
+
+    private func decrementMinimumTimeGap() {
+        let current = preferences.recordingInterval
+        preferences.recordingInterval = .validated(value: current.value - 1, unit: current.unit)
     }
 
     private func t(_ english: String) -> String {

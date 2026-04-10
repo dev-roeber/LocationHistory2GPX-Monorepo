@@ -34,6 +34,7 @@ Integriertes Monorepo fuer Core Swift Package und Xcode Wrapper der `LocationHis
 - auf compact iPhone-Layouts unter iOS 17+ einen dedizierten `Live`-Tab fuer Live-Location und Live-Recording anzeigen
 - die `Days`-Liste repo-wahr standardmaessig absteigend (`neu -> alt`) anzeigen; Monatssortierung, Suche und Navigation bleiben dabei erhalten
 - die `Live`-Seite mit klarer Map-/Recording-/Upload-/Library-Hierarchie, Status-Chips, Quick Actions und erweiterten Live-Metriken wie aktueller Geschwindigkeit, Durchschnittsgeschwindigkeit, letzter Teilstrecke und Update-Alter fuehren
+- den minimalen Zeitabstand zwischen akzeptierten Live-Punkten lokal konfigurieren; `0` deaktiviert die harte Untergrenze (`No minimum`), eine numerische Obergrenze gibt es bewusst nicht (`Maximum Time Gap: Unlimited`)
 - den optionalen Server-Upload mit Queue-/Failure-/Last-Success-Status, Pause/Resume und manuellem Flush sichtbar und robust in der Live-UI fuehren
 - die `Insights`-Seite ueber segmentierte Oberflaechen (`Overview`, `Patterns`, `Breakdowns`), KPI-Karten, Highlight-Karten, `Top Days` und Monatstrends deutlich tiefer aufbereiten
 - fuer importierte History auf iOS 17+/macOS 14+ ein eigenes Heatmap-Sheet mit Deckkraft-Regler, Radius-Presets, `Auf Daten zoomen`, kleiner Dichte-Legende, geglaettetem viewport-/LOD-basiertem Aggregations-Rendering sowie frueheren Farbwechseln und sichtbar kraeftigerer Detaildarstellung fuer niedrige und mittlere Dichte oeffnen (implementiert, aber noch nicht separat Apple-/Performance-verifiziert)
